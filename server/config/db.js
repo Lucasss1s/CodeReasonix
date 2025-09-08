@@ -1,17 +1,9 @@
-// Carga variables de entorno desde .env
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'; //Variables de entorno .env
 dotenv.config();
 
-// Importa el cliente de Supabase
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'; //Cliente de Supabase
 
-/*
-  Supabase URL y KEY:
-  - Supabase URL: dirección de tu proyecto en la nube
-  - Supabase KEY: Service Role Key (para backend)
-*/
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Crear instancia de Supabase que usamos en todo el backend
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey); //Instancia de Supabase 

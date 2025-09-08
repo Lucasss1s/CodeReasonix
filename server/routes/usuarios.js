@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/db.js'; 
 
-const router = express.Router(); //Router independiente
+const router = express.Router(); //Manejador de rutas independientes
 
 router.get('/', async (req, res) => {
     try {
