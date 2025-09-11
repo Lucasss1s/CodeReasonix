@@ -24,8 +24,8 @@ router.post('/', async (req, res) => {
 
         for (const caso of casos) {
             // Generar codigo final usando la plantilla
-            const plantilla = codigo_fuente.replace('{entrada}', caso.entrada_procesada);
-            const resultado = await enviarCodigo(plantilla);
+            const plantilla = codigo_fuente.replace('{entrada}', caso.entrada_procesada[lenguaje]);
+            const resultado = await enviarCodigo(plantilla, lenguaje);
 
             const salida_obtenida = resultado.stdout?.trim() || 'error';
             resultados.push({
