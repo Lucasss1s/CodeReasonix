@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
+import "../index.css"; 
 
 export default function Index() {
     const [ejercicios, setEjercicios] = useState([]);
@@ -11,22 +13,19 @@ export default function Index() {
     }, []);
 
     return (
-        <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Lista de ejercicios</h1>
-        <ul className="space-y-4">
+        <div className="index-container">
+        <h1 className="titulo">Lista de Ejercicios</h1>
+        <ul className="ejercicio-lista">
             {ejercicios.map(ej => (
-            <li key={ej.id_ejercicio} className="border p-4 rounded-xl shadow">
-                <h2 className="text-lg font-semibold">{ej.titulo}</h2>
-                <p className="text-sm text-gray-400">Dificultad: {ej.dificultad}</p>
-                <a
-                href={`/ejercicio/${ej.id_ejercicio}`}
-                className="text-blue-500 hover:underline mt-2 block"
-                >
+            <li key={ej.id_ejercicio} className="ejercicio-card">
+                <h2>{ej.titulo}</h2>
+                <p>Dificultad: {ej.dificultad}</p>
+                <Link to={`/ejercicio/${ej.id_ejercicio}`} className="boton-ver">
                 Ver ejercicio
-                </a>
+                </Link>
             </li>
             ))}
         </ul>
         </div>
     );
-    }
+}

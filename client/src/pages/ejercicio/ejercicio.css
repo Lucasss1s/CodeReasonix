@@ -1,0 +1,145 @@
+.ejercicio-page {
+    display: flex;
+    height: 100vh;
+    background: #1e1e1e;
+    color: #f1f1f1;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+/* Columna izquierda */
+.left-panel {
+    width: 40%;
+    padding: 20px;
+    border-right: 2px solid #333;
+    overflow-y: auto;
+}
+
+.ejercicio-header h2 {
+    margin: 0 0 10px;
+    font-size: 22px;
+}
+
+.descripcion {
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+.dificultad {
+    font-weight: bold;
+    color: #f39c12;
+}
+
+.casos-container {
+    margin-top: 20px;
+}
+
+.caso {
+    background: #2c2c2c;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+}
+
+.caso pre {
+    background: #111;
+    padding: 6px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin-top: 4px;
+}
+
+.resultado-ok {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.resultado-error {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* Columna derecha */
+.right-panel {
+    width: 60%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.editor-container {
+    background: #2c2c2c;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.editor-header label {
+    margin-right: 10px;
+}
+
+.editor {
+    flex-grow: 1;
+    background: #111;
+    color: #eee;
+    font-family: monospace;
+    font-size: 14px;
+    padding: 10px;
+    border-radius: 4px;
+    border: none;
+    resize: none;
+    min-height: 250px;
+}
+
+.btn-submit {
+    margin-top: 12px;
+    padding: 10px 16px;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    align-self: flex-start;
+    font-weight: bold;
+}
+.btn-submit:hover {
+    background: #45a049;
+}
+
+.resultados-container {
+    background: #2c2c2c;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.resultados-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.resultados-container th,
+.resultados-container td {
+    border: 1px solid #444;
+    padding: 8px;
+    text-align: center;
+}
+
+.hint {
+    font-style: italic;
+    color: #bbb;
+    }
+
+/* Carga */
+.loading {
+    padding: 20px;
+    font-size: 18px;
+}

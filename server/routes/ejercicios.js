@@ -14,36 +14,36 @@ router.get('/', async (req, res) => {
         res.json(ejercicios);
     } catch (err) {
         console.error('Error listando ejercicios:', err);
-        res.status(500).json({ error: 'Error listando ejercicios'});
+        res.status(500).json({ error: 'Error listando ejercicios' });
     }
 });
 
+// Detalle ejercicio con casos de prueba
 router.get('/:id', async (req, res) => {
-    const { id } = req.params; //Obtiene el parametro de la URL
+    const { id } = req.params;
 
     try {
         const { data: ejercicio, error: errorEjercicio } = await supabase
             .from('ejercicio')
-            .select('id_ejercicio, titulo, descripcion, dificultad')
+            .select('id_ejercicio, titulo, descripcion, dificultad, plantillas')
             .eq('id_ejercicio', id)
-            .single(); //Espera solo un registro
+            .single();
 
         if (errorEjercicio) throw errorEjercicio;
         if (!ejercicio) return res.status(404).json({ error: 'Ejercicio no encontrado' });
 
-        //Consulta los casos de prueba asociados
         const { data: casos, error: errorCasos } = await supabase
             .from('caso_prueba')
-            .select('id_caso, entrada, salida_esperada, publico')
+            .select('id_caso, entrada_procesada, salida_esperada, publico')
             .eq('id_ejercicio', id)
             .eq('publico', true);
 
         if (errorCasos) throw errorCasos;
 
-        res.json({ ...ejercicio, casos_prueba: casos});
+        res.json({ ...ejercicio, casos_prueba: casos });
     } catch (err) {
         console.error('Error obteniendo ejercicio:', err);
-        res.status(500).json({ error: 'Error obteniendo ejercicio'});
+        res.status(500).json({ error: 'Error obteniendo ejercicio' });
     }
 });
 
