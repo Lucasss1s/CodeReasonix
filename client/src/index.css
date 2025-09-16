@@ -37,3 +37,31 @@
 .boton-ver:hover {
   background: #0056b3;
 }
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #1e1e2f;
+    color: #fff;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.nav-buttons .btn-nav {
+    margin-left: 10px;
+    padding: 6px 12px;
+    background-color: #ff7a00;
+    color: #fff;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.nav-buttons .btn-nav:hover {
+    background-color: #e66a00;
+}
+

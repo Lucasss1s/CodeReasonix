@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@supabase/supabase-js": "^2.57.4",
     "ace-builds": "^1.43.3",
     "axios": "^1.11.0",
     "react": "^19.1.1",
