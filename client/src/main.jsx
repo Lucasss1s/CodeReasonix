@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Index from './pages/index.jsx';
 import Ejercicio from './pages/ejercicio/ejercicio.jsx';
+import ResultadoFinal from './pages/ejercicio/resultadoFinal.jsx'
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -11,6 +12,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/ejercicio/:id" element={<Ejercicio />} />
+        <Route path="/resultado/:id" element={ <ResultadoFinal/> } />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
