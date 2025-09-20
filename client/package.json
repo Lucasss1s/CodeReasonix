@@ -14,8 +14,11 @@
     "@supabase/supabase-js": "^2.57.4",
     "ace-builds": "^1.43.3",
     "axios": "^1.11.0",
+    "chart.js": "^4.5.0",
+    "framer-motion": "^12.23.13",
     "react": "^19.1.1",
     "react-ace": "^14.0.1",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.8.2"
   },

@@ -5,6 +5,7 @@ import Index from './pages/index.jsx';
 import Ejercicio from './pages/ejercicio/ejercicio.jsx';
 import Register from './pages/register.jsx';
 import Login from './pages/login.jsx'; 
+import ResultadoFinal from './pages/ejercicio/resultadoFinal.jsx'
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -15,6 +16,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/ejercicio/:id" element={<Ejercicio />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/resultado/:id" element={ <ResultadoFinal/> } />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

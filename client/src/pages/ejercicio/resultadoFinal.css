@@ -1,0 +1,234 @@
+body{
+  background-color: #181818;
+}
+
+.resultado-page {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #1e1e1e; 
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  font-family: "Inter", sans-serif;
+  color: #f5f5f5;
+}
+
+.resultado-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #fff;
+}
+
+.resultado-header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.meta-row {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-size: 0.95rem;
+  color: #bbb;
+}
+
+.estado-badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  margin-top: 0.8rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.estado-badge.ok {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+.estado-badge.error {
+  background: rgba(231, 76, 60, 0.1);;
+  color: #991b1b;
+}
+
+/* metricas */
+.metricas {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.card-metrica {
+  flex: 1;
+  background: #2a2a2a;
+  padding: 1.2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.card-metrica h4 {
+  font-size: 1rem;
+  color: #fff;;
+  margin-bottom: 0.5rem;
+}
+.card-metrica p {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* chart */
+.chart-container {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #2a2a2a;
+  border-radius: 12px;
+}
+.chart-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.chart-tabs button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #333;
+  color: #eee;
+  cursor: pointer;
+  transition: 0.2s;
+  font-weight: 600;
+}
+.chart-tabs button.active {
+  background: #4caf50;
+  color: #fff;
+}
+.chart-tabs button:hover {
+  background: #444;
+}
+
+/* codigo */
+.codigo-container {
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 1rem;
+  border-radius: 10px;
+  position: relative;
+  margin-bottom: 2rem;
+}
+.codigo-container pre {
+  font-size: 0.9rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.btn-copy {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 6px;
+  background: #3b82f6;
+  color: white;
+  cursor: pointer;
+}
+.btn-copy:hover {
+  background: #2563eb;
+}
+
+/* cases */
+.detalles-container {
+  margin: 2rem 0;
+}
+.panel-fallo, .panel-exito {
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid #e74c3c;
+  padding: 1.2rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+.panel-exito {
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid #4caf50;
+}
+.panel-fallo h4,
+.panel-exito h4 {
+  margin-bottom: 0.6rem;
+}
+.btn-ghost {
+  background: none;
+  border: 1px solid #666;
+  color: #f5f5f5;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 0.8rem;
+  transition: 0.2s;
+}
+.btn-ghost:hover {
+  background: #333;
+}
+
+/* tabla */
+.tabla-completa table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: #1e1e1e;
+  border-radius: 10px;
+}
+.tabla-completa th, .tabla-completa td {
+  border: 1px solid #e2e8f0;
+  padding: 0.6rem;
+  font-size: 0.9rem;
+  text-align: center;
+  background: #333;
+}
+.tabla-completa th{
+  background-color: #181818;
+}
+.tabla-completa tr.ok {
+  color: #4caf50;
+}
+.tabla-completa tr.error {
+  color: #e74c3c;
+}
+
+/* btnes */
+.acciones {
+  text-align: center;
+  margin-top: 2rem;
+}
+.btn-volver {
+  padding: 0.6rem 1.2rem;
+  background: #4caf50;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-volver:hover {
+  background: #43a047;;
+}
+
+/* carga */
+.loading {
+  text-align: center;
+  margin-top: 3rem;
+  font-size: 1.2rem;
+  color: #475569;
+}
+.error-box {
+  background: #fee2e2;
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+  color: #991b1b;
+  font-weight: 600;
+}
