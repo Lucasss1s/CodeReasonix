@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 🔹 Registro (guarda en tabla usuario con contraseña hasheada)
+// 🔹 Registro (guarda en tabla usuario y cliente con contraseña hasheada)
 router.post('/register', async (req, res) => {
   const { nombre, email, password } = req.body;
 
@@ -31,26 +31,49 @@ router.post('/register', async (req, res) => {
     // Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insertar en la tabla usuario
-    const { data, error } = await supabase
+    // 1️⃣ Insertar en la tabla usuario
+    const { data: userData, error: userError } = await supabase
       .from('usuario')
-      .insert([{
-        nombre,
-        email,
-        contraseña: hashedPassword,
-        estado: true, // usuario activo
-        fecha_registro: new Date()
-      }])
-      .select();
+      .insert([
+        {
+          nombre,
+          email,
+          contraseña: hashedPassword,
+          estado: true, // usuario activo
+          fecha_registro: new Date()
+        },
+      ])
+      .select()
+      .single(); // devuelve solo un usuario
 
-    if (error) throw error;
+    if (userError) throw userError;
 
-    res.json({ usuario: data[0] });
+    // 2️⃣ Insertar en la tabla cliente con el id_usuario creado
+    const { data: clientData, error: clientError } = await supabase
+      .from('cliente')
+      .insert([
+        {
+          id_usuario: userData.id_usuario,
+          tarjeta: null,
+          subscripcion: null,
+        },
+      ])
+      .select()
+      .single();
+
+    if (clientError) throw clientError;
+
+    res.json({
+      usuario: userData,
+      cliente: clientData,
+      message: 'Usuario y cliente creados correctamente',
+    });
   } catch (err) {
-    console.error('Error registrando usuario:', err);
-    res.status(500).json({ error: 'Error registrando usuario' });
+    console.error('Error registrando usuario y cliente:', err);
+    res.status(500).json({ error: 'Error registrando usuario y cliente' });
   }
 });
+
 
 // 🔹 Login (verifica email + contraseña)
 router.post('/login', async (req, res) => {
