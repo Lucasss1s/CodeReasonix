@@ -15,7 +15,16 @@ function Ejercicio() {
     const [loadingFinal, setLoadingFinal] = useState(false);
     const [error, setError] = useState(null);
 
-    //ejercicio + plantilla 
+    const clienteId = localStorage.getItem("cliente");
+
+    useEffect(() => {
+        if (clienteId === null) {
+            console.warn("No hay cliente en localStorage. Redirigiendo al login");
+            navigate("/login");
+        }
+    }, [clienteId, navigate]);
+
+    // Cargar ejercicio + plantilla inicial
     useEffect(() => {
         const fetchEjercicio = async () => {
             try {
@@ -43,14 +52,14 @@ function Ejercicio() {
     }, [id, lenguaje]);
 
     const handleSubmit = async () => {
-        if (!ejercicio) return;
+        if (!ejercicio || !clienteId) return;
         setLoadingSubmit(true);
         setError(null);
         setResultados([]);
         setResumen(null);
 
         const body = {
-            id_cliente: 1,
+            id_cliente: clienteId,
             id_ejercicio: ejercicio.id_ejercicio,
             codigo_fuente: codigo,
             lenguaje,
@@ -85,40 +94,39 @@ function Ejercicio() {
     };
 
     const handleFinalSubmit = async () => {
-    if (!ejercicio) return;
-    setLoadingFinal(true);
-    setError(null);
+        if (!ejercicio || !clienteId) return;
+        setLoadingFinal(true);
+        setError(null);
 
-    const body = {
-        id_cliente: 1,
-        id_ejercicio: ejercicio.id_ejercicio,
-        codigo_fuente: codigo,
-        lenguaje,
-    };
+        const body = {
+            id_cliente: clienteId,
+            id_ejercicio: ejercicio.id_ejercicio,
+            codigo_fuente: codigo,
+            lenguaje,
+        };
 
-    try {
-        const res = await fetch("http://localhost:5000/submit-final", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        });
+        try {
+            const res = await fetch("http://localhost:5000/submit-final", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
 
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const created = data.insert;
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            const created = data.insert;
 
-        if (!created || !created.id_submit_final) {
-        console.warn('No se devolvió id_submit_final en la respuesta', data);
-        return navigate('/resultado', { state: { data } });
+            if (!created || !created.id_submit_final) {
+                console.warn("No se devolvió id_submit_final en la respuesta", data);
+                return navigate("/resultado", { state: { data } });
+            }
+            navigate(`/resultado/${created.id_submit_final}`);
+        } catch (err) {
+            console.error("Error en submit final:", err);
+            setError(err.message || "Error al enviar el código final.");
+        } finally {
+            setLoadingFinal(false);
         }
-        navigate(`/resultado/${created.id_submit_final}`);
-    
-    } catch (err) {
-        console.error("Error en submit final:", err);
-        setError(err.message || "Error al enviar el código final.");
-    } finally {
-        setLoadingFinal(false);
-    }
     };
 
     const monacoLanguageMap = {
@@ -152,31 +160,25 @@ function Ejercicio() {
                             ? "Fácil"
                             : ejercicio.dificultad === 2
                                 ? "Medio"
-                                : ejercicio.dificultad == 3
+                                : ejercicio.dificultad === 3
                                     ? "Difícil"
-                                    : "Muy dificil"}
+                                    : "Muy difícil"}
                     </p>
                 </div>
 
                 <div className="casos-container">
                     <h3>Casos de prueba:</h3>
                     {ejercicio.casos_prueba.length === 0 && <p>No hay casos visibles.</p>}
-                    {ejercicio.casos_prueba.map((caso) => {
-                        return (
-                            <div key={caso.id_caso} className="caso">
-                                <p>
-                                    <strong>Entrada:</strong>
-                                </p>
-                                <pre>
-                                    {caso.entrada_procesada?.[lenguaje] ??
-                                        JSON.stringify(caso.entrada_procesada ?? caso.entrada)}
-                                </pre>
-                                <p>
-                                    <strong>Salida esperada:</strong> {caso.salida_esperada}
-                                </p>
-                            </div>
-                        );
-                    })}
+                    {ejercicio.casos_prueba.map((caso) => (
+                        <div key={caso.id_caso} className="caso">
+                            <p><strong>Entrada:</strong></p>
+                            <pre>
+                                {caso.entrada_procesada?.[lenguaje] ??
+                                    JSON.stringify(caso.entrada_procesada ?? caso.entrada)}
+                            </pre>
+                            <p><strong>Salida esperada:</strong> {caso.salida_esperada}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
 
@@ -240,12 +242,8 @@ function Ejercicio() {
                                 resumen.resultado === "aceptado" ? "resumen-ok" : "resumen-error"
                             }
                         >
-                            <p>
-                                <strong>{resumen.aceptados}/{resumen.totales}</strong> casos aceptados
-                            </p>
-                            <p>
-                                <strong>Estado:</strong> {resumen.resultado.toUpperCase()}
-                            </p>
+                            <p><strong>{resumen.aceptados}/{resumen.totales}</strong> casos aceptados</p>
+                            <p><strong>Estado:</strong> {resumen.resultado.toUpperCase()}</p>
                         </div>
                     )}
 

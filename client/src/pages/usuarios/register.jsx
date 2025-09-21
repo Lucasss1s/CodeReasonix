@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { supabase } from "../config/supabase.js";
+import { supabase } from "../../config/supabase.js";
 
 export default function Register() {
   const [nombre, setNombre] = useState("");
@@ -13,7 +13,6 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      // 1️⃣ Crear usuario en Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -21,19 +20,15 @@ export default function Register() {
 
       if (authError) throw authError;
 
-      const user = authData.user; // Usuario creado en Supabase Auth
-
-      // 2️⃣ Guardar en la tabla "usuario" a través del backend
+      const user = authData.user; 
       await axios.post("http://localhost:5000/usuarios/register", {
         nombre,
         email,
-        password,      // Se enviará al backend para hashear y guardar
-        estado: true,  // Booleano para la columna estado
+        password,     
+        estado: true, 
       });
 
       setMensaje("Usuario registrado correctamente ✅");
-
-      // 3️⃣ Redirigir al login después de 1.5s
       setTimeout(() => navigate("/"), 1500);
     } catch (err) {
       console.error(err);

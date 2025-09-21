@@ -26,6 +26,15 @@ function ResultadoFinal() {
     const [showAllCases, setShowAllCases] = useState(false);
     const [chartMode, setChartMode] = useState("tiempo");
 
+    const clienteId = localStorage.getItem("cliente");
+
+    useEffect(() => {
+        if (clienteId === null) {
+            console.warn("No hay cliente en localStorage. Redirigiendo al login");
+            navigate("/login");
+        }
+    }, [clienteId, navigate]);
+
     useEffect(() => {
         const fetchResultado = async () => {
             try {

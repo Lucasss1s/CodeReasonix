@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import { supabase } from "../config/supabase.js";
 import "../index.css"; 
 
 export default function Index() {
   const [ejercicios, setEjercicios] = useState([]);
-  const [usuario, setUsuario] = useState(null); // Aquí guardaremos el nombre
-  const navigate = useNavigate();
+  const [usuario, setUsuario] = useState(null);
 
   // Obtener ejercicios
   useEffect(() => {
@@ -23,7 +22,6 @@ export default function Index() {
       const user = sessionData.session?.user;
 
       if (user) {
-        // Consultar tu tabla 'usuario' para obtener el nombre
         const { data, error } = await supabase
           .from("usuario")
           .select("nombre")
@@ -61,13 +59,6 @@ export default function Index() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Función de logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUsuario(null);
-    navigate("/");
-  };
-
   return (
     <div className="index-container">
       {/* Barra de navegación */}
@@ -77,7 +68,8 @@ export default function Index() {
           {usuario ? (
             <>
               <span className="usuario-nombre">Hola, {usuario.nombre}</span>
-              <button onClick={handleLogout} className="btn-nav">Cerrar Sesión</button>
+              {/* 🔥 Ahora redirigimos a nuestra página de logout */}
+              <Link to="/logout" className="btn-nav">Cerrar Sesión</Link>
             </>
           ) : (
             <>
