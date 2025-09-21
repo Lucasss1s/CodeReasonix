@@ -5,6 +5,9 @@ import usuariosRouter from './routes/usuarios.js';
 import ejerciciosRouter from './routes/ejercicios.js';
 import submitRouter from './routes/submit.js';
 import submitFinalRouter from './routes/submitFinal.js';
+import publicacionesRouter from "./routes/publicaciones.js";
+import comentariosRouter from "./routes/comentarios.js";
+import reaccionesRouter from "./routes/reacciones.js";
 
 const app = express(); // Instancia
 app.use(cors());
@@ -18,6 +21,9 @@ app.use('/usuarios', usuariosRouter);
 app.use('/ejercicios', ejerciciosRouter);  
 app.use('/submit', submitRouter);
 app.use('/submit-final', submitFinalRouter);
+app.use("/publicaciones", publicacionesRouter);
+app.use("/comentarios", comentariosRouter);
+app.use("/reacciones", reaccionesRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`)); // app.listen(PORT, callback)
