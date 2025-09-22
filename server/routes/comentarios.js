@@ -3,13 +3,24 @@ import { supabase } from "../config/db.js";
 
 const router = express.Router();
 
-// 🔹 Obtener comentarios de una publicación
 router.get("/publicacion/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const { data, error } = await supabase
       .from("comentario")
-      .select("id_comentario, contenido, fecha, cliente(id_cliente, id_usuario)")
+      .select(`
+        id_comentario,
+        contenido,
+        fecha,
+        cliente (
+          id_cliente,
+          usuario (
+            id_usuario,
+            nombre,
+            email
+          )
+        )
+      `)
       .eq("id_publicacion", id);
 
     if (error) throw error;
@@ -20,7 +31,6 @@ router.get("/publicacion/:id", async (req, res) => {
   }
 });
 
-// 🔹 Crear comentario
 router.post("/", async (req, res) => {
   const { id_publicacion, id_cliente, contenido } = req.body;
   if (!id_publicacion || !id_cliente || !contenido) {
@@ -30,8 +40,27 @@ router.post("/", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("comentario")
-      .insert([{ id_publicacion, id_cliente, contenido, fecha: new Date() }])
-      .select()
+      .insert([
+        {
+          id_publicacion,
+          id_cliente,
+          contenido,
+          fecha: new Date()
+        }
+      ])
+      .select(`
+        id_comentario,
+        contenido,
+        fecha,
+        cliente (
+          id_cliente,
+          usuario (
+            id_usuario,
+            nombre,
+            email
+          )
+        )
+      `)
       .single();
 
     if (error) throw error;

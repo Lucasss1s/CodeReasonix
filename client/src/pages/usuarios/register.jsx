@@ -20,15 +20,24 @@ export default function Register() {
 
       if (authError) throw authError;
 
-      const user = authData.user; 
-      await axios.post("http://localhost:5000/usuarios/register", {
+      const res = await axios.post("http://localhost:5000/usuarios/register", {
         nombre,
         email,
-        password,     
-        estado: true, 
+        password,
+        estado: true,
       });
 
-      setMensaje("Usuario registrado correctamente ✅");
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (loginError) throw loginError;
+
+      localStorage.setItem("usuario", JSON.stringify(res.data.usuario));
+      localStorage.setItem("cliente", res.data.cliente.id_cliente);
+
+      setMensaje("Usuario registrado y logeado correctamente ✅");
+
       setTimeout(() => navigate("/"), 1500);
     } catch (err) {
       console.error(err);
