@@ -4,7 +4,6 @@ import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
-// 🔹 Obtener todos los usuarios (solo administración)
 router.get('/', async (req, res) => {
   try {
     const { data: usuarios, error } = await supabase
@@ -19,7 +18,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 🔹 Registro (guarda en tabla usuario y cliente con contraseña hasheada)
 router.post('/register', async (req, res) => {
   const { nombre, email, password } = req.body;
 
@@ -30,8 +28,6 @@ router.post('/register', async (req, res) => {
   try {
     // Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 1️⃣ Insertar en la tabla usuario
     const { data: userData, error: userError } = await supabase
       .from('usuario')
       .insert([
@@ -39,16 +35,15 @@ router.post('/register', async (req, res) => {
           nombre,
           email,
           contraseña: hashedPassword,
-          estado: true, // usuario activo
+          estado: true, 
           fecha_registro: new Date()
         },
       ])
       .select()
-      .single(); // devuelve solo un usuario
+      .single();
 
     if (userError) throw userError;
 
-    // 2️⃣ Insertar en la tabla cliente con el id_usuario creado
     const { data: clientData, error: clientError } = await supabase
       .from('cliente')
       .insert([
@@ -75,7 +70,6 @@ router.post('/register', async (req, res) => {
 });
 
 
-// 🔹 Login (verifica email + contraseña)
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
@@ -90,14 +84,25 @@ router.post('/login', async (req, res) => {
     const valid = await bcrypt.compare(password, user.contraseña);
     if (!valid) return res.status(400).json({ error: 'Contraseña incorrecta' });
 
-    res.json({ usuario: { id_usuario: user.id_usuario, nombre: user.nombre, email: user.email } });
+    const { data: cliente, error: clienteError } = await supabase
+      .from('cliente')
+      .select('id_cliente')
+      .eq('id_usuario', user.id_usuario)
+      .single();
+
+    if (clienteError) throw clienteError;
+
+    res.json({
+      usuario: { id_usuario: user.id_usuario, nombre: user.nombre, email: user.email },
+      id_cliente: cliente?.id_cliente ?? null
+    });
   } catch (err) {
     console.error('Error en login:', err);
     res.status(500).json({ error: 'Error en login' });
   }
 });
 
-// 🔹 Actualizar usuario
+
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { nombre, email, estado, password } = req.body;
@@ -120,7 +125,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// 🔹 Eliminar usuario
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 

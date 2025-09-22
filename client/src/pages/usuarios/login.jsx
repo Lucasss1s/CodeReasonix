@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../config/supabase.js";
+import { supabase } from "../../config/supabase.js";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -11,7 +11,6 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // 1️⃣ Iniciar sesión con Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -19,12 +18,28 @@ export default function Login() {
 
       if (error) throw error;
 
-      // 2️⃣ Si todo salió bien, data.user tiene el usuario logeado
-      console.log("Usuario logeado:", data.user);
+      const res = await fetch("http://localhost:5000/usuarios/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!res.ok) throw new Error(`Error al traer cliente: ${res.status}`);
+      const dataBackend = await res.json();
+
+      if (!dataBackend.id_cliente) {
+        setMensaje("Error: no se encontró cliente asociado a este usuario.");
+        return;
+      }
+
+      localStorage.setItem("usuario", JSON.stringify(dataBackend.usuario));
+      localStorage.setItem("cliente", dataBackend.id_cliente);
+
+      console.log("Usuario logeado:", dataBackend.usuario);
+      console.log("Cliente ID:", dataBackend.id_cliente);
 
       setMensaje("Login exitoso ✅");
 
-      // 3️⃣ Redirigir al index después de 1s
       setTimeout(() => navigate("/"), 1000);
     } catch (err) {
       console.error(err);
