@@ -9,6 +9,7 @@ import publicacionesRouter from "./routes/publicaciones.js";
 import comentariosRouter from "./routes/comentarios.js";
 import reaccionesRouter from "./routes/reacciones.js";
 import feedRouter from "./routes/feed.js";
+import perfilRouter from "./routes/perfil.js";
 
 const app = express(); // Instancia
 app.use(cors());
@@ -26,7 +27,8 @@ app.use('/submit-final', submitFinalRouter);
 app.use("/publicaciones", publicacionesRouter);
 app.use("/comentarios", comentariosRouter);
 app.use("/reacciones", reaccionesRouter);
-app.use("/feed", feedRouter); 
+app.use("/feed", feedRouter);
+app.use("/perfil", perfilRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

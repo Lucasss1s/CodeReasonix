@@ -66,6 +66,7 @@ export default function Index() {
           <Link to="/comunidad" className="btn-nav">Comunidad</Link>
           {usuario ? (
             <>
+              <Link to="/perfil" className="btn-nav">Perfil</Link> {/* 👈 Nuevo botón */}
               <span className="usuario-nombre">Hola, {usuario.nombre}</span>
               <Link to="/logout" className="btn-nav">Cerrar Sesión</Link>
             </>

@@ -26,7 +26,7 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // Hashear la contraseña
+    // 1️⃣ Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
     const { data: userData, error: userError } = await supabase
       .from('usuario')
@@ -35,7 +35,7 @@ router.post('/register', async (req, res) => {
           nombre,
           email,
           contraseña: hashedPassword,
-          estado: true, 
+          estado: true,
           fecha_registro: new Date()
         },
       ])
@@ -44,6 +44,7 @@ router.post('/register', async (req, res) => {
 
     if (userError) throw userError;
 
+    // 2️⃣ Crear cliente vinculado
     const { data: clientData, error: clientError } = await supabase
       .from('cliente')
       .insert([
@@ -58,17 +59,36 @@ router.post('/register', async (req, res) => {
 
     if (clientError) throw clientError;
 
+    // 3️⃣ Crear perfil inicial vinculado al cliente (nivel y reputacion como INT)
+    const { data: perfilData, error: perfilError } = await supabase
+      .from('perfil')
+      .insert([
+        {
+          id_cliente: clientData.id_cliente,
+          biografia: "",
+          skills: "",
+          nivel: 1,             // 👈 numérico
+          reputacion: 0,        // 👈 numérico
+          redes_sociales: null,
+          foto_perfil: null
+        },
+      ])
+      .select()
+      .single();
+
+    if (perfilError) throw perfilError;
+
     res.json({
       usuario: userData,
       cliente: clientData,
-      message: 'Usuario y cliente creados correctamente',
+      perfil: perfilData,
+      message: 'Usuario, cliente y perfil creados correctamente',
     });
   } catch (err) {
     console.error('Error registrando usuario y cliente:', err);
     res.status(500).json({ error: 'Error registrando usuario y cliente' });
   }
 });
-
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -101,7 +121,6 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Error en login' });
   }
 });
-
 
 router.put('/:id', async (req, res) => {
   const { id } = req.params;

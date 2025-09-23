@@ -1,0 +1,88 @@
+.perfil-container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #1e1e2f;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  color: #fff;
+}
+
+.perfil-container h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #ff7a00;
+}
+
+.perfil-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.perfil-form label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #ddd;
+}
+
+.perfil-form textarea,
+.perfil-form input {
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  background: #2a2a3a;
+  color: #fff;
+}
+
+.perfil-form textarea {
+  resize: none;
+  min-height: 80px;
+}
+
+.perfil-form input[readonly] {
+  background: #333;
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+.perfil-form button {
+  background: #ff7a00;
+  color: #fff;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: background 0.2s ease;
+}
+
+.perfil-form button:hover {
+  background: #e66a00;
+}
+
+.mensaje {
+  margin-top: 15px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* 🔹 Preview de foto de perfil */
+.preview {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.preview img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%; /* círculo */
+  object-fit: cover;
+  border: 3px solid #ff7a00;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
