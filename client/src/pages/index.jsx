@@ -59,7 +59,7 @@ export default function Index() {
   }, []);
 
   return (
-    <div className="index-container">
+    <>
       <nav className="navbar">
         <h1 className="logo">CodeReasonix</h1>
         <div className="nav-buttons">
@@ -78,19 +78,21 @@ export default function Index() {
         </div>
       </nav>
 
-      <h1 className="titulo">Lista de Ejercicios</h1>
+      <div className="index-container">
+        <h1 className="titulo">Lista de Ejercicios</h1>
 
-      <ul className="ejercicio-lista">
-        {ejercicios.map(ej => (
-          <li key={ej.id_ejercicio} className="ejercicio-card">
-            <h2 className="tituloeje">{ej.titulo}</h2>
-            <p>Dificultad: {ej.dificultad}</p>
-            <Link to={`/ejercicio/${ej.id_ejercicio}`} className="boton-ver">
-              Ver ejercicio
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+        <ul className="ejercicio-lista">
+          {ejercicios.map(ej => (
+            <li key={ej.id_ejercicio} className="ejercicio-card">
+              <h2 className="tituloeje">{ej.titulo}</h2>
+              <p>Dificultad: {ej.dificultad}</p>
+              <Link to={`/ejercicio/${ej.id_ejercicio}`} className="boton-ver">
+                Ver ejercicio
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
   );
 }

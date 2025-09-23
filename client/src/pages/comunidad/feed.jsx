@@ -76,7 +76,6 @@ export default function Feed() {
         });
     };
 
-    // 🔹 Eliminar publicación
     const handleEliminar = async (idPublicacion) => {
         try {
             await axios.delete(`http://localhost:5000/publicaciones/${idPublicacion}`, {
@@ -123,7 +122,6 @@ export default function Feed() {
                                 </span>
                             </h3>
 
-                            {/* 🔹 Botón de menú solo si es su publicación */}
                             {publi.cliente?.id_cliente == id_cliente && (
                                 <div className="menu-container">
                                     <button className="menu-button">⋮</button>
