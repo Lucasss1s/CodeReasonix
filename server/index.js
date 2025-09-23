@@ -5,6 +5,7 @@ import usuariosRouter from './routes/usuarios.js';
 import ejerciciosRouter from './routes/ejercicios.js';
 import submitRouter from './routes/submit.js';
 import submitFinalRouter from './routes/submitFinal.js';
+import codigoGuardadoRouter from './routes/codigoGuardado.js';
 
 const app = express(); // Instancia
 app.use(cors());
@@ -18,6 +19,7 @@ app.use('/usuarios', usuariosRouter);
 app.use('/ejercicios', ejerciciosRouter);  
 app.use('/submit', submitRouter);
 app.use('/submit-final', submitFinalRouter);
+app.use('/codigoGuardado', codigoGuardadoRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`)); // app.listen(PORT, callback)

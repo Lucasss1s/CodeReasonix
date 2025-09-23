@@ -1,5 +1,5 @@
-// client/src/pages/ejercicio/resultadoFinal.jsx
 import React, { useEffect, useState } from "react";
+import useAuth from "../../hooks/useAuth";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bar } from "react-chartjs-2";
@@ -17,6 +17,8 @@ import "./resultadoFinal.css";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function ResultadoFinal() {
+    const {clienteId} = useAuth({ redirectToLogin: true });
+
     const { id } = useParams();
     const navigate = useNavigate();
     const [resultado, setResultado] = useState(null);
@@ -25,15 +27,6 @@ function ResultadoFinal() {
     const [error, setError] = useState(null);
     const [showAllCases, setShowAllCases] = useState(false);
     const [chartMode, setChartMode] = useState("tiempo");
-
-    const clienteId = localStorage.getItem("cliente");
-
-    useEffect(() => {
-        if (clienteId === null) {
-            console.warn("No hay cliente en localStorage. Redirigiendo al login");
-            navigate("/login");
-        }
-    }, [clienteId, navigate]);
 
     useEffect(() => {
         const fetchResultado = async () => {

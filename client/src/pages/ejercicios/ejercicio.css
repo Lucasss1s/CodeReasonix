@@ -145,6 +145,21 @@ p {
     border-color: #4caf50;
     }
 
+.btn-reset {
+    padding: 10px 18px;
+    background: #e67e22;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+.btn-reset:hover {
+    background: #d35400;
+    transform: translateY(-1px);
+}
+
 .btn-submit {
     padding: 10px 18px;
     background: #4caf50;
@@ -279,3 +294,105 @@ p {
     text-align: center;
     color: #aaa;
 }
+
+/* Indicador de guardado */
+.save-indicator {
+    text-align: right;
+    font-size: 13px;
+    margin-top: 6px;
+    opacity: 0.8;
+    color: #aaa;
+    transition: color 0.3s ease;
+}
+.save-indicator.saving {
+    color: #f39c12;
+}
+.save-indicator.saved {
+    color: #4caf50;
+}
+
+.ejercicio-page {
+    display: flex;
+    height: 100vh;
+    background: #121212;
+    color: #f5f5f5;
+    font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+}
+
+.left-panel {
+    padding: 24px;
+    border-right: 1px solid #2a2a2a;
+    overflow-y: auto;
+}
+
+.drag-handle {
+    width: 4px;
+    cursor: col-resize;
+    background: #2a2a2a;
+    transition: background 0.2s;
+}
+.drag-handle:hover {
+    background: #444;
+}
+
+.right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+}
+
+.editor-container {
+    background: #1c1c1c;
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.resultados-container {
+    background: #1c1c1c;
+    margin-top: 14px;
+    padding: 14px;
+    flex: 1 1 auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    max-height: 400px;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+.resultados-container.closed {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+}
+.editor-resultados-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.horizontal-drag-handle {
+    height: 5px;
+    flex-shrink: 0; 
+    background: #2a2a2a;
+    cursor: row-resize;
+    transition: background 0.2s;
+}
+.horizontal-drag-handle:hover {
+    background: #444;
+}
+
+
+
+
+
