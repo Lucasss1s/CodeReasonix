@@ -1,0 +1,221 @@
+.feed-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+}
+
+.feed-container h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: white;
+  font-size: 2rem;
+  letter-spacing: 1px;
+}
+
+.publicacion-form {
+  background: #2a2a3a;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.publicacion-form textarea {
+  width: 100%;
+  min-height: 80px;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  resize: none;
+  outline: none;
+  font-size: 1rem;
+  background: #1e1e2f;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.publicacion-form button {
+  display: block;
+  margin-left: auto;
+  background: #ff7a00;
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.publicacion-form button:hover {
+  background: #e66a00;
+}
+
+/* 🔹 Publicaciones */
+.publicacion-card {
+  background: #1e1e2f;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.publicacion-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+.publicacion-card h3 {
+  margin: 0;
+  color: #ff7a00;
+  font-size: 1.2rem;
+}
+
+.publicacion-card p {
+  margin: 10px 0;
+  font-size: 1rem;
+  color: #ddd;
+}
+
+.publicacion-card small {
+  display: block;
+  margin-bottom: 10px;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+/* 🔹 Reacciones */
+.reacciones {
+  margin-top: 10px;
+}
+
+.reacciones button {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 1rem;
+  margin-right: 15px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.reacciones button:hover {
+  color: #ff7a00;
+}
+
+/* 🔹 Comentarios */
+.comentarios {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #333;
+}
+
+.comentarios h4 {
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #ff7a00;
+}
+
+.comentarios div {
+  margin-bottom: 6px;
+  color: #eee;
+}
+
+.comentarios form {
+  display: flex;
+  margin-top: 10px;
+}
+
+.comentarios input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #444;
+  border-radius: 6px 0 0 6px;
+  outline: none;
+  background: #2a2a3a;
+  color: #fff;
+}
+
+.comentarios button {
+  padding: 8px 12px;
+  background: #ff7a00;
+  color: #fff;
+  border: none;
+  border-radius: 0 6px 6px 0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.comentarios button:hover {
+  background: #e66a00;
+}
+
+/* 🔹 menu eliminar */
+.publicacion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-button {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #aaa;
+  padding: 5px;
+  border-radius: 50%;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.menu-button:hover {
+  color: #ff7a00;
+}
+
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  background: #2c2c3c;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 10;
+  min-width: 120px;
+  opacity: 0;
+  transform: scale(0.95);
+  transform-origin: top right;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.menu-container .menu-dropdown {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.menu-dropdown button {
+  background: none;
+  border: none;
+  padding: 10px 15px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: #fff;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.menu-dropdown button:hover {
+  background: #ff7a00;
+  color: #fff;
+}
+

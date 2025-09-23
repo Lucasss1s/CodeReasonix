@@ -7,6 +7,8 @@ import Register from './pages/usuarios/register.jsx';
 import Login from './pages/usuarios/login.jsx'; 
 import ResultadoFinal from './pages/ejercicios/resultadoFinal.jsx'
 import Logout from "./pages/usuarios/logout.jsx";
+import Feed from "./pages/comunidad/feed.jsx"; 
+
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -17,8 +19,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/ejercicio/:id" element={<Ejercicio />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/resultado/:id" element={ <ResultadoFinal/> } />
-        <Route path="/logout" element={<Logout/>}/>
+        <Route path="/resultado/:id" element={<ResultadoFinal />} />
+        <Route path="/logout" element={<Logout />} />
+        <Route path="/comunidad" element={<Feed />} /> 
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

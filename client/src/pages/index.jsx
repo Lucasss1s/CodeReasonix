@@ -30,7 +30,7 @@ export default function Index() {
 
         if (error) {
           console.error("Error al obtener el nombre:", error);
-          setUsuario({ nombre: user.email }); // fallback
+          setUsuario({ nombre: user.email }); 
         } else {
           setUsuario(data);
         }
@@ -41,7 +41,6 @@ export default function Index() {
 
     fetchUsuario();
 
-    // Escuchar cambios de sesión
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         supabase
@@ -60,15 +59,14 @@ export default function Index() {
   }, []);
 
   return (
-    <div className="index-container">
-      {/* Barra de navegación */}
+    <>
       <nav className="navbar">
         <h1 className="logo">CodeReasonix</h1>
         <div className="nav-buttons">
+          <Link to="/comunidad" className="btn-nav">Comunidad</Link>
           {usuario ? (
             <>
               <span className="usuario-nombre">Hola, {usuario.nombre}</span>
-              {/* 🔥 Ahora redirigimos a nuestra página de logout */}
               <Link to="/logout" className="btn-nav">Cerrar Sesión</Link>
             </>
           ) : (
@@ -80,19 +78,21 @@ export default function Index() {
         </div>
       </nav>
 
-      <h1 className="titulo">Lista de Ejercicios</h1>
+      <div className="index-container">
+        <h1 className="titulo">Lista de Ejercicios</h1>
 
-      <ul className="ejercicio-lista">
-        {ejercicios.map(ej => (
-          <li key={ej.id_ejercicio} className="ejercicio-card">
-            <h2>{ej.titulo}</h2>
-            <p>Dificultad: {ej.dificultad}</p>
-            <Link to={`/ejercicio/${ej.id_ejercicio}`} className="boton-ver">
-              Ver ejercicio
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+        <ul className="ejercicio-lista">
+          {ejercicios.map(ej => (
+            <li key={ej.id_ejercicio} className="ejercicio-card">
+              <h2 className="tituloeje">{ej.titulo}</h2>
+              <p>Dificultad: {ej.dificultad}</p>
+              <Link to={`/ejercicio/${ej.id_ejercicio}`} className="boton-ver">
+                Ver ejercicio
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
   );
 }
