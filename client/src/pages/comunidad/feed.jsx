@@ -10,6 +10,7 @@ import "./feed.css";
 export default function Feed() {
     const [publicaciones, setPublicaciones] = useState([]);
     const [usuario, setUsuario] = useState(null);
+    const [menuAbierto, setMenuAbierto] = useState(null); 
     const id_cliente = localStorage.getItem("cliente");
 
     const cargarFeed = async () => {
@@ -67,6 +68,16 @@ export default function Feed() {
         return () => listener.subscription.unsubscribe();
     }, []);
 
+    useEffect(() => {
+        const handleClickFuera = (e) => {
+            if (!e.target.closest(".menu-container")) {
+                setMenuAbierto(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickFuera);
+        return () => document.removeEventListener("mousedown", handleClickFuera);
+    }, []);
+
     const formatFecha = (fecha) => {
         const publicada = new Date(fecha);
         return publicada.toLocaleDateString("es-ES", {
@@ -82,6 +93,7 @@ export default function Feed() {
                 data: { id_cliente }
             });
             cargarFeed();
+            setMenuAbierto(null);
         } catch (err) {
             console.error("Error eliminando publicación:", err);
         }
@@ -124,15 +136,23 @@ export default function Feed() {
 
                             {publi.cliente?.id_cliente == id_cliente && (
                                 <div className="menu-container">
-                                    <button className="menu-button">⋮</button>
-                                    <div className="menu-dropdown">
-                                        <button onClick={() => handleEliminar(publi.id_publicacion)}>
-                                            Eliminar
-                                        </button>
-                                    </div>
+                                    <button
+                                        className="menu-button"
+                                        onClick={() =>
+                                            setMenuAbierto(menuAbierto === publi.id_publicacion ? null : publi.id_publicacion)
+                                        }
+                                    >
+                                        ⋮
+                                    </button>
+                                    {menuAbierto === publi.id_publicacion && (
+                                        <div className="menu-dropdown">
+                                            <button onClick={() => handleEliminar(publi.id_publicacion)}>
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-
                         </div>
 
                         <p>{publi.contenido}</p>
