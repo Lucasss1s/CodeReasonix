@@ -10,6 +10,7 @@ import "./feed.css";
 export default function Feed() {
     const [publicaciones, setPublicaciones] = useState([]);
     const [usuario, setUsuario] = useState(null);
+    const id_cliente = localStorage.getItem("cliente");
 
     const cargarFeed = async () => {
         try {
@@ -75,8 +76,20 @@ export default function Feed() {
         });
     };
 
+    // 🔹 Eliminar publicación
+    const handleEliminar = async (idPublicacion) => {
+        try {
+            await axios.delete(`http://localhost:5000/publicaciones/${idPublicacion}`, {
+                data: { id_cliente }
+            });
+            cargarFeed();
+        } catch (err) {
+            console.error("Error eliminando publicación:", err);
+        }
+    };
+
     return (
-        <div className="feed-container">
+        <>
             <nav className="navbar">
                 <h1 className="logo">CodeReasonix</h1>
                 <div className="nav-buttons">
@@ -95,32 +108,50 @@ export default function Feed() {
                 </div>
             </nav>
 
-            <h1>Comunidad</h1>
+            <div className="feed-container">
+                <h1>Comunidad</h1>
 
-            <Publicacion setPublicaciones={setPublicaciones} />
+                <Publicacion setPublicaciones={setPublicaciones} />
 
-            {publicaciones.map(publi => (
-                <div key={publi.id_publicacion} className="publicacion-card">
-                    <h3>
-                        {publi.cliente?.usuario?.nombre || "Usuario"}
-                        <span className="fecha-publicacion">
-                            {" • "}{formatFecha(publi.fecha)}
-                        </span>
-                    </h3>
-                    <p>{publi.contenido}</p>
+                {publicaciones.map(publi => (
+                    <div key={publi.id_publicacion} className="publicacion-card">
+                        <div className="publicacion-header">
+                            <h3>
+                                {publi.cliente?.usuario?.nombre || "Usuario"}
+                                <span className="fecha-publicacion">
+                                    {" • "}{formatFecha(publi.fecha)}
+                                </span>
+                            </h3>
 
-                    <Reaccion
-                        idPublicacion={publi.id_publicacion}
-                        reacciones={publi.reacciones}
-                        onUpdate={cargarFeed}
-                    />
-                    <Comentario
-                        idPublicacion={publi.id_publicacion}
-                        comentarios={publi.comentarios}
-                        onUpdate={cargarFeed}
-                    />
-                </div>
-            ))}
-        </div>
+                            {/* 🔹 Botón de menú solo si es su publicación */}
+                            {publi.cliente?.id_cliente == id_cliente && (
+                                <div className="menu-container">
+                                    <button className="menu-button">⋮</button>
+                                    <div className="menu-dropdown">
+                                        <button onClick={() => handleEliminar(publi.id_publicacion)}>
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                        </div>
+
+                        <p>{publi.contenido}</p>
+
+                        <Reaccion
+                            idPublicacion={publi.id_publicacion}
+                            reacciones={publi.reacciones}
+                            onUpdate={cargarFeed}
+                        />
+                        <Comentario
+                            idPublicacion={publi.id_publicacion}
+                            comentarios={publi.comentarios}
+                            onUpdate={cargarFeed}
+                        />
+                    </div>
+                ))}
+            </div>
+        </>
     );
 }

@@ -48,4 +48,46 @@ router.post("/", async (req, res) => {
   }
 });
 
+// 🔹 Eliminar publicación (solo si pertenece al cliente)
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { id_cliente } = req.body;
+
+  if (!id_cliente) {
+    return res.status(400).json({ error: "Falta el id_cliente" });
+  }
+
+  try {
+    // Buscar publicación
+    const { data: publi, error: findError } = await supabase
+      .from("publicacion")
+      .select("id_cliente")
+      .eq("id_publicacion", id)
+      .single();
+
+    if (findError || !publi) {
+      return res.status(404).json({ error: "Publicación no encontrada" });
+    }
+
+    // Verificar que pertenece al cliente
+    if (publi.id_cliente !== parseInt(id_cliente)) {
+      return res.status(403).json({ error: "No puedes eliminar esta publicación" });
+    }
+
+    // Eliminar
+    const { error: deleteError } = await supabase
+      .from("publicacion")
+      .delete()
+      .eq("id_publicacion", id);
+
+    if (deleteError) throw deleteError;
+
+    res.json({ message: "Publicación eliminada correctamente" });
+  } catch (err) {
+    console.error("Error eliminando publicación:", err);
+    res.status(500).json({ error: "Error eliminando publicación" });
+  }
+});
+
+
 export default router;
