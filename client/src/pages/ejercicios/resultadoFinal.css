@@ -117,12 +117,17 @@ body{
   border-radius: 10px;
   position: relative;
   margin-bottom: 2rem;
+  max-height: 50vh;       
+  overflow-y: auto;        
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 .codigo-container pre {
   font-size: 0.9rem;
+  margin: 0; 
   overflow-x: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
+  line-height: 1.4;
 }
 .btn-copy {
   position: absolute;
