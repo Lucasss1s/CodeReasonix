@@ -14,15 +14,15 @@ router.get("/:id_cliente", async (req, res) => {
       .eq("id_cliente", id_cliente)
       .single();
 
-    if (error) throw error;
-    res.json(data);
+    if (error && error.code !== "PGRST116") throw error; // si no existe, devuelve null
+    res.json(data || {});
   } catch (err) {
     console.error("Error obteniendo perfil:", err);
     res.status(500).json({ error: "Error obteniendo perfil" });
   }
 });
 
-// 🔹 Editar perfil de un cliente
+// 🔹 Editar perfil de un cliente (o crearlo si no existe)
 router.put("/:id_cliente", async (req, res) => {
   const { id_cliente } = req.params;
   const { biografia, skills, nivel, reputacion, redes_sociales, foto_perfil } = req.body;
@@ -30,23 +30,26 @@ router.put("/:id_cliente", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("perfil")
-      .update({
-        biografia,
-        skills,
-        nivel,
-        reputacion,
-        redes_sociales,
-        foto_perfil
-      })
-      .eq("id_cliente", id_cliente)
+      .upsert(
+        {
+          id_cliente: parseInt(id_cliente),
+          biografia,
+          skills,
+          nivel: nivel || 1,           // por defecto 1
+          reputacion: reputacion || 0, // por defecto 0
+          redes_sociales,
+          foto_perfil
+        },
+        { onConflict: ["id_cliente"] } // si ya existe, actualiza
+      )
       .select()
       .single();
 
     if (error) throw error;
     res.json(data);
   } catch (err) {
-    console.error("Error actualizando perfil:", err);
-    res.status(500).json({ error: "Error actualizando perfil" });
+    console.error("Error guardando perfil:", err);
+    res.status(500).json({ error: "Error guardando perfil" });
   }
 });
 
