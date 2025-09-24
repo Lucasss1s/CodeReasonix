@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { supabase } from "../../config/supabase.js";
-import { Link } from "react-router-dom";
-import "./perfil.css"; 
+import Navbar from "../../components/Navbar"; 
+import "./perfil.css";
 
 export default function Perfil() {
   const [perfil, setPerfil] = useState({
@@ -14,12 +13,10 @@ export default function Perfil() {
     foto_perfil: ""
   });
   const [mensaje, setMensaje] = useState("");
-  const [usuario, setUsuario] = useState(null);
   const [preview, setPreview] = useState(null);
 
   const id_cliente = localStorage.getItem("cliente");
 
-  // 🔹 Cargar perfil
   const cargarPerfil = async () => {
     try {
       const res = await axios.get(`http://localhost:5000/perfil/${id_cliente}`);
@@ -34,44 +31,40 @@ export default function Perfil() {
 
   useEffect(() => {
     cargarPerfil();
-
-    // Obtener nombre del usuario (para la navbar)
-    const fetchUsuario = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user;
-
-      if (user) {
-        const { data } = await supabase
-          .from("usuario")
-          .select("nombre")
-          .eq("email", user.email)
-          .single();
-
-        setUsuario(data || { nombre: user.email });
-      }
-    };
-    fetchUsuario();
   }, []);
 
-  // 🔹 Manejar subida de imagen
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result); // Mostrar preview
-        setPerfil({ ...perfil, foto_perfil: reader.result }); // Guardar base64
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("foto", file);
+
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/perfil/${id_cliente}/foto`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      setPerfil({ ...perfil, foto_perfil: res.data.url });
+      setPreview(res.data.url);
+      setMensaje("Foto actualizada ✅");
+    } catch (err) {
+      console.error("Error subiendo foto:", err);
+      setMensaje("Error al subir la foto ❌");
     }
   };
 
-  // 🔹 Guardar perfil
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await axios.put(`http://localhost:5000/perfil/${id_cliente}`, perfil);
       setMensaje("Perfil actualizado ✅");
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 800); 
     } catch (err) {
       console.error("Error actualizando perfil:", err);
       setMensaje("Error al actualizar ❌");
@@ -80,27 +73,8 @@ export default function Perfil() {
 
   return (
     <>
-      {/* 🔹 Navbar igual a las otras páginas */}
-      <nav className="navbar">
-        <h1 className="logo">CodeReasonix</h1>
-        <div className="nav-buttons">
-          <Link to="/" className="btn-nav">Inicio</Link>
-          <Link to="/comunidad" className="btn-nav">Comunidad</Link>
-          {usuario ? (
-            <>
-              <span className="usuario-nombre">Hola, {usuario.nombre}</span>
-              <Link to="/logout" className="btn-nav">Cerrar Sesión</Link>
-            </>
-          ) : (
-            <>
-              <Link to="/register" className="btn-nav">Registrarse</Link>
-              <Link to="/login" className="btn-nav">Iniciar Sesión</Link>
-            </>
-          )}
-        </div>
-      </nav>
+      <Navbar /> 
 
-      {/* 🔹 Formulario de perfil */}
       <div className="perfil-container">
         <h1>Mi Perfil</h1>
         <form onSubmit={handleSubmit} className="perfil-form">
@@ -118,18 +92,10 @@ export default function Perfil() {
           />
 
           <label>Nivel</label>
-          <input
-            type="number"
-            value={perfil.nivel ?? 1}
-            readOnly
-          />
+          <input type="number" value={perfil.nivel ?? 1} readOnly />
 
           <label>Reputación</label>
-          <input
-            type="number"
-            value={perfil.reputacion ?? 0}
-            readOnly
-          />
+          <input type="number" value={perfil.reputacion ?? 0} readOnly />
 
           <label>Redes Sociales</label>
           <input
@@ -139,11 +105,7 @@ export default function Perfil() {
           />
 
           <label>Foto de perfil</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-          />
+          <input type="file" accept="image/*" onChange={handleFileChange} />
           {preview && (
             <div className="preview">
               <img src={preview} alt="Foto de perfil" />

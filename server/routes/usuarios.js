@@ -26,7 +26,6 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // 1️⃣ Hashear la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
     const { data: userData, error: userError } = await supabase
       .from('usuario')
@@ -44,7 +43,6 @@ router.post('/register', async (req, res) => {
 
     if (userError) throw userError;
 
-    // 2️⃣ Crear cliente vinculado
     const { data: clientData, error: clientError } = await supabase
       .from('cliente')
       .insert([
@@ -59,7 +57,6 @@ router.post('/register', async (req, res) => {
 
     if (clientError) throw clientError;
 
-    // 3️⃣ Crear perfil inicial vinculado al cliente (nivel y reputacion como INT)
     const { data: perfilData, error: perfilError } = await supabase
       .from('perfil')
       .insert([
@@ -67,8 +64,8 @@ router.post('/register', async (req, res) => {
           id_cliente: clientData.id_cliente,
           biografia: "",
           skills: "",
-          nivel: 1,             // 👈 numérico
-          reputacion: 0,        // 👈 numérico
+          nivel: 1,             
+          reputacion: 0,        
           redes_sociales: null,
           foto_perfil: null
         },

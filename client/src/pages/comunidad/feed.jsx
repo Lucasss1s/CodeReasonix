@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import axios from "axios";
-import { supabase } from "../../config/supabase.js";
+import Navbar from "../../components/Navbar";  
 import Publicacion from "./publicacion.jsx";
 import Comentario from "./comentario.jsx";
 import Reaccion from "./reaccion.jsx";
@@ -9,7 +8,6 @@ import "./feed.css";
 
 export default function Feed() {
     const [publicaciones, setPublicaciones] = useState([]);
-    const [usuario, setUsuario] = useState(null);
     const [menuAbierto, setMenuAbierto] = useState(null); 
     const id_cliente = localStorage.getItem("cliente");
 
@@ -24,48 +22,6 @@ export default function Feed() {
 
     useEffect(() => {
         cargarFeed();
-    }, []);
-
-    useEffect(() => {
-        const fetchUsuario = async () => {
-            const { data: sessionData } = await supabase.auth.getSession();
-            const user = sessionData.session?.user;
-
-            if (user) {
-                const { data, error } = await supabase
-                    .from("usuario")
-                    .select("nombre")
-                    .eq("email", user.email)
-                    .single();
-
-                if (error) {
-                    console.error("Error obteniendo usuario:", error);
-                    setUsuario({ nombre: user.email });
-                } else {
-                    setUsuario(data);
-                }
-            } else {
-                setUsuario(null);
-            }
-        };
-
-        fetchUsuario();
-
-        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session?.user) {
-                supabase
-                    .from("usuario")
-                    .select("nombre")
-                    .eq("email", session.user.email)
-                    .single()
-                    .then(({ data }) => setUsuario(data))
-                    .catch(() => setUsuario({ nombre: session.user.email }));
-            } else {
-                setUsuario(null);
-            }
-        });
-
-        return () => listener.subscription.unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -101,23 +57,7 @@ export default function Feed() {
 
     return (
         <>
-            <nav className="navbar">
-                <h1 className="logo">CodeReasonix</h1>
-                <div className="nav-buttons">
-                    <Link to="/" className="btn-nav">Inicio</Link>
-                    {usuario ? (
-                        <>
-                            <span className="usuario-nombre">Hola, {usuario.nombre}</span>
-                            <Link to="/logout" className="btn-nav">Cerrar Sesión</Link>
-                        </>
-                    ) : (
-                        <>
-                            <Link to="/register" className="btn-nav">Registrarse</Link>
-                            <Link to="/login" className="btn-nav">Iniciar Sesión</Link>
-                        </>
-                    )}
-                </div>
-            </nav>
+            <Navbar />
 
             <div className="feed-container">
                 <h1>Comunidad</h1>
