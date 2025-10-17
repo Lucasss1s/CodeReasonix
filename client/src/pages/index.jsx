@@ -11,6 +11,14 @@ export default function Index() {
     axios.get("http://localhost:5000/ejercicios")
       .then(res => setEjercicios(res.data))
       .catch(err => console.error(err));
+
+    const id = localStorage.getItem("cliente");
+    if (!id) return;
+    fetch("http://localhost:5000/gamificacion/login-xp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_cliente: Number(id) })
+    }).catch(() => {});
   }, []);
 
   return (

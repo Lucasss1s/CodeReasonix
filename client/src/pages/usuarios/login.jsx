@@ -35,6 +35,27 @@ export default function Login() {
       localStorage.setItem("usuario", JSON.stringify(dataBackend.usuario));
       localStorage.setItem("cliente", dataBackend.id_cliente);
 
+      //xp por login diario 
+      try {
+        const resXp = await fetch("http://localhost:5000/gamificacion/login-xp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_cliente: dataBackend.id_cliente }),
+        });
+        const xpData = await resXp.json();
+        if (resXp.ok) {
+          if (xpData.otorgado) {
+            console.log(`+${xpData.xp_otorgado} XP de login. XP total: ${xpData.xp_total}, nivel: ${xpData.nivel}`);
+          } else {
+            console.log("Ya tenía XP de login hoy. No se otorga nuevamente.");
+          }
+        } else {
+          console.warn("No se pudo otorgar XP de login:", xpData?.error);
+        }
+      } catch (e) {
+        console.warn("Error llamando /gamificacion/login-xp", e);
+      }
+
       console.log("Usuario logeado:", dataBackend.usuario);
       console.log("Cliente ID:", dataBackend.id_cliente);
 

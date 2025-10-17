@@ -1,6 +1,8 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
 import { enviarCodigo } from '../utils/judge0.js';
+import { otorgarXP, registrarActividadDiaria, otorgarXPUnaVezPorDia } from '../services/gamificacion.js';
+import { obtenerDificultadEjercicio, xpPorDificultad, yaAceptadoEjercicio  } from '../services/ejercicio.js';
 
 const router = express.Router();
 
@@ -67,13 +69,93 @@ router.post('/', async (req, res) => {
 
         if (errorInsert) throw errorInsert;
 
+        let recompensa = null;
+        let recompensa_bonus = null;
+
+        if (aceptado) {
+            const lang = (lenguaje || "").trim().toLowerCase();
+            const { data: row, error: selErr } = await supabase
+                .from('usuario_ejercicio_resuelto')
+                .select('lenguajes_resueltos')
+                .eq('id_cliente', id_cliente)
+                .eq('id_ejercicio', id_ejercicio)
+                .single();
+
+            if (selErr && selErr.code !== 'PGRST116') throw selErr;
+
+            let recompensa = null;
+
+            if (!row) {
+                const difNum = await obtenerDificultadEjercicio(id_ejercicio); 
+                const cantidad = xpPorDificultad(difNum);
+                recompensa = await otorgarXP({
+                id_cliente,
+                cantidad,
+                motivo: { tipo: 'submit', detalle: { id_ejercicio, dificultad: difNum, lenguaje: lang } }
+                });
+
+                await registrarActividadDiaria({
+                id_cliente,
+                tipo: "resolver_ejercicio",
+                xpDelta: cantidad,
+                incrementar: true
+                });
+
+                const { error: insErr } = await supabase
+                .from('usuario_ejercicio_resuelto')
+                .insert({
+                    id_cliente,
+                    id_ejercicio,
+                    id_submit_final: inserted.id_submit_final,
+                    lenguajes_resueltos: [lang]
+                });
+                if (insErr) throw insErr;
+
+            } else {
+                // Se resolvio antes: no dar xp ? agregamos al array 
+                const yaTiene = Array.isArray(row.lenguajes_resueltos)
+                ? row.lenguajes_resueltos.map(s => (s || '').toLowerCase())
+                : [];
+                if (!yaTiene.includes(lang)) {
+                const nuevo = [...yaTiene, lang];
+
+                const { error: upErr } = await supabase
+                    .from('usuario_ejercicio_resuelto')
+                    .update({ lenguajes_resueltos: nuevo })
+                    .eq('id_cliente', id_cliente)
+                    .eq('id_ejercicio', id_ejercicio);
+
+                if (upErr) throw upErr;
+
+                }
+            }
+
+            const recompensa_bonus = await otorgarXPUnaVezPorDia({
+                id_cliente,
+                tipoActividad: "primer_resuelto_dia",
+                xp: 5,
+                motivo: { tipo: "bonus_primer_resuelto_dia" }
+            });
+            if (recompensa_bonus?.otorgado) {
+                await registrarActividadDiaria({
+                id_cliente,
+                tipo: "resolver_ejercicio",
+                xpDelta: 5,
+                incrementar: false 
+                });
+            }
+            }
+
+
         res.json({
             mensaje: 'Submit Final procesado con Judge0',
             resultado: aceptado ? 'aceptado' : 'rechazado',
             tiempo_max: tiempoMax,
             memoria_max: memoriaMax,
             detalles: resultados,
-            insert: inserted
+            insert: inserted,
+            recompensa, 
+            recompensa_bonus  
         });
 
     } catch (err) {

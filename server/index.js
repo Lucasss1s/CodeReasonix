@@ -11,6 +11,7 @@ import comentariosRouter from "./routes/comentarios.js";
 import reaccionesRouter from "./routes/reacciones.js";
 import feedRouter from "./routes/feed.js";
 import perfilRouter from "./routes/perfil.js";
+import gamificacionRoutes from "./routes/gamificacion.js";
 
 const app = express(); // Instancia
 app.use(cors());
@@ -31,6 +32,7 @@ app.use("/comentarios", comentariosRouter);
 app.use("/reacciones", reaccionesRouter);
 app.use("/feed", feedRouter);
 app.use("/perfil", perfilRouter);
+app.use("/gamificacion", gamificacionRoutes);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
