@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";  
 import "../index.css";
+import GamificationHUD from "../components/GamificationHUD";
 
 export default function Index() {
   const [ejercicios, setEjercicios] = useState([]);

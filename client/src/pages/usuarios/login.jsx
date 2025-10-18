@@ -65,7 +65,7 @@ export default function Login() {
     } catch (err) {
       console.error(err);
       setMensaje(err.message || "Error al iniciar sesión ❌");
-    }
+    }    
   };
 
   return (

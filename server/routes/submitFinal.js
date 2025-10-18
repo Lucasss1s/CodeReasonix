@@ -83,8 +83,6 @@ router.post('/', async (req, res) => {
 
             if (selErr && selErr.code !== 'PGRST116') throw selErr;
 
-            let recompensa = null;
-
             if (!row) {
                 const difNum = await obtenerDificultadEjercicio(id_ejercicio); 
                 const cantidad = xpPorDificultad(difNum);
@@ -130,7 +128,7 @@ router.post('/', async (req, res) => {
                 }
             }
 
-            const recompensa_bonus = await otorgarXPUnaVezPorDia({
+            recompensa_bonus = await otorgarXPUnaVezPorDia({
                 id_cliente,
                 tipoActividad: "primer_resuelto_dia",
                 xp: 5,
