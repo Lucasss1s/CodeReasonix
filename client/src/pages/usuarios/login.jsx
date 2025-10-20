@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../config/supabase.js";
+import { toast } from "sonner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -10,12 +11,10 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    let rewardState = null;
+    
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({email, password});
       if (error) throw error;
 
       const res = await fetch("http://localhost:5000/usuarios/login", {
@@ -43,28 +42,33 @@ export default function Login() {
           body: JSON.stringify({ id_cliente: dataBackend.id_cliente }),
         });
         const xpData = await resXp.json();
+
         if (resXp.ok) {
           if (xpData.otorgado) {
-            console.log(`+${xpData.xp_otorgado} XP de login. XP total: ${xpData.xp_total}, nivel: ${xpData.nivel}`);
+            rewardState = {
+              amount: xpData.xp_otorgado ?? 5,
+              icon: "💎",
+            };
           } else {
-            console.log("Ya tenía XP de login hoy. No se otorga nuevamente.");
+            console.log("ya tenia xp de login hoy, no se otorga");
           }
         } else {
-          console.warn("No se pudo otorgar XP de login:", xpData?.error);
+          console.warn("no se pudo otorgar xp de login:", xpData?.error);
         }
       } catch (e) {
         console.warn("Error llamando /gamificacion/login-xp", e);
       }
 
-      console.log("Usuario logeado:", dataBackend.usuario);
-      console.log("Cliente ID:", dataBackend.id_cliente);
-
       setMensaje("Login exitoso ✅");
 
-      setTimeout(() => navigate("/"), 1000);
+      navigate("/", {
+        replace: true,
+        state: rewardState ? { reward: rewardState } : {},
+      });
     } catch (err) {
       console.error(err);
       setMensaje(err.message || "Error al iniciar sesión ❌");
+      toast.error("Error al iniciar sesión");
     }    
   };
 

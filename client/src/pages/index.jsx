@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";  
 import "../index.css";
-import GamificationHUD from "../components/GamificationHUD";
+import RewardOnRoute from "../components/RewardOnRoute";
 
 export default function Index() {
   const [ejercicios, setEjercicios] = useState([]);
@@ -25,6 +25,8 @@ export default function Index() {
   return (
     <>
       <Navbar /> 
+
+      <RewardOnRoute position="top-center" duration={2400} size="lg" />
 
       <div className="index-container">
         <h1 className="titulo">Lista de Ejercicios</h1>
