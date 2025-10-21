@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
 export default function Oferta() {
   const [ofertas, setOfertas] = useState([]);
-  const [postingId, setPostingId] = useState(null);
-  const id_cliente = localStorage.getItem("cliente");
+  const navigate = useNavigate();
 
   const cargarOfertas = async () => {
     try {
@@ -21,32 +21,16 @@ export default function Oferta() {
     cargarOfertas();
   }, []);
 
-  const handlePostularme = async (id_oferta) => {
-    if (!id_cliente) {
-      alert("Tenés que iniciar sesión para postularte.");
-      return;
-    }
-    try {
-      setPostingId(id_oferta);
-      await axios.post("http://localhost:5000/postulaciones", {
-        id_oferta,
-        id_cliente: Number(id_cliente),
-        estado: "pendiente",
-      });
-      alert("¡Postulación enviada!");
-    } catch (err) {
-      console.error("Error postulando:", err);
-      alert("No pudimos enviar tu postulación (¿ya postulaste?).");
-    } finally {
-      setPostingId(null);
-    }
+  const snippet = (text, max = 180) => {
+    if (!text) return "";
+    return text.length > max ? text.slice(0, max).trim() + "…" : text;
   };
 
   const formatFecha = (iso) =>
     iso
       ? new Date(iso).toLocaleDateString("es-ES", {
           day: "2-digit",
-          month: "long",
+          month: "short",
           year: "numeric",
         })
       : "";
@@ -61,40 +45,33 @@ export default function Oferta() {
           <div className="vacio">No hay ofertas disponibles.</div>
         )}
 
-        {ofertas.map((of) => (
-          <div key={of.id_oferta} className="oferta-card">
-            <div className="oferta-header">
-              <h3>{of.titulo}</h3>
-              <div className="oferta-meta">
-                <span>{of.empresa?.nombre || "Empresa"}</span>
-                {of.empresa?.sector && <span> • {of.empresa?.sector}</span>}
-                {of.ubicacion && <span> • {of.ubicacion}</span>}
-                {of.fecha_publicacion && (
-                  <span className="fecha"> • {formatFecha(of.fecha_publicacion)}</span>
-                )}
+        <div className="grid-ofertas">
+          {ofertas.map((of) => (
+            <article
+              key={of.id_oferta}
+              className="oferta-card-clickable"
+              onClick={() => navigate(`/entrevistas/oferta/${of.id_oferta}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") navigate(`/entrevistas/oferta/${of.id_oferta}`); }}
+            >
+              <div className="oferta-card-main">
+                <div className="oferta-left">
+                  <h3 className="oferta-title">{of.titulo}</h3>
+                  <p className="oferta-company">
+                    {of.empresa?.nombre || "Empresa"}{of.empresa?.sector ? ` • ${of.empresa.sector}` : ""}
+                  </p>
+                  <p className="oferta-snippet">{snippet(of.descripcion || of.requisitos)}</p>
+                </div>
+
+                <div className="oferta-right">
+                  {of.ubicacion && <div className="meta-line">{of.ubicacion}</div>}
+                  <div className="meta-line">{formatFecha(of.fecha_publicacion)}</div>
+                </div>
               </div>
-            </div>
-
-            {of.descripcion && <p className="oferta-descripcion">{of.descripcion}</p>}
-
-            {of.requisitos && (
-              <div className="oferta-requisitos">
-                <strong>Requisitos:</strong>
-                <p className="pre">{of.requisitos}</p>
-              </div>
-            )}
-
-            <div className="oferta-actions">
-              <button
-                className="btn-primary"
-                onClick={() => handlePostularme(of.id_oferta)}
-                disabled={postingId === of.id_oferta}
-              >
-                {postingId === of.id_oferta ? "Enviando..." : "Postularme"}
-              </button>
-            </div>
-          </div>
-        ))}
+            </article>
+          ))}
+        </div>
       </div>
     </>
   );

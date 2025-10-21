@@ -3,7 +3,6 @@ import { supabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET /empresas?q=
 router.get('/', async (req, res) => {
   const q = (req.query.q || '').trim();
   try {
@@ -19,7 +18,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /empresas/:id
 router.get('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
@@ -37,7 +35,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /empresas
 router.post('/', async (req, res) => {
   const { nombre, descripcion, sector } = req.body;
   if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
@@ -57,7 +54,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /empresas/:id
 router.put('/:id', async (req, res) => {
   const id = Number(req.params.id);
   const { nombre, descripcion, sector } = req.body;
@@ -78,7 +74,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /empresas/:id
 router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {

@@ -3,7 +3,6 @@ import { supabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET /ofertas → lista todas las ofertas laborales
 router.get('/', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -19,7 +18,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /ofertas/:id → una oferta específica
 router.get('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
@@ -37,7 +35,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /ofertas → crear nueva oferta
 router.post('/', async (req, res) => {
   const { id_empresa, titulo, descripcion, ubicacion, requisitos, fecha_publicacion } = req.body;
   if (!id_empresa || !titulo) {
@@ -68,7 +65,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /ofertas/:id → actualizar oferta
 router.put('/:id', async (req, res) => {
   const id = Number(req.params.id);
   const { id_empresa, titulo, descripcion, ubicacion, requisitos, fecha_publicacion } = req.body;
@@ -89,7 +85,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /ofertas/:id → eliminar oferta
 router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {

@@ -11,6 +11,7 @@ import Feed from "./pages/comunidad/feed.jsx";
 import Perfil from "./pages/perfil/perfil.jsx";
 import Oferta from "./pages/entrevistas/oferta.jsx";
 import Postulacion from "./pages/entrevistas/postulacion.jsx";
+import OfertaDetalle from "./pages/entrevistas/ofertaDetalle.jsx";
 
 import './index.css';
 
@@ -28,6 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/entrevistas" element={<Oferta />} />
         <Route path="/entrevistas/mis-postulaciones" element={<Postulacion />} />
+        <Route path="/entrevistas/oferta/:id" element={<OfertaDetalle />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

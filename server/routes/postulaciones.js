@@ -3,10 +3,8 @@ import { supabase } from '../config/db.js';
 
 const router = express.Router();
 
-// Estados válidos (guardados como TEXT en la DB)
 const ESTADOS_VALIDOS = ['pendiente', 'en_revision', 'aceptada', 'rechazada'];
 
-// Lista todas
 router.get('/', async (_req, res) => {
   try {
     const { data, error } = await supabase
@@ -30,7 +28,6 @@ router.get('/', async (_req, res) => {
   }
 });
 
-// Del cliente
 router.get('/mias/:id_cliente', async (req, res) => {
   const id_cliente = Number(req.params.id_cliente);
   if (!id_cliente) return res.status(400).json({ error: 'id_cliente es obligatorio' });
@@ -57,7 +54,6 @@ router.get('/mias/:id_cliente', async (req, res) => {
   }
 });
 
-// Por oferta
 router.get('/por-oferta/:id_oferta', async (req, res) => {
   const id_oferta = Number(req.params.id_oferta);
   if (!id_oferta) return res.status(400).json({ error: 'id_oferta es obligatorio' });
@@ -84,7 +80,6 @@ router.get('/por-oferta/:id_oferta', async (req, res) => {
   }
 });
 
-// Crear postulación (fecha la pone la DB; estado default 'pendiente' si no viene)
 router.post('/', async (req, res) => {
   const { id_oferta, id_cliente } = req.body;
   let { estado } = req.body;
@@ -102,7 +97,7 @@ router.post('/', async (req, res) => {
     const payload = {
       id_oferta: Number(id_oferta),
       id_cliente: Number(id_cliente),
-      estado // fecha NO se envía: la pone la DB
+      estado 
     };
 
     const { data, error } = await supabase
@@ -119,7 +114,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Cambiar estado
 router.patch('/:id_postulacion', async (req, res) => {
   const id_postulacion = Number(req.params.id_postulacion);
   const { estado } = req.body;
@@ -147,7 +141,6 @@ router.patch('/:id_postulacion', async (req, res) => {
   }
 });
 
-// Eliminar
 router.delete('/:id_postulacion', async (req, res) => {
   const id_postulacion = Number(req.params.id_postulacion);
   if (!id_postulacion) return res.status(400).json({ error: 'id_postulacion es obligatorio' });
