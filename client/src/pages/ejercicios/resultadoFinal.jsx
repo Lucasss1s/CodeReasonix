@@ -13,6 +13,7 @@ import {
     Legend,
 } from "chart.js";
 import "./resultadoFinal.css";
+import RewardOnRoute from "../../components/RewardOnRoute";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -85,6 +86,9 @@ function ResultadoFinal() {
 
     return (
         <div className="resultado-page">
+            
+            <RewardOnRoute position="top-center" size="lg" duration={2600} />
+
             {/* HEADER */}
             <motion.div
                 className="resultado-header"

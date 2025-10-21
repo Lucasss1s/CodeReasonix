@@ -210,7 +210,24 @@ function Ejercicio() {
                 }),
             });
             const data = await res.json();
-            navigate(`/resultado/${data.insert?.id_submit_final ?? ""}`);
+
+            const idSubmit = data.insert?.id_submit_final ??data.id_submit_final ?? "";
+            
+            //navigate(`/resultado/${data.insert?.id_submit_final ?? ""}`);
+
+            if (data.resultado === "aceptado" && data.reward?.amount) {
+                const qs = new URLSearchParams({
+                    reward: String(data.reward.amount),
+                    icon: data.reward.icon || "⭐",
+                }).toString();
+
+                navigate(`/resultado/${idSubmit}?${qs}`, {
+                    replace: false,
+                    state: { reward: data.reward },
+                });
+                } else {
+                navigate(`/resultado/${idSubmit}`);
+            }
         } catch (err) {
             console.error("Error en submit final:", err);
             setError(err.message || "Error al enviar el código final.");

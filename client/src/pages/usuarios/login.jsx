@@ -45,10 +45,16 @@ export default function Login() {
 
         if (resXp.ok) {
           if (xpData.otorgado) {
-            rewardState = {
-              amount: xpData.xp_otorgado ?? 5,
-              icon: "💎",
-            };
+            const a = xpData?.reward_login?.amount || 0;
+            const b = xpData?.reward_streak?.amount || 0;
+            const total = a + b;
+
+            if (total > 0) {
+              rewardState = {
+                amount: total,
+                icon: b > 0 ? "🔥" : "💎",
+              };
+            }
           } else {
             console.log("ya tenia xp de login hoy, no se otorga");
           }

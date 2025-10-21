@@ -144,6 +144,17 @@ router.post('/', async (req, res) => {
             }
             }
 
+            //recompensa para el front
+            const xpBase  = Number(
+            (recompensa?.xp_otorgado ?? recompensa?.xp ?? recompensa?.cantidad ?? 0)
+            );
+            const xpBonus = Number(
+            (recompensa_bonus?.otorgado ? (recompensa_bonus?.xp ?? recompensa_bonus?.xp_otorgado ?? 0) : 0)
+            );
+            const reward = (aceptado && (xpBase + xpBonus) > 0)
+            ? { amount: xpBase + xpBonus, icon: "💎" }
+            : null;
+
 
         res.json({
             mensaje: 'Submit Final procesado con Judge0',
@@ -153,7 +164,8 @@ router.post('/', async (req, res) => {
             detalles: resultados,
             insert: inserted,
             recompensa, 
-            recompensa_bonus  
+            recompensa_bonus,
+            reward
         });
 
     } catch (err) {

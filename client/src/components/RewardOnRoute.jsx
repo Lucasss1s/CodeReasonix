@@ -7,7 +7,7 @@ export default function RewardOnRoute({
     offset = { x: 0, y: 18 },
     duration = 2200,
     size = "lg",
-}) {
+    }) {
     const location = useLocation();
     const navigate = useNavigate();
     const [reward, setReward] = useState(null);
@@ -20,20 +20,32 @@ export default function RewardOnRoute({
         const sp = new URLSearchParams(location.search);
         const qReward = sp.get("reward");
         const qIcon = sp.get("icon");
-        const viaQS = qReward ? { amount: Number(qReward) || 5, icon: qIcon || "💎" } : null;
+        const qStreak = sp.get("streak");
+        const qStreakXp = sp.get("streakXp");
+        let viaQS = null;
+        if (qReward) {
+        const amount = Number(qReward) || 5;
+        const icon = qIcon || "💎";
+        const streak = qStreak ? Number(qStreak) : 0;
+        const streakXp = qStreakXp ? Number(qStreakXp) : 0;
+        const note =
+            streak >= 2 && streakXp > 0 ? `🔥 Racha x${streak} (+${streakXp})` : undefined;
+        viaQS = { amount, icon, note };
+        }
 
         if (r || viaQS) {
         setReward(r || viaQS);
+        // limpiamos state/query para que no se repita en refresh
         navigate(location.pathname, { replace: true, state: {} });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.key]);
 
-    //disparo manual 
+    //disparo manual
     useEffect(() => {
         const handler = (e) => {
-        const { amount = 5, icon = "💎" } = e.detail || {};
-        setReward({ amount, icon });
+        const { amount = 5, icon = "💎", note } = e.detail || {};
+        setReward({ amount, icon, note });
         };
         window.addEventListener("reward", handler);
         return () => window.removeEventListener("reward", handler);
@@ -50,6 +62,7 @@ export default function RewardOnRoute({
         offset={offset}
         duration={duration}
         size={size}
+        note={reward.note}           
         onDone={() => setReward(null)}
         />
     );
