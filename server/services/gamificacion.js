@@ -208,7 +208,7 @@ async function cumpleCondicion(cond, id_cliente) {
         .from("submit_final")
         .select("*", { count: "exact", head: true })
         .eq("id_cliente", id_cliente)
-        .eq("estado", true);
+        .eq("resultado", true);
       if (error) return false;
       return (count ?? 0) >= (cond.cantidad ?? 1);
     }
