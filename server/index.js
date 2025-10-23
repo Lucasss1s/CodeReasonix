@@ -12,6 +12,9 @@ import reaccionesRouter from "./routes/reacciones.js";
 import feedRouter from "./routes/feed.js";
 import perfilRouter from "./routes/perfil.js";
 import gamificacionRoutes from "./routes/gamificacion.js";
+import empresaRouter from './routes/empresa.js';
+import ofertasRouter from './routes/ofertas.js';
+import postulacionesRouter from './routes/postulaciones.js';
 
 const app = express(); // Instancia
 app.use(cors());
@@ -32,6 +35,9 @@ app.use("/comentarios", comentariosRouter);
 app.use("/reacciones", reaccionesRouter);
 app.use("/feed", feedRouter);
 app.use("/perfil", perfilRouter);
+app.use('/empresas', empresaRouter);
+app.use('/ofertas', ofertasRouter);
+app.use('/postulaciones', postulacionesRouter);
 app.use("/gamificacion", gamificacionRoutes);
 
 const PORT = 5000;

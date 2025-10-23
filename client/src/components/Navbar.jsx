@@ -72,6 +72,8 @@ export default function Navbar() {
             <h1 className="logo">CodeReasonix</h1>
             <div className="nav-buttons">
                 <Link to="/comunidad" className="btn-nav">Comunidad</Link>
+                <Link to="/entrevistas" className="btn-nav">entrevistas</Link>
+                
                 <Link to="/" className="btn-nav">Inicio</Link>
 
                 {usuario ? (
@@ -85,6 +87,7 @@ export default function Navbar() {
                         {menuAbierto && (
                             <div className="menu-dropdown">
                                 <Link to="/perfil" className="dropdown-item">Ver Perfil</Link>
+                                <Link to="/entrevistas/mis-postulaciones" className="dropdown-item">Postulaciones</Link>
                                 <Link to="/logout" className="dropdown-item">Cerrar Sesión</Link>
                             </div>
                         )}
