@@ -13,11 +13,15 @@ import Oferta from "./pages/entrevistas/oferta.jsx";
 import Postulacion from "./pages/entrevistas/postulacion.jsx";
 import OfertaDetalle from "./pages/entrevistas/ofertaDetalle.jsx";
 
+import RewardOnRoute from './components/RewardOnRoute';
+
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
+      <RewardOnRoute position="top-center" duration={2400} size="lg" />
+
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/ejercicio/:id" element={<Ejercicio />} />
