@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
+import { toast } from "sonner";
 import Navbar from "../../components/Navbar";
-import useGamificacion from "../../components/../hooks/useGamificacion"; 
+import useGamificacion from "../../hooks/useGamificacion";
+import useAchievements from "../../hooks/useAchievements";
+import AchievementGrid from "../../components/AchievementGrid";
+import "../../components/achievement.css";
 import "./perfil.css";
 
 const detectPlatform = (url = "") => {
-  const u = url.toLowerCase();
+  const u = (url || "").toLowerCase();
   if (u.includes("github.com")) return { key: "github", icon: "fa-brands fa-github", label: "GitHub" };
   if (u.includes("linkedin.com")) return { key: "linkedin", icon: "fa-brands fa-linkedin", label: "LinkedIn" };
   if (u.includes("twitter.com") || u.includes("x.com")) return { key: "twitter", icon: "fa-brands fa-x-twitter", label: "Twitter/X" };
@@ -19,11 +23,9 @@ const detectPlatform = (url = "") => {
 const parseSocials = (raw) => {
   if (!raw) return [];
   try {
-    // si viene JSON 
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (Array.isArray(parsed)) return parsed.filter(Boolean);
   } catch (_) {}
-  //fallback: coma/espacio-separado
   return String(raw)
     .split(/[,\n]/)
     .map((s) => s.trim())
@@ -31,11 +33,7 @@ const parseSocials = (raw) => {
 };
 
 const stringifySocials = (arr) => {
-  try {
-    return JSON.stringify(arr);
-  } catch {
-    return (arr || []).join(", ");
-  }
+  try { return JSON.stringify(arr); } catch { return (arr || []).join(", "); }
 };
 
 /* barra progreso */
@@ -50,7 +48,7 @@ function ProgressBar({ current, total }) {
   );
 }
 
-/*Feed drawer*/
+/* Drawer feed */
 function FeedDrawer({ open, onClose, feed }) {
   if (!open) return null;
   return (
@@ -84,21 +82,23 @@ function FeedDrawer({ open, onClose, feed }) {
 }
 
 export default function Perfil() {
-  const [perfil, setPerfil] = useState({
-    biografia: "",
-    skills: "",
-    redes_sociales: "", 
-    foto_perfil: ""
-  });
+  const [perfil, setPerfil] = useState({ biografia: "", skills: "", redes_sociales: "", foto_perfil: "" });
   const [mensaje, setMensaje] = useState("");
   const [preview, setPreview] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [newSocial, setNewSocial] = useState("");
   const [socials, setSocials] = useState([]);
   const [feedOpen, setFeedOpen] = useState(false);
-/*hook de hud */
+  const [uploading, setUploading] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+
   const id_cliente = useMemo(() => parseInt(localStorage.getItem("cliente") || "0", 10), []);
-  const { data: gami, loading: gLoading, error: gError, refetch } = useGamificacion(id_cliente);
+  const { data: gami, loading: gLoading } = useGamificacion(id_cliente);
+
+  const { loading: aLoading, error: aError, defs, unlocked, locked, recalc } = useAchievements(id_cliente);
+
+  const avatarDropRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const cargarPerfil = async () => {
     if (!id_cliente) return;
@@ -113,16 +113,27 @@ export default function Perfil() {
     }
   };
 
+  useEffect(() => { cargarPerfil(); }, []);
+
+  //Recalcular logros cuando se entra
   useEffect(() => {
-    cargarPerfil();
-  }, []);
+    let mounted = true;
+    (async () => {
+      const r = await recalc();
+      if (!mounted) return;
+      if (Array.isArray(r?.nuevos) && r.nuevos.length) {
+        r.nuevos.forEach((l) => {
+          toast.success(`¡Logro desbloqueado! ${l.icono || "🏆"} ${l.titulo}${l.xp_otorgado ? ` (+${l.xp_otorgado} XP)` : ""}`);
+        });
+      }
+    })();
+    return () => { mounted = false; };
+  }, [recalc]);
 
   const handleSave = async () => {
     try {
-      const body = {
-        ...perfil,
-        redes_sociales: stringifySocials(socials)
-      };
+      setSavingProfile(true);
+      const body = { ...perfil, redes_sociales: stringifySocials(socials) };
       await axios.put(`http://localhost:5000/perfil/${id_cliente}`, body);
       setMensaje("Perfil actualizado ✅");
       setEditMode(false);
@@ -130,26 +141,22 @@ export default function Perfil() {
     } catch (err) {
       console.error(err);
       setMensaje("Error al actualizar ❌");
+    } finally {
+      setSavingProfile(false);
     }
   };
 
-  const handleCancel = () => {
-    setEditMode(false);
-    //recargar estado  
-    cargarPerfil();
-  };
+  const handleCancel = () => { setEditMode(false); cargarPerfil(); };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
+  const doUpload = async (file) => {
     if (!file) return;
     const formData = new FormData();
     formData.append("foto", file);
     try {
-      const res = await axios.post(
-        `http://localhost:5000/perfil/${id_cliente}/foto`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      setUploading(true);
+      const res = await axios.post(`http://localhost:5000/perfil/${id_cliente}/foto`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       const url = res.data?.url;
       setPerfil((p) => ({ ...p, foto_perfil: url }));
       setPreview(url);
@@ -158,28 +165,66 @@ export default function Perfil() {
     } catch (err) {
       console.error("Error subiendo foto:", err);
       setMensaje("Error al subir la foto ❌");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    await doUpload(file);
+  };
+
+  const handleAvatarClick = () => {
+    if (uploading) return;
+    fileInputRef.current?.click();
+  };
+
+  // Drag&drop avatar
+  useEffect(() => {
+    const el = avatarDropRef.current;
+    if (!el) return;
+    const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+    const onDrop = (e) => { prevent(e); const file = e.dataTransfer.files?.[0]; if (file) doUpload(file); el.classList.remove("is-dragover"); };
+    const onDragOver = (e) => { prevent(e); el.classList.add("is-dragover"); };
+    const onDragLeave = (e) => { prevent(e); el.classList.remove("is-dragover"); };
+    el.addEventListener("dragover", onDragOver);
+    el.addEventListener("dragleave", onDragLeave);
+    el.addEventListener("drop", onDrop);
+    return () => {
+      el.removeEventListener("dragover", onDragOver);
+      el.removeEventListener("dragleave", onDragLeave);
+      el.removeEventListener("drop", onDrop);
+    };
+  }, []);
+
+  const handleRemovePhoto = async () => {
+    try {
+      setUploading(true);
+      await axios.put(`http://localhost:5000/perfil/${id_cliente}`, { ...perfil, foto_perfil: null });
+      setPreview(null);
+      setPerfil((p) => ({ ...p, foto_perfil: null }));
+      setMensaje("Foto eliminada ✅");
+      setTimeout(() => setMensaje(""), 1200);
+    } catch (e) {
+      console.error(e);
+      setMensaje("No se pudo eliminar la foto ❌");
+    } finally {
+      setUploading(false);
     }
   };
 
   const addSocial = () => {
-    if (!newSocial.trim()) return;
-    const clean = newSocial.trim();
-    if (socials.includes(clean)) return;
+    const clean = (newSocial || "").trim();
+    if (!clean || socials.includes(clean)) return;
     setSocials([...socials, clean]);
     setNewSocial("");
   };
-
-  const removeSocial = (idx) => {
-    setSocials(socials.filter((_, i) => i !== idx));
-  };
+  const removeSocial = (idx) => setSocials(socials.filter((_, i) => i !== idx));
 
   const skillsArr = useMemo(() => {
     const raw = perfil?.skills || "";
-    return raw
-      .split(/[,\n]/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 20);
+    return raw.split(/[,\n]/).map((s) => s.trim()).filter(Boolean).slice(0, 20);
   }, [perfil.skills]);
 
   const progreso = gami?.progreso ?? { xpEnNivel: 0, xpParaSubir: 100, nextLevelRemaining: 100 };
@@ -189,37 +234,75 @@ export default function Perfil() {
   return (
     <>
       <Navbar />
-
       <div className="p-page">
         <div className="p-wrap">
           {/* Header */}
           <header className="p-header">
             <div className="p-header__left">
-              <div className="p-avatar">
-                {preview ? <img src={preview} alt="Avatar" /> : <div className="p-avatar__ph"><i className="fa-solid fa-user" /></div>}
-                <label className="p-btn p-btn--tiny p-btn--ghost p-avatar__upload">
-                  <i className="fa-solid fa-camera" />
-                  <input type="file" accept="image/*" onChange={handleFileChange} hidden />
-                </label>
+              <div
+                className={`p-avatar ${uploading ? "is-uploading" : ""} ${preview ? "has-photo" : ""}`}
+                ref={avatarDropRef}
+                role="button"
+                tabIndex={0}
+                onClick={handleAvatarClick}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleAvatarClick()}
+                aria-label="Cambiar foto de perfil"
+                title="Click o arrastrá una imagen para actualizar tu foto"
+              >
+                {preview ? (
+                  <img src={preview} alt="Avatar" />
+                ) : (
+                  <div className="p-avatar__ph"><i className="fa-solid fa-user" /></div>
+                )}
+
+                {/* Overlay cam */}
+                <div className="p-avatar__overlay">
+                  <i className="fa-solid fa-camera" aria-hidden="true" />
+                </div>
+
+                {/* Quitar foto sio hay*/}
+                {preview && (
+                  <button
+                    className="p-avatar__remove"
+                    onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }}
+                    title="Quitar foto"
+                    aria-label="Quitar foto"
+                    disabled={uploading}
+                  >
+                    <i className="fa-solid fa-xmark" />
+                  </button>
+                )}
+
+                {/* Input hidden */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="visually-hidden"
+                />
               </div>
+
               <div className="p-user">
                 <h1>Mi Perfil</h1>
-{/*                 <div className="p-badges">
-                  <span className="p-chip p-chip--lvl">Nivel {gLoading ? "…" : (gami?.nivel ?? 1)}</span>
-                  <span className="p-chip p-chip--xp">{gLoading ? "…" : (gami?.xp_total ?? 0)} XP</span>
-                  <span className="p-chip p-chip--streak">🔥 {streak} días</span>
-                </div> */}
               </div>
             </div>
+
             <div className="p-header__right">
               {!editMode ? (
-                <button className="p-btn" onClick={() => setEditMode(true)}>
-                  <i className="fa-solid fa-pen" /> Editar
-                </button>
+                <div className="p-actions">
+                  <button className="p-btn" onClick={() => setEditMode(true)}>
+                    <i className="fa-solid fa-pen" /> Editar
+                  </button>
+                </div>
               ) : (
                 <div className="p-actions">
-                  <button className="p-btn" onClick={handleSave}><i className="fa-solid fa-floppy-disk" /> Guardar</button>
-                  <button className="p-btn p-btn--ghost" onClick={handleCancel}><i className="fa-solid fa-xmark" /> Cancelar</button>
+                  <button className="p-btn" onClick={handleSave} disabled={savingProfile}>
+                    <i className="fa-solid fa-floppy-disk" /> {savingProfile ? "Guardando…" : "Guardar"}
+                  </button>
+                  <button className="p-btn p-btn--ghost" onClick={handleCancel}>
+                    <i className="fa-solid fa-xmark" /> Cancelar
+                  </button>
                 </div>
               )}
             </div>
@@ -227,12 +310,15 @@ export default function Perfil() {
 
           {mensaje && <div className="p-alert">{mensaje}</div>}
 
-          {/*izquierda info, derecha progreso */}
+          {/* Grid principal*/}
           <div className="p-grid">
+            {/* LEFT */}
             <section className="p-card">
+              {/*Bio */}
               <div className="p-block">
                 <div className="p-block__head">
                   <h3>Biografía</h3>
+                  {editMode && <small className="p-muted" aria-live="polite">{perfil.biografia?.length || 0}/600</small>}
                 </div>
                 {!editMode ? (
                   <p className={`p-bio ${(!perfil.biografia || !perfil.biografia.trim()) ? "is-empty" : ""}`}>
@@ -242,6 +328,7 @@ export default function Perfil() {
                   <textarea
                     className="p-input p-textarea"
                     rows={4}
+                    maxLength={600}
                     value={perfil.biografia || ""}
                     placeholder="Ej.: Desarrollador full-stack con foco en educación, creé CodeReasonix para mejorar la lógica con desafíos diarios…"
                     onChange={(e) => setPerfil({ ...perfil, biografia: e.target.value })}
@@ -249,30 +336,22 @@ export default function Perfil() {
                 )}
               </div>
 
-              {/*Skill */}
+              {/* Skills */}
               <div className="p-block">
-                <div className="p-block__head">
-                  <h3>Skills</h3>
-                </div>
+                <div className="p-block__head"><h3>Skills</h3></div>
                 {!editMode ? (
                   <div className="p-tags">
                     {skillsArr.length > 0 ? skillsArr.map((s, i) => <span className="p-tag" key={i}>{s}</span>) : <span className="p-muted">Sin skills cargadas.</span>}
                   </div>
                 ) : (
-                  <input
-                    className="p-input"
-                    placeholder="Separá por coma. Ej: JavaScript, React, SQL, Node, Arduino"
-                    value={perfil.skills || ""}
-                    onChange={(e) => setPerfil({ ...perfil, skills: e.target.value })}
-                  />
+                  <input className="p-input" placeholder="Separá por coma. Ej: JavaScript, React, SQL, Node, Arduino"
+                    value={perfil.skills || ""} onChange={(e) => setPerfil({ ...perfil, skills: e.target.value })} />
                 )}
               </div>
 
-              {/*Redes */}
+              {/* Redes */}
               <div className="p-block">
-                <div className="p-block__head">
-                  <h3>Redes</h3>
-                </div>
+                <div className="p-block__head"><h3>Redes</h3></div>
                 {!editMode ? (
                   <ul className="p-socials">
                     {socials.length === 0 ? (
@@ -283,9 +362,7 @@ export default function Perfil() {
                         return (
                           <li key={i}>
                             <i className={p.icon} />
-                            <a href={/^https?:\/\//.test(url) ? url : `https://${url}`} target="_blank" rel="noreferrer">
-                              {p.label}
-                            </a>
+                            <a href={/^https?:\/\//.test(url) ? url : `https://${url}`} target="_blank" rel="noreferrer">{p.label}</a>
                             <span className="p-socials__url">{url}</span>
                           </li>
                         );
@@ -295,13 +372,8 @@ export default function Perfil() {
                 ) : (
                   <>
                     <div className="p-addsocial">
-                      <input
-                        className="p-input"
-                        placeholder="Pegá una URL: https://github.com/tuuser"
-                        value={newSocial}
-                        onChange={(e) => setNewSocial(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && addSocial()}
-                      />
+                      <input className="p-input" placeholder="Pegá una URL: https://github.com/tuuser" value={newSocial} onChange={(e) => setNewSocial(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && addSocial()} />
                       <button className="p-btn" onClick={addSocial}><i className="fa-solid fa-plus" /> Agregar</button>
                     </div>
                     <ul className="p-socials p-socials--edit">
@@ -312,9 +384,7 @@ export default function Perfil() {
                             <i className={p.icon} />
                             <span>{p.label}</span>
                             <span className="p-socials__url">{url}</span>
-                            <button className="p-iconbtn" onClick={() => removeSocial(i)}>
-                              <i className="fa-solid fa-trash" />
-                            </button>
+                            <button className="p-iconbtn" onClick={() => removeSocial(i)}><i className="fa-solid fa-trash" /></button>
                           </li>
                         );
                       })}
@@ -322,29 +392,33 @@ export default function Perfil() {
                   </>
                 )}
               </div>
-            </section>
 
-            {/*Progreso*/}
-            <aside className="p-card p-card--right">
+              {/* Logros*/}
               <div className="p-block">
                 <div className="p-block__head">
-                  <h3>Progreso</h3>
-                  <button className="p-btn p-btn--ghost" onClick={refetch}><i className="fa-solid fa-rotate" /> Actualizar</button>
+                  <h3>Mis logros</h3>
+                  <span className="p-muted">
+                    {aLoading ? "Cargando…" : `${(unlocked?.length || 0)} desbloqueados · ${(locked?.length || 0)} por desbloquear`}
+                  </span>
                 </div>
+                {aError && <div className="p-alert">Error logros: {aError}</div>}
+                {aLoading ? (
+                  <div className="p-empty">Cargando logros…</div>
+                ) : (
+                  <AchievementGrid defs={defs} unlocked={unlocked} locked={locked} />
+                )}
+              </div>
+            </section>
+
+            {/* RIGHT */}
+            <aside className="p-card p-card--right">
+              <div className="p-block">
+                <div className="p-block__head"><h3>Progreso</h3></div>
 
                 <div className="p-kpis">
-                  <div className="p-kpi">
-                    <div className="p-kpi__label">Nivel</div>
-                    <div className="p-kpi__value">{gLoading ? "…" : (gami?.nivel ?? 1)}</div>
-                  </div>
-                  <div className="p-kpi">
-                    <div className="p-kpi__label">XP total</div>
-                    <div className="p-kpi__value">{gLoading ? "…" : (gami?.xp_total ?? 0)}</div>
-                  </div>
-                  <div className="p-kpi">
-                    <div className="p-kpi__label">Racha</div>
-                    <div className="p-kpi__value">🔥 {streak}</div>
-                  </div>
+                  <div className="p-kpi"><div className="p-kpi__label">Nivel</div><div className="p-kpi__value">{gLoading ? "…" : (gami?.nivel ?? 1)}</div></div>
+                  <div className="p-kpi"><div className="p-kpi__label">XP total</div><div className="p-kpi__value">{gLoading ? "…" : (gami?.xp_total ?? 0)}</div></div>
+                  <div className="p-kpi"><div className="p-kpi__label">Racha</div><div className="p-kpi__value">🔥 {streak}</div></div>
                 </div>
 
                 <ProgressBar current={progreso.xpEnNivel} total={progreso.xpParaSubir} />
@@ -392,7 +466,7 @@ export default function Perfil() {
                   <ul className="p-mini-feed">
                     {gami.feed.slice(0, 5).map((f, i) => (
                       <li key={i}>
-                        <span className="p-mini-feed__xp">+{f.puntos} XP</span>
+                        <span className="p-badge p-badge--xp">+{f.puntos} XP</span>
                         <span className="p-mini-feed__meta">{f.motivo?.tipo || "otro"}</span>
                         <time className="p-mini-feed__time">{new Date(f.fecha).toLocaleDateString()}</time>
                       </li>

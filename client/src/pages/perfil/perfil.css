@@ -9,6 +9,7 @@
   --p-accent:#ff7a00;
   --p-accent-2:#ffa14d;
   --p-ok:#22c55e;
+  --p-badge:#0b1020;
   --p-shadow: 0 14px 34px rgba(0,0,0,.45);
 }
 
@@ -22,26 +23,55 @@
   margin-bottom:18px;
 }
 .p-header__left{ display:flex; gap:14px; align-items:center; }
-.p-avatar{ position:relative; width:80px; height:80px; }
+
+.p-avatar{ position:relative; width:92px; height:92px; cursor:pointer; }
 .p-avatar img, .p-avatar__ph{
   width:100%; height:100%; border-radius:50%; object-fit:cover;
   background:#0b1020; border:3px solid var(--p-accent);
   box-shadow:0 0 0 3px rgba(255,122,0,.18);
-  display:grid; place-items:center; font-size:28px; color:#94a3b8;
+  display:grid; place-items:center; font-size:30px; color:#94a3b8;
+  transition: transform .18s ease, box-shadow .18s ease;
 }
-.p-avatar__upload{
-  position:absolute; bottom:-6px; right:-6px; cursor:pointer;
+.p-avatar:hover img,
+.p-avatar:hover .p-avatar__ph{
+  transform: scale(1.01);
+  box-shadow:0 0 0 4px rgba(255,122,0,.25);
 }
+.p-avatar.has-photo:hover img{ filter:brightness(0.92); }
+
+/* Overlay cámara centrado */
+.p-avatar__overlay{
+  position:absolute; inset:0; display:grid; place-items:center;
+  border-radius:50%;
+  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.0) 40%, rgba(0,0,0,.35) 100%);
+  color:#fff; opacity:0; transition:opacity .18s ease;
+  pointer-events:none;
+}
+.p-avatar:hover .p-avatar__overlay{ opacity:1; }
+.p-avatar__overlay i{ font-size:22px; }
+
+/* Botón quitar foto */
+.p-avatar__remove{
+  position:absolute; top:-6px; left:-6px;
+  width:28px; height:28px; border-radius:50%;
+  border:1px solid var(--p-border);
+  background:#0b1020; color:#dfe7ff; cursor:pointer;
+  display:grid; place-items:center; box-shadow:var(--p-shadow);
+  opacity:0; transform: translateY(-2px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+.p-avatar:hover .p-avatar__remove{ opacity:1; transform: translateY(0); }
+
+/* Drag over / uploading */
+.p-avatar.is-dragover { outline: 2px dashed var(--p-accent); outline-offset: 4px; }
+.p-avatar.is-uploading::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.15); border-top-color: var(--p-accent);
+  animation: p-spin 1s linear infinite;
+}
+@keyframes p-spin { to { transform: rotate(360deg); } }
+
 .p-user h1{ margin:0 0 6px 0; font-size:1.6rem; letter-spacing:.3px; }
-.p-badges{ display:flex; gap:8px; flex-wrap:wrap; }
-.p-chip{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px;
-  background:#0b1020; border:1px solid var(--p-border); color:var(--p-text);
-}
-.p-chip--lvl{ border-color:#2c3759; }
-.p-chip--xp{ border-color:#374267; }
-.p-chip--streak{ border-color:#2f4a39; }
 
 .p-header__right .p-actions{ display:flex; gap:10px; }
 
@@ -65,19 +95,18 @@
 }
 
 /* ===== Grid ===== */
-.p-grid{
-  display:grid; gap:18px; grid-template-columns:1fr;
-}
-@media (min-width: 980px){
-  .p-grid{ grid-template-columns:1.25fr .9fr; }
-}
+.p-grid{ display:grid; gap:18px; grid-template-columns:1fr; }
+@media (min-width: 980px){ .p-grid{ grid-template-columns:1.25fr .9fr; } }
 
 /* ===== Cards ===== */
 .p-card{
   background:var(--p-card); border:1px solid var(--p-border); border-radius:14px;
   box-shadow:var(--p-shadow); padding:16px;
 }
-.p-card--right{ background:var(--p-card-2); }
+.p-card--right{
+  background: linear-gradient(180deg, var(--p-card-2), rgba(15,20,36,.92));
+  border: 1px solid #1c2440;
+}
 
 /* ===== Bloques ===== */
 .p-block{ margin-bottom:14px; }
@@ -142,7 +171,9 @@
 .p-today__item{
   display:flex; justify-content:space-between; align-items:center; gap:12px;
   padding:10px 12px; border:1px solid var(--p-border); border-radius:12px; background:#101523;
+  transition: border-color .18s ease, transform .18s ease;
 }
+.p-today__item:hover{ transform: translateY(-1px); border-color:#2c3759; }
 .p-today__item.is-done{ background:#0f1f17; border-color:#1f3f2c; }
 .p-today__left{ display:flex; gap:10px; align-items:center; }
 .p-today__left i{ color:#d9e1ff; }
@@ -151,15 +182,29 @@
 .p-dot{ width:18px; height:18px; border-radius:8px; background:#0b1020; border:1px solid #32405f; }
 .p-dot.ok{ background:var(--p-ok); border-color:#3ad072; }
 
-/* ===== Mini Feed ===== */
+/* ===== Mini Feed (mejor paleta) ===== */
 .p-mini-feed{ list-style:none; padding:0; margin:8px 0 0 0; display:grid; gap:8px; }
 .p-mini-feed li{
   display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
-  padding:8px 10px; border:1px solid var(--p-border); border-radius:10px; background:#101523;
+  padding:10px 12px;
+  border:1px solid #1e2740; border-radius:12px;
+  background: linear-gradient(180deg, #0f1424, #0e1220);
+  transition: border-color .18s ease, transform .18s ease;
 }
-.p-mini-feed__xp{ font-weight:900; }
+.p-mini-feed li:hover{ transform: translateY(-1px); border-color:#2c3759; }
+
+.p-badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 10px; border-radius:999px; font-weight:900; font-size:12px;
+  background:#0b1020; border:1px solid #2b3448; color:#dfe7ff;
+}
+.p-badge--xp{
+  background:linear-gradient(90deg,var(--p-accent),var(--p-accent-2));
+  color:#111; border: none; box-shadow:0 8px 16px rgba(255,122,0,.2);
+}
+
 .p-mini-feed__meta{ color:var(--p-sub); font-size:12px; }
-.p-mini-feed__time{ color:var(--p-sub); font-size:12px; }
+.p-mini-feed__time{ color:#a8b3d9; font-size:12px; }
 
 /* ===== Drawer Feed ===== */
 .p-drawer{ position:fixed; inset:0; z-index:50; }
@@ -181,7 +226,7 @@
   padding:10px 12px; border:1px solid var(--p-border); border-radius:12px; background:#101523;
 }
 .p-feed__left{ display:grid; gap:4px; }
-.p-feed__xp{ font-weight:900; }
+.p-feed__xp{ font-weight:900; color:var(--p-text); }
 .p-feed__meta{ color:var(--p-sub); font-size:12px; }
 .p-feed__time{ color:var(--p-sub); font-size:12px; }
 .p-empty{ color:var(--p-sub); padding:16px; }
@@ -189,3 +234,8 @@
 /* ===== Inputs generales ===== */
 .p-actions{ display:flex; gap:10px; }
 
+/* util */
+.visually-hidden{
+  position:absolute !important; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden;
+  clip:rect(0 0 0 0); border:0;
+}

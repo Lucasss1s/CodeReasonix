@@ -55,6 +55,13 @@ export default function Login() {
                 icon: b > 0 ? "🔥" : "💎",
               };
             }
+
+            if (Array.isArray(xpData?.nuevosLogros) && xpData.nuevosLogros.length) {
+              xpData.nuevosLogros.forEach(l => {
+                toast.success(`¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`);
+              });
+            }
+            
           } else {
             console.log("ya tenia xp de login hoy, no se otorga");
           }

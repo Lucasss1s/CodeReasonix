@@ -1,14 +1,10 @@
 import { supabase } from "../config/db.js";
 import { otorgarXP } from "./gamificacion.js";
 
-/*condicion logro*/
+/*Verificar cond */
 async function evalCondition(cond, id_cliente) {
-  if (!cond) return false;
-  if (typeof cond === "string") {
-    try { cond = JSON.parse(cond); } catch (e) { /*continuar*/ }
-  }
   if (!cond || !cond.tipo) return false;
-  const tipo = (cond.tipo || "").toString().toLowerCase();
+  const tipo = cond.tipo;
 
   switch (tipo) {
     case "login": {
@@ -16,20 +12,14 @@ async function evalCondition(cond, id_cliente) {
       const { count, error } = await supabase
         .from("actividad_diaria")
         .select("*", { count: "exact", head: true })
-        .in("tipo", ["login", "login_diario"]);
-      if (error) return false;
-      const { count: cnt, error: err2 } = await supabase
-        .from("actividad_diaria")
-        .select("*", { count: "exact", head: true })
         .eq("id_cliente", id_cliente)
         .in("tipo", ["login", "login_diario"]);
-      if (err2) return false;
-      return (cnt ?? 0) >= veces;
+      if (error) return false;
+      return (count ?? 0) >= veces;
     }
 
     case "streak": {
       const dias = cond.dias ?? 1;
-      //usuario_streak.streak_actual 
       const { data: srow, error: sErr } = await supabase
         .from("usuario_streak")
         .select("streak_actual")
@@ -53,7 +43,6 @@ async function evalCondition(cond, id_cliente) {
 
     case "nivel":
     case "xp_minimo": {
-      //'nivel' usa propiedad valor, 'xp_minimo' usa valor (xp total)
       if (tipo === "nivel") {
         const objetivo = cond.valor ?? cond.nivel ?? 1;
         const { data } = await supabase
@@ -78,18 +67,120 @@ async function evalCondition(cond, id_cliente) {
   }
 }
 
-/*verificar y retornar*/
+/** 
+ * Calcula progreso para cada tipo de condicion usando metricas precargadas
+ * metrics: { loginCount, ejerciciosOK, nivel, xp_total, streak_actual }
+ */
+function buildProgress(cond, metrics) {
+  if (!cond || !cond.tipo) return null;
+
+  switch (cond.tipo) {
+    case "login": {
+      const goal = cond.veces ?? 1;
+      const current = Math.min(metrics.loginCount ?? 0, goal);
+      return {
+        label: `Logins`,
+        current,
+        goal,
+        percent: Math.round((current / goal) * 100)
+      };
+    }
+
+    case "streak": {
+      const goal = cond.dias ?? 1;
+      const cur = Math.min(metrics.streak_actual ?? 0, goal);
+      return {
+        label: `Racha`,
+        current: cur,
+        goal,
+        percent: Math.round((cur / goal) * 100)
+      };
+    }
+
+    case "ejercicio_resuelto":
+    case "ejercicios_resueltos": {
+      const goal = cond.cantidad ?? 1;
+      const cur = Math.min(metrics.ejerciciosOK ?? 0, goal);
+      return {
+        label: `Ejercicios aceptados`,
+        current: cur,
+        goal,
+        percent: Math.round((cur / goal) * 100)
+      };
+    }
+
+    case "nivel": {
+      const goal = cond.valor ?? cond.nivel ?? 1;
+      const cur = Math.min(metrics.nivel ?? 1, goal);
+      return {
+        label: `Nivel`,
+        current: cur,
+        goal,
+        percent: Math.round((cur / goal) * 100)
+      };
+    }
+
+    case "xp_minimo": {
+      const goal = cond.valor ?? 0;
+      const cur = Math.min(metrics.xp_total ?? 0, goal);
+      const pct = goal > 0 ? Math.round((cur / goal) * 100) : 100;
+      return {
+        label: `XP total`,
+        current: cur,
+        goal,
+        percent: pct
+      };
+    }
+
+    default:
+      return null;
+  }
+}
+
+/*Metricas basicas para armar progreso sin N consultas por logro*/
+async function getUserProgressMetrics(id_cliente) {
+  const [loginAgg, ejerciciosAgg, xpRow, streakRow] = await Promise.all([
+    supabase
+      .from("actividad_diaria")
+      .select("*", { count: "exact", head: true })
+      .eq("id_cliente", id_cliente)
+      .in("tipo", ["login", "login_diario"]),
+    supabase
+      .from("submit_final")
+      .select("*", { count: "exact", head: true })
+      .eq("id_cliente", id_cliente)
+      .eq("resultado", true),
+    supabase
+      .from("usuario_xp")
+      .select("xp_total, nivel")
+      .eq("id_cliente", id_cliente)
+      .maybeSingle(),
+    supabase
+      .from("usuario_streak")
+      .select("streak_actual")
+      .eq("id_cliente", id_cliente)
+      .maybeSingle()
+  ]);
+
+  return {
+    loginCount: loginAgg?.count ?? 0,
+    ejerciciosOK: ejerciciosAgg?.count ?? 0,
+    xp_total: xpRow?.data?.xp_total ?? 0,
+    nivel: xpRow?.data?.nivel ?? 1,
+    streak_actual: streakRow?.data?.streak_actual ?? 0
+  };
+}
+
+/*Verifica y da logros faltantes */
 export async function checkAndGrantLogros(id_cliente) {
   if (!id_cliente) throw new Error("id_cliente requerido");
 
-  //leer logros activos
   const { data: logros, error: lErr } = await supabase
     .from("logro")
     .select("*")
     .eq("activo", true);
   if (lErr) throw lErr;
 
-  //logros ya otorgados
   const { data: userLogros, error: uErr } = await supabase
     .from("usuario_logro")
     .select("id_logro")
@@ -114,10 +205,13 @@ export async function checkAndGrantLogros(id_cliente) {
     const cumple = await evalCondition(condicion, id_cliente);
     if (!cumple) continue;
 
-    //intento insertar en usuario_logro (evitar duplicados)
     const { error: insErr } = await supabase
       .from("usuario_logro")
-      .insert({ id_cliente, id_logro: l.id_logro, fecha_otorgado: new Date().toISOString() });
+      .insert({
+        id_cliente,
+        id_logro: l.id_logro,
+        fecha_otorgado: new Date().toISOString(),
+      });
     if (insErr) {
       if (insErr.code && (insErr.code === "23505" || insErr.message?.includes("duplicate"))) {
         continue;
@@ -147,9 +241,47 @@ export async function checkAndGrantLogros(id_cliente) {
       xp_otorgado: xpToGive,
     });
 
-    //set para evitar reintentos 
     otorgadosSet.add(l.id_logro);
   }
 
   return nuevos;
+}
+
+/** 
+ * - obtenidos de user
+ * - defs: definiciones activas, con "unlocked" (bool) y "progress"({label,current,goal,percent})
+ */
+export async function getLogrosWithProgress(id_cliente) {
+  if (!id_cliente) throw new Error("id_cliente requerido");
+
+  const [{ data: obtenidosRaw }, { data: defsRaw }, metrics] = await Promise.all([
+    supabase
+      .from("usuario_logro")
+      .select("id_logro, fecha_otorgado, logro( id_logro, titulo, descripcion, icono, xp_otorgado, activo )")
+      .eq("id_cliente", id_cliente)
+      .order("fecha_otorgado", { ascending: false }),
+    supabase
+      .from("logro")
+      .select("*")
+      .eq("activo", true),
+    getUserProgressMetrics(id_cliente)
+  ]);
+
+  const obtenidos = (obtenidosRaw || []).map(u => ({
+    id_logro: u.id_logro,
+    fecha_otorgado: u.fecha_otorgado,
+    ...u.logro
+  }));
+
+  const obtainedSet = new Set(obtenidos.map(x => x.id_logro));
+
+  const defs = (defsRaw || []).map((l) => {
+    let cond = l.condicion;
+    try { if (typeof cond === "string") cond = JSON.parse(cond); } catch {}
+    const progress = buildProgress(cond, metrics);
+    const unlocked = obtainedSet.has(l.id_logro);
+    return { ...l, unlocked, progress };
+  });
+
+  return { obtenidos, defs };
 }
