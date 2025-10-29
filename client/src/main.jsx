@@ -12,6 +12,8 @@ import Perfil from "./pages/perfil/perfil.jsx";
 import Oferta from "./pages/entrevistas/oferta.jsx";
 import Postulacion from "./pages/entrevistas/postulacion.jsx";
 import OfertaDetalle from "./pages/entrevistas/ofertaDetalle.jsx";
+import Torneo from "./pages/torneos/torneo.jsx";
+import TorneoDetalle from "./pages/torneos/torneoDetalle.jsx";
 
 import './index.css';
 
@@ -30,6 +32,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/entrevistas" element={<Oferta />} />
         <Route path="/entrevistas/mis-postulaciones" element={<Postulacion />} />
         <Route path="/entrevistas/oferta/:id" element={<OfertaDetalle />} />
+        <Route path="/torneos" element={<Torneo />} />
+        <Route path="/torneos/:id" element={<TorneoDetalle />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
