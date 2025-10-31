@@ -2,6 +2,7 @@ import express from "express";
 import { supabase } from "../config/db.js";
 import { otorgarXPUnaVezPorDia, desglosarXP   } from "../services/gamificacion.js";
 import { actualizarStreak } from "../services/streak.js";
+import { checkAndGrantLogros } from "../services/logros.js";
 
 const router = express.Router();
 
@@ -28,9 +29,18 @@ router.post("/login-xp", async (req, res) => {
       streakRes = { otorga: false, streak: 0, streak_max: 0, xp: 0 };
     }
 
+    //Logros
+    let nuevosLogros = [];
+    try {
+      nuevosLogros = await checkAndGrantLogros(id_cliente);
+    } catch (e) {
+      console.warn("[login-xp] checkAndGrantLogros fallo:", e);
+      nuevosLogros = [];
+    }
+
     //rewards
     const reward_login = loginXP?.otorgado
-      ? { amount: loginXP?.xp ?? loginXP?.xp_otorgado ?? 5, icon: "💎" }
+      ? { amount: loginXP?.xp_otorgado ?? 0, icon: "💎" }
       : null;
 
     const reward_streak = (streakRes?.otorga && streakRes.streak >= 2)
@@ -45,6 +55,7 @@ router.post("/login-xp", async (req, res) => {
       reward_streak,
       streak: streakRes.streak,
       streak_max: streakRes.streak_max,
+      nuevosLogros 
     });
   } catch (e) {
     console.error("[login-xp] error:", e);

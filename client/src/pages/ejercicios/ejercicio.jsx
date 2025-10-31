@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Editor from "@monaco-editor/react";
 import useAuth from "../../hooks/useAuth";
 import confetti from "canvas-confetti";
+import { toast } from "sonner";
 import "./ejercicio.css";
 
 function Ejercicio() {
@@ -220,6 +221,12 @@ function Ejercicio() {
                     reward: String(data.reward.amount),
                     icon: data.reward.icon || "⭐",
                 }).toString();
+
+                if (Array.isArray(data?.nuevosLogros) && data.nuevosLogros.length) {
+                    data.nuevosLogros.forEach(l => {
+                        toast.success(`¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`);
+                    });
+                }
 
                 navigate(`/resultado/${idSubmit}?${qs}`, {
                     replace: false,

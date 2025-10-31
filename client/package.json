@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.1.0",
     "@monaco-editor/react": "^4.7.0",
     "@supabase/supabase-js": "^2.57.4",
     "ace-builds": "^1.43.3",

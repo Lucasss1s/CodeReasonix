@@ -252,13 +252,12 @@ async function cumpleCondicion(cond, id_cliente) {
 
 export async function otorgarXPUnaVezPorDia({
   id_cliente,
-  tipoActividad,           // 'login' | 'resolver_ejercicio' | etc.
+  tipoActividad,           
   xp,
   motivo = {}
 }) {
   const hoy = new Date().toISOString().slice(0, 10);
 
-  // ¿Ya existe actividad de este tipo hoy?
   const { data: ya, error: errSel } = await supabase
     .from("actividad_diaria")
     .select("id_cliente")
@@ -266,15 +265,15 @@ export async function otorgarXPUnaVezPorDia({
     .eq("fecha", hoy)
     .eq("tipo", tipoActividad)
     .limit(1);
+
   if (errSel) throw errSel;
 
   if (ya && ya.length > 0) {
-    // Ya se otorgó hoy: devolvemos estado sin volver a sumar
     const { data: ux } = await supabase
       .from("usuario_xp")
       .select("xp_total, nivel")
       .eq("id_cliente", id_cliente)
-      .single();
+      .maybeSingle();
     return {
       otorgado: false,
       xp_otorgado: 0,
@@ -283,16 +282,35 @@ export async function otorgarXPUnaVezPorDia({
     };
   }
 
-  // Registrar actividad del día y sumar XP
-  await registrarActividadDiaria({ id_cliente, tipo: tipoActividad, xpDelta: xp});
-  const res = await otorgarXP({
-    id_cliente,
-    cantidad: xp,
-    motivo
-  });
 
-  return {
-    otorgado: true,
-    ...res
-  };
+  try {
+    //registramos la actividad del dia
+    await registrarActividadDiaria({ id_cliente, tipo: tipoActividad, xpDelta: xp});
+
+    const res = await otorgarXP({
+      id_cliente,
+      cantidad: xp,
+      motivo
+    });
+
+    return {
+      otorgado: true,
+      ...res
+    };
+  } catch (e) {
+    if (e && (e.code === "23505" || (e.details && e.details.includes("already exists")))) {
+      const { data: ux } = await supabase
+        .from("usuario_xp")
+        .select("xp_total, nivel")
+        .eq("id_cliente", id_cliente)
+        .maybeSingle();
+      return {
+        otorgado: false,
+        xp_otorgado: 0,
+        xp_total: ux?.xp_total ?? 0,
+        nivel: ux?.nivel ?? 1
+      };
+    }
+    throw e;
+  }
 }

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const JUDGE0_URL = 'https://judge0-ce.p.rapidapi.com';
-const RAPIDAPI_KEY = '29065a868emsh13cecf10fc91f34p1962d0jsnfcaadee611d4'; // key
+const RAPIDAPI_KEY = '800ed4197dmshe7f9439f952fe25p12c155jsn3a993b9627e6'; // key
 const RAPIDAPI_HOST = 'judge0-ce.p.rapidapi.com';
 
 const lenguajeMap = {

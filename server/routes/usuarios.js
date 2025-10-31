@@ -154,4 +154,49 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from('usuario')
+      .select('id_usuario, nombre, email, estado, fecha_registro')
+      .eq('id_usuario', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json(data);
+  } catch (err) {
+    console.error('Error obteniendo usuario:', err);
+    res.status(500).json({ error: 'Error obteniendo usuario' });
+  }
+});
+
+router.get('/by-cliente/:id_cliente', async (req, res) => {
+  const { id_cliente } = req.params;
+  try {
+    const { data: cli, error: cliErr } = await supabase
+      .from('cliente')
+      .select('id_usuario')
+      .eq('id_cliente', id_cliente)
+      .single();
+    if (cliErr) throw cliErr;
+    if (!cli) return res.status(404).json({ error: 'Cliente no encontrado' });
+
+    const { data: usr, error: usrErr } = await supabase
+      .from('usuario')
+      .select('id_usuario, nombre, email, estado, fecha_registro')
+      .eq('id_usuario', cli.id_usuario)
+      .single();
+    if (usrErr) throw usrErr;
+    if (!usr) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    res.json(usr);
+  } catch (err) {
+    console.error('Error resolviendo usuario por cliente:', err);
+    res.status(500).json({ error: 'Error resolviendo usuario por cliente' });
+  }
+});
+
+
 export default router;
