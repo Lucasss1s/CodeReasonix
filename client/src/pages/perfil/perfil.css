@@ -239,3 +239,43 @@
   position:absolute !important; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden;
   clip:rect(0 0 0 0); border:0;
 }
+
+/* ===== Header: nombre y username ===== */
+.p-displayname{ margin:0 0 2px 0; font-size:1.6rem; letter-spacing:.2px; }
+.p-username{ color:var(--p-sub); font-size:.95rem; }
+
+/* Icon button redondo (Ajustes) */
+.p-iconbtn{
+  background:#0b1020; border:1px solid var(--p-border); color:#cbd5e1;
+  width:38px; height:38px; border-radius:10px; cursor:pointer;
+}
+.p-iconbtn--round{ border-radius:999px; }
+
+/* Avatar mejorado: overlay y botones ubicados */
+.p-avatar{ position:relative; width:88px; height:88px; cursor:pointer; }
+.p-avatar::after{
+  content:""; position:absolute; inset:0; border-radius:50%;
+  box-shadow:inset 0 0 0 0 rgba(255,122,0,.35); transition:box-shadow .18s ease, transform .18s ease;
+}
+.p-avatar:hover::after{ box-shadow:inset 0 0 0 3px rgba(255,122,0,.28); transform:scale(1.01); }
+
+.p-avatar__upload{
+  position:absolute; bottom:-6px; right:-6px; cursor:pointer;
+}
+.p-avatar__remove{
+  position:absolute; left:-6px; bottom:-6px; cursor:pointer;
+}
+
+/* Drag over del avatar */
+.p-avatar.is-dragover { outline: 2px dashed var(--p-accent); outline-offset: 4px; }
+
+/* Spinner mientras sube */
+.p-avatar.is-uploading::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.15); border-top-color: var(--p-accent);
+  animation: p-spin 1s linear infinite;
+}
+@keyframes p-spin { to { transform: rotate(360deg); } }
+
+
+

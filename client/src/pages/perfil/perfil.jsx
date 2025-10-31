@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import Navbar from "../../components/Navbar";
 import useGamificacion from "../../hooks/useGamificacion";
 import useAchievements from "../../hooks/useAchievements";
 import AchievementGrid from "../../components/AchievementGrid";
+import AccountSettingsModal from "../../components/AccountSettingsModal";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import "../../components/achievement.css";
 import "./perfil.css";
 
@@ -36,7 +38,7 @@ const stringifySocials = (arr) => {
   try { return JSON.stringify(arr); } catch { return (arr || []).join(", "); }
 };
 
-/* barra progreso */
+/*barra progreso */
 function ProgressBar({ current, total }) {
   const pct = Math.max(0, Math.min(100, total > 0 ? (current / total) * 100 : 0));
   return (
@@ -48,7 +50,7 @@ function ProgressBar({ current, total }) {
   );
 }
 
-/* Drawer feed */
+
 function FeedDrawer({ open, onClose, feed }) {
   if (!open) return null;
   return (
@@ -82,7 +84,16 @@ function FeedDrawer({ open, onClose, feed }) {
 }
 
 export default function Perfil() {
-  const [perfil, setPerfil] = useState({ biografia: "", skills: "", redes_sociales: "", foto_perfil: "" });
+  const [perfil, setPerfil] = useState({
+    biografia: "",
+    skills: "",
+    redes_sociales: "",
+    foto_perfil: "",
+    display_name: "",
+    nombre: "",
+    apellido: "",
+    username: ""
+  });
   const [mensaje, setMensaje] = useState("");
   const [preview, setPreview] = useState(null);
   const [editMode, setEditMode] = useState(false);
@@ -91,11 +102,13 @@ export default function Perfil() {
   const [feedOpen, setFeedOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [usuario, setUsuario] = useState({ id_usuario: null, nombre: "", email: "" });
 
   const id_cliente = useMemo(() => parseInt(localStorage.getItem("cliente") || "0", 10), []);
-  const { data: gami, loading: gLoading } = useGamificacion(id_cliente);
-
-  const { loading: aLoading, error: aError, defs, unlocked, locked, recalc } = useAchievements(id_cliente);
+  const { data: gami, loading: gLoading, error: gError, refetch } = useGamificacion(id_cliente);
+  const { loading: aLoading, error: aError, defs, unlocked, locked, refresh, recalc } = useAchievements(id_cliente);
+  const [checking, setChecking] = useState(false);
 
   const avatarDropRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -103,37 +116,39 @@ export default function Perfil() {
   const cargarPerfil = async () => {
     if (!id_cliente) return;
     try {
-      const res = await axios.get(`http://localhost:5000/perfil/${id_cliente}`);
-      const p = res.data || {};
-      setPerfil(p);
+      const [pRes, uRes] = await Promise.all([
+        axios.get(`http://localhost:5000/perfil/${id_cliente}`),
+        axios.get(`http://localhost:5000/usuarios/by-cliente/${id_cliente}`)
+      ]);
+
+      const p = pRes.data || {};
+      setPerfil((prev) => ({ ...prev, ...p }));
       if (p?.foto_perfil) setPreview(p.foto_perfil);
       setSocials(parseSocials(p?.redes_sociales));
+
+      const u = uRes.data || {};
+      setUsuario({
+        id_usuario: u.id_usuario ?? null,
+        nombre: u.nombre ?? "",
+        email: u.email ?? ""
+      });
     } catch (err) {
-      console.error("Error cargando perfil:", err);
+      console.error("Error cargando perfil/usuario:", err);
     }
   };
 
-  useEffect(() => { cargarPerfil(); }, []);
 
-  //Recalcular logros cuando se entra
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const r = await recalc();
-      if (!mounted) return;
-      if (Array.isArray(r?.nuevos) && r.nuevos.length) {
-        r.nuevos.forEach((l) => {
-          toast.success(`¡Logro desbloqueado! ${l.icono || "🏆"} ${l.titulo}${l.xp_otorgado ? ` (+${l.xp_otorgado} XP)` : ""}`);
-        });
-      }
-    })();
-    return () => { mounted = false; };
-  }, [recalc]);
+  useEffect(() => { cargarPerfil(); }, []);
 
   const handleSave = async () => {
     try {
       setSavingProfile(true);
-      const body = { ...perfil, redes_sociales: stringifySocials(socials) };
+      const body = {
+        biografia: perfil.biografia ?? "",
+        skills: perfil.skills ?? "",
+        redes_sociales: stringifySocials(socials),
+        foto_perfil: perfil.foto_perfil ?? null
+      };
       await axios.put(`http://localhost:5000/perfil/${id_cliente}`, body);
       setMensaje("Perfil actualizado ✅");
       setEditMode(false);
@@ -145,6 +160,7 @@ export default function Perfil() {
       setSavingProfile(false);
     }
   };
+
 
   const handleCancel = () => { setEditMode(false); cargarPerfil(); };
 
@@ -160,11 +176,10 @@ export default function Perfil() {
       const url = res.data?.url;
       setPerfil((p) => ({ ...p, foto_perfil: url }));
       setPreview(url);
-      setMensaje("Foto actualizada ✅");
-      setTimeout(() => setMensaje(""), 1200);
+      toast.success("Foto actualizada");
     } catch (err) {
       console.error("Error subiendo foto:", err);
-      setMensaje("Error al subir la foto ❌");
+      toast.error("Error al subir la foto");
     } finally {
       setUploading(false);
     }
@@ -175,12 +190,7 @@ export default function Perfil() {
     await doUpload(file);
   };
 
-  const handleAvatarClick = () => {
-    if (uploading) return;
-    fileInputRef.current?.click();
-  };
-
-  // Drag&drop avatar
+  //avatar
   useEffect(() => {
     const el = avatarDropRef.current;
     if (!el) return;
@@ -198,17 +208,20 @@ export default function Perfil() {
     };
   }, []);
 
+  const handleAvatarClick = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
   const handleRemovePhoto = async () => {
     try {
       setUploading(true);
-      await axios.put(`http://localhost:5000/perfil/${id_cliente}`, { ...perfil, foto_perfil: null });
+      await axios.put(`http://localhost:5000/perfil/${id_cliente}`, { foto_perfil: null });
       setPreview(null);
       setPerfil((p) => ({ ...p, foto_perfil: null }));
-      setMensaje("Foto eliminada ✅");
-      setTimeout(() => setMensaje(""), 1200);
+      toast.success("Foto eliminada");
     } catch (e) {
       console.error(e);
-      setMensaje("No se pudo eliminar la foto ❌");
+      toast.error("No se pudo eliminar la foto");
     } finally {
       setUploading(false);
     }
@@ -231,66 +244,88 @@ export default function Perfil() {
   const hoy = gami?.hoy ?? {};
   const streak = gami?.streak ?? 0;
 
+  const handleRecalc = async () => {
+    setChecking(true);
+    try {
+      const r = await recalc();
+      if (Array.isArray(r?.nuevos) && r.nuevos.length) {
+        r.nuevos.forEach((l) => {
+          toast.success(`¡Logro desbloqueado! ${l.icono || "🏆"} ${l.titulo}${l.xp_otorgado ? ` (+${l.xp_otorgado} XP)` : ""}`);
+        });
+      } else {
+        toast.info("Sin nuevos logros por ahora.");
+      }
+      await refresh();
+    } finally {
+      setChecking(false);
+    }
+  };
+
   return (
     <>
       <Navbar />
       <div className="p-page">
         <div className="p-wrap">
-          {/* Header */}
+          {/*Header*/}
           <header className="p-header">
             <div className="p-header__left">
               <div
-                className={`p-avatar ${uploading ? "is-uploading" : ""} ${preview ? "has-photo" : ""}`}
+                className={`p-avatar ${uploading ? "is-uploading" : ""}`}
                 ref={avatarDropRef}
+                onClick={handleAvatarClick}
                 role="button"
                 tabIndex={0}
-                onClick={handleAvatarClick}
                 onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleAvatarClick()}
-                aria-label="Cambiar foto de perfil"
-                title="Click o arrastrá una imagen para actualizar tu foto"
+                title="Clic o arrastrá una imagen para actualizar tu foto"
               >
-                {preview ? (
-                  <img src={preview} alt="Avatar" />
-                ) : (
-                  <div className="p-avatar__ph"><i className="fa-solid fa-user" /></div>
-                )}
+                {preview ? <img src={preview} alt="Avatar" /> : <div className="p-avatar__ph"><i className="fa-solid fa-user" /></div>}
 
-                {/* Overlay cam */}
-                <div className="p-avatar__overlay">
-                  <i className="fa-solid fa-camera" aria-hidden="true" />
-                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} hidden />
 
-                {/* Quitar foto sio hay*/}
+                <button
+                  className="p-btn p-btn--tiny p-btn--ghost p-avatar__upload"
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleAvatarClick(); }}
+                  aria-label="Cambiar foto de perfil"
+                  title="Cambiar foto de perfil"
+                >
+                  <i className="fa-solid fa-camera" />
+                </button>
+
                 {preview && (
                   <button
-                    className="p-avatar__remove"
+                    className="p-btn p-btn--tiny p-btn--ghost p-avatar__remove"
+                    type="button"
                     onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }}
+                    disabled={uploading}
                     title="Quitar foto"
                     aria-label="Quitar foto"
-                    disabled={uploading}
                   >
-                    <i className="fa-solid fa-xmark" />
+                    <i className="fa-solid fa-trash" />
                   </button>
                 )}
-
-                {/* Input hidden */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="visually-hidden"
-                />
               </div>
 
               <div className="p-user">
-                <h1>Mi Perfil</h1>
+                <h1>
+                  {(perfil.display_name || "").trim() || usuario.nombre || "Mi Perfil"}
+                </h1>
+                {!!(perfil.username || "").trim() && (
+                  <div className="p-muted" style={{ fontSize: 13 }}>
+                    @{perfil.username.trim()}
+                  </div>
+                )}
               </div>
+
+
             </div>
 
             <div className="p-header__right">
               {!editMode ? (
                 <div className="p-actions">
+                  <button className="p-iconbtn p-iconbtn--round" title="Ajustes de cuenta" onClick={() => setSettingsOpen(true)}>
+                    <i className="fa-solid fa-gear" />
+                  </button>
                   <button className="p-btn" onClick={() => setEditMode(true)}>
                     <i className="fa-solid fa-pen" /> Editar
                   </button>
@@ -310,11 +345,11 @@ export default function Perfil() {
 
           {mensaje && <div className="p-alert">{mensaje}</div>}
 
-          {/* Grid principal*/}
+          {/* Grid principal */}
           <div className="p-grid">
-            {/* LEFT */}
+            {/* Left */}
             <section className="p-card">
-              {/*Bio */}
+              {/* Bio*/}
               <div className="p-block">
                 <div className="p-block__head">
                   <h3>Biografía</h3>
@@ -344,12 +379,12 @@ export default function Perfil() {
                     {skillsArr.length > 0 ? skillsArr.map((s, i) => <span className="p-tag" key={i}>{s}</span>) : <span className="p-muted">Sin skills cargadas.</span>}
                   </div>
                 ) : (
-                  <input className="p-input" placeholder="Separá por coma. Ej: JavaScript, React, SQL, Node, Arduino"
+                  <input className="p-input" placeholder="Separá por coma. Ej: JavaScript, React, SQL, Node, Arduino" 
                     value={perfil.skills || ""} onChange={(e) => setPerfil({ ...perfil, skills: e.target.value })} />
                 )}
               </div>
 
-              {/* Redes */}
+              {/*Redes */}
               <div className="p-block">
                 <div className="p-block__head"><h3>Redes</h3></div>
                 {!editMode ? (
@@ -372,8 +407,9 @@ export default function Perfil() {
                 ) : (
                   <>
                     <div className="p-addsocial">
-                      <input className="p-input" placeholder="Pegá una URL: https://github.com/tuuser" value={newSocial} onChange={(e) => setNewSocial(e.target.value)}
-                              onKeyDown={(e) => e.key === "Enter" && addSocial()} />
+                      <input className="p-input" placeholder="Pegá una URL: https://github.com/tuuser"
+                            value={newSocial} onChange={(e) => setNewSocial(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && addSocial()} />
                       <button className="p-btn" onClick={addSocial}><i className="fa-solid fa-plus" /> Agregar</button>
                     </div>
                     <ul className="p-socials p-socials--edit">
@@ -393,13 +429,15 @@ export default function Perfil() {
                 )}
               </div>
 
-              {/* Logros*/}
+              {/* Logros */}
               <div className="p-block">
                 <div className="p-block__head">
                   <h3>Mis logros</h3>
-                  <span className="p-muted">
-                    {aLoading ? "Cargando…" : `${(unlocked?.length || 0)} desbloqueados · ${(locked?.length || 0)} por desbloquear`}
-                  </span>
+                  <div className="p-actions">
+                    <span className="p-muted" style={{ marginRight: 8 }}>
+                      {aLoading ? "Cargando…" : `${(unlocked?.length || 0)} desbloqueados · ${(locked?.length || 0)} por desbloquear`}
+                    </span>
+                  </div>
                 </div>
                 {aError && <div className="p-alert">Error logros: {aError}</div>}
                 {aLoading ? (
@@ -413,7 +451,9 @@ export default function Perfil() {
             {/* RIGHT */}
             <aside className="p-card p-card--right">
               <div className="p-block">
-                <div className="p-block__head"><h3>Progreso</h3></div>
+                <div className="p-block__head">
+                  <h3>Progreso</h3>
+                </div>
 
                 <div className="p-kpis">
                   <div className="p-kpi"><div className="p-kpi__label">Nivel</div><div className="p-kpi__value">{gLoading ? "…" : (gami?.nivel ?? 1)}</div></div>
@@ -466,7 +506,7 @@ export default function Perfil() {
                   <ul className="p-mini-feed">
                     {gami.feed.slice(0, 5).map((f, i) => (
                       <li key={i}>
-                        <span className="p-badge p-badge--xp">+{f.puntos} XP</span>
+                        <span className="p-mini-feed__xp">+{f.puntos} XP</span>
                         <span className="p-mini-feed__meta">{f.motivo?.tipo || "otro"}</span>
                         <time className="p-mini-feed__time">{new Date(f.fecha).toLocaleDateString()}</time>
                       </li>
@@ -480,6 +520,23 @@ export default function Perfil() {
       </div>
 
       <FeedDrawer open={feedOpen} onClose={() => setFeedOpen(false)} feed={gami?.feed || []} />
+
+      {/* Modal ajustes */}
+      <AccountSettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        id_cliente={id_cliente}
+        onIdentityUpdated={(partial) => {
+
+          if ("display_name" in partial || "username" in partial) {
+            setPerfil((prev) => ({ ...prev, ...partial }));
+          }
+
+          if ("nombre" in partial || "email" in partial) {
+            setUsuario((u) => ({ ...u, ...partial }));
+          }
+        }}
+      />
     </>
   );
 }

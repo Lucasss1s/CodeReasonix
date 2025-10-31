@@ -14,6 +14,7 @@ import Postulacion from "./pages/entrevistas/postulacion.jsx";
 import OfertaDetalle from "./pages/entrevistas/ofertaDetalle.jsx";
 
 import RewardOnRoute from './components/RewardOnRoute';
+import { Toaster } from "sonner";
 
 import './index.css';
 
@@ -21,6 +22,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <RewardOnRoute position="top-center" duration={2400} size="lg" />
+          <Toaster position="top-right" richColors closeButton />
 
       <Routes>
         <Route path="/" element={<Index />} />
