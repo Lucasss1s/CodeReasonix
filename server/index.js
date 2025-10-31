@@ -15,10 +15,6 @@ import gamificacionRoutes from "./routes/gamificacion.js";
 import empresaRouter from './routes/empresa.js';
 import ofertasRouter from './routes/ofertas.js';
 import postulacionesRouter from './routes/postulaciones.js';
-import torneoRouter from './routes/torneo.js';
-import rondaRouter from './routes/ronda.js';
-import resultadoRouter from './routes/resultado.js';
-import inscripcionRouter from './routes/inscripcion.js';
 
 const app = express(); // Instancia
 app.use(cors());
@@ -43,10 +39,6 @@ app.use('/empresas', empresaRouter);
 app.use('/ofertas', ofertasRouter);
 app.use('/postulaciones', postulacionesRouter);
 app.use("/gamificacion", gamificacionRoutes);
-app.use('/torneos', torneoRouter);
-app.use('/rondas', rondaRouter);
-app.use('/resultados', resultadoRouter);
-app.use('/inscripciones', inscripcionRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
