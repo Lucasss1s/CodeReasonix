@@ -89,6 +89,7 @@ export default function Navbar() {
                             <div className="menu-dropdown">
                                 <Link to="/perfil" className="dropdown-item">Ver Perfil</Link>
                                 <Link to="/entrevistas/mis-postulaciones" className="dropdown-item">Postulaciones</Link>
+                                <Link to="/mis-desafios" className="dropdown-item">Mis Desafíos</Link>
                                 <Link to="/logout" className="dropdown-item">Cerrar Sesión</Link>
                             </div>
                         )}

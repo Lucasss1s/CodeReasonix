@@ -16,9 +16,9 @@ import empresaRouter from './routes/empresa.js';
 import ofertasRouter from './routes/ofertas.js';
 import postulacionesRouter from './routes/postulaciones.js';
 import logrosRouter from "./routes/logros.js";
-import desafioRouter from './routes/desafios.js';
-import preguntaRouter from './routes/preguntas.js';
+import desafiosRouter from './routes/desafios.js';
 import desafioPreguntaRouter from './routes/desafioPregunta.js';
+import preguntasRouter from './routes/preguntas.js';
 import participanteDesafioRouter from './routes/participanteDesafio.js';
 import participantePreguntaRouter from './routes/participantePregunta.js';
 
@@ -46,11 +46,11 @@ app.use('/ofertas', ofertasRouter);
 app.use('/postulaciones', postulacionesRouter);
 app.use("/gamificacion", gamificacionRoutes);
 app.use("/logros", logrosRouter);
-app.use('/desafios', desafioRouter);
-app.use('/preguntas', preguntaRouter);
-app.use('/desafioPregunta', desafioPreguntaRouter);
-app.use('/participanteDesafio', participanteDesafioRouter);
-app.use('/participantePregunta', participantePreguntaRouter);
+app.use('/desafios', desafiosRouter);
+app.use('/desafio-pregunta', desafioPreguntaRouter);
+app.use('/preguntas', preguntasRouter);
+app.use('/participante-desafio', participanteDesafioRouter);
+app.use('/participante-pregunta', participantePreguntaRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

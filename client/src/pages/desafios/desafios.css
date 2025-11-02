@@ -29,7 +29,8 @@
 
 .boss-title { 
     margin:0 0 6px; 
-    font-size:18px; 
+    font-size:18px;
+    color: white !important;
 }
 
 .boss-desc { 

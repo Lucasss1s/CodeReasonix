@@ -40,7 +40,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/entrevistas/mis-postulaciones" element={<Postulacion />} />
         <Route path="/entrevistas/oferta/:id" element={<OfertaDetalle />} />
         <Route path="/desafios" element={<Desafio />} />
-        <Route path="/desafios/mis" element={<MisDesafios />} />
+        <Route path="/mis-desafios" element={<MisDesafios />} />
         <Route path="/desafios/:id" element={<DesafioDetalle />} />
       </Routes>
     </BrowserRouter>

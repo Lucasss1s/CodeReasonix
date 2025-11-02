@@ -89,7 +89,6 @@ export default function DesafioDetalle() {
     <>
       <Navbar />
       <div className="page-container">
-        <Link to="/desafios">← Volver a desafíos</Link>
 
         <div className="detalle-top">
           <div className="detalle-left">
