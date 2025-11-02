@@ -12,8 +12,11 @@ import Perfil from "./pages/perfil/perfil.jsx";
 import Oferta from "./pages/entrevistas/oferta.jsx";
 import Postulacion from "./pages/entrevistas/postulacion.jsx";
 import OfertaDetalle from "./pages/entrevistas/ofertaDetalle.jsx";
-
 import RewardOnRoute from './components/RewardOnRoute';
+import Desafio from "./pages/desafios/desafio.jsx";
+import DesafioDetalle from "./pages/desafios/desafioDetalle.jsx";
+import MisDesafios from "./pages/desafios/miDesafio.jsx";
+
 import { Toaster } from "sonner";
 
 import './index.css';
@@ -36,6 +39,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/entrevistas" element={<Oferta />} />
         <Route path="/entrevistas/mis-postulaciones" element={<Postulacion />} />
         <Route path="/entrevistas/oferta/:id" element={<OfertaDetalle />} />
+        <Route path="/desafios" element={<Desafio />} />
+        <Route path="/desafios/mis" element={<MisDesafios />} />
+        <Route path="/desafios/:id" element={<DesafioDetalle />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

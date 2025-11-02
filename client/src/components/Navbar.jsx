@@ -73,6 +73,7 @@ export default function Navbar() {
             <div className="nav-buttons">
                 <Link to="/comunidad" className="btn-nav">Comunidad</Link>
                 <Link to="/entrevistas" className="btn-nav">entrevistas</Link>
+                <Link to="/desafios" className="btn-nav">desafios</Link>
                 
                 <Link to="/" className="btn-nav">Inicio</Link>
 
