@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import EjercicioComentarios from "../../components/EjercicioComentarios.jsx";
 import Editor from "@monaco-editor/react";
 import useAuth from "../../hooks/useAuth";
 import confetti from "canvas-confetti";
@@ -25,6 +26,18 @@ function Ejercicio() {
     const isDragging = useRef(false);
     const [editorHeight, setEditorHeight] = useState(70);
     const isDraggingVertical = useRef(false);
+    const [commentCount, setCommentCount] = useState(0);
+    const [order, setOrder] = useState("recientes");
+    const [showComments, setShowComments] = useState(false);
+    const toggleComments = () => {
+    setShowComments(v => !v);
+    if (!showComments) {
+        setTimeout(() => {
+        document.getElementById("exercise-comments")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 0);
+    }
+    };
+
 
     // Cargar ejercicio 
     useEffect(() => {
@@ -42,7 +55,7 @@ function Ejercicio() {
         fetchEjercicio();
     }, [id]);
 
-    // -------- Cargar código guardado --------
+    //Cargar codigo guardado
     useEffect(() => {
         const fetchCodigoGuardado = async () => {
             if (!clienteId || !ejercicio) return;
@@ -70,7 +83,7 @@ function Ejercicio() {
         fetchCodigoGuardado();
     }, [clienteId, ejercicio, lenguaje]);
 
-    // -------- Guardado automático --------
+    //Guardar codigo automatico
     useEffect(() => {
         if (!clienteId || !ejercicio) return;
         if (codigo === undefined) return;
@@ -96,7 +109,23 @@ function Ejercicio() {
         return () => clearTimeout(timeout);
     }, [codigo, clienteId, ejercicio, lenguaje]);
 
-    // -------- Drag horizontal (panel izquierdo) --------
+    // Contador comentarios
+    useEffect(() => {
+        if (!id) return;
+        const loadCount = async () => {
+            try {
+            const res = await fetch(`http://localhost:5000/ejercicio-comentarios/${id}/count`);
+            if (!res.ok) return;
+            const { count } = await res.json();
+            setCommentCount(count ?? 0);
+            } catch (err) {
+                console.error("Error cargando numero comentarios:", err);
+            }
+        };
+        loadCount();
+        }, [id]);
+
+    //Drag horizontal (panel izquierdo)
     const startDrag = () => (isDragging.current = true);
     const stopDrag = () => (isDragging.current = false);
     const onDrag = (e) => {
@@ -107,7 +136,7 @@ function Ejercicio() {
         setLeftWidth(newWidth);
     };
 
-    // -------- Drag vertical (editor / resultados) --------
+    //Drag vertical (editor / resultados)
     const startVerticalDrag = () => (isDraggingVertical.current = true);
     const stopVerticalDrag = () => (isDraggingVertical.current = false);
     const onVerticalDrag = (e) => {
@@ -267,6 +296,57 @@ function Ejercicio() {
                         </div>
                     ))}
                 </div>
+
+                <div className="ej-toolbar">
+                <button
+                    className={`ej-icon ${showComments ? "is-active" : ""}`}
+                    onClick={toggleComments}
+                    title="Comentarios"
+                >
+                    <i className="fa-regular fa-comment"></i>
+                    {commentCount > 0 && <span className="ej-badge">{commentCount}</span>}
+                </button>
+
+                <button className="ej-icon" title="Pistas (próx)">
+                    <i className="fa-regular fa-lightbulb"></i>
+                </button>
+
+                <button className="ej-icon" title="Reportar bug (próx)">
+                    <i className="fa-regular fa-flag"></i>
+                </button>
+
+                <div className="ej-spacer" />
+
+                {showComments && (
+                    <div className="ej-filters">
+                    <button
+                        className={`ej-chip ${order === "recientes" ? "is-active" : ""}`}
+                        onClick={() => setOrder("recientes")}
+                        title="Más recientes"
+                    >
+                        <i className="fa-solid fa-arrow-down-short-wide"></i>
+                    </button>
+                    <button
+                        className={`ej-chip ${order === "populares" ? "is-active" : ""}`}
+                        onClick={() => setOrder("populares")}
+                        title="Más populares"
+                    >
+                        <i className="fa-solid fa-fire"></i>
+                    </button>
+                    </div>
+                )}
+                </div>
+
+                {showComments && (
+                <EjercicioComentarios
+                    idEjercicio={ejercicio.id_ejercicio}
+                    idCliente={clienteId}
+                    order={order}
+                    onCountChange={setCommentCount}
+                    showTitle={false}   
+                />
+                )}
+
             </div>
 
             <div className="drag-handle" onMouseDown={startDrag}></div>
