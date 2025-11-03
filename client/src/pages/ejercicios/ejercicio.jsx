@@ -6,6 +6,8 @@ import useAuth from "../../hooks/useAuth";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import "./ejercicio.css";
+import EjercicioPistas from "../../components/EjercicioPistas.jsx";
+
 
 function Ejercicio() {
     const { clienteId } = useAuth({ redirectToLogin: true });
@@ -37,6 +39,9 @@ function Ejercicio() {
         }, 0);
     }
     };
+    const [showPistas, setShowPistas] = useState(false);
+    const [pistasProgress, setPistasProgress] = useState({ unlocked: 0, total: 0 });
+
 
 
     // Cargar ejercicio 
@@ -297,6 +302,14 @@ function Ejercicio() {
                     ))}
                 </div>
 
+                {showPistas && (
+                    <EjercicioPistas
+                    idEjercicio={ejercicio.id_ejercicio}
+                    idCliente={clienteId}
+                    onProgress={setPistasProgress}
+                    />
+                )}
+
                 <div className="ej-toolbar">
                 <button
                     className={`ej-icon ${showComments ? "is-active" : ""}`}
@@ -307,8 +320,22 @@ function Ejercicio() {
                     {commentCount > 0 && <span className="ej-badge">{commentCount}</span>}
                 </button>
 
-                <button className="ej-icon" title="Pistas (próx)">
-                    <i className="fa-regular fa-lightbulb"></i>
+                <button
+                className={`ej-icon ${showPistas ? "is-active" : ""}`}
+                onClick={() => {
+                    setShowPistas(v => !v);
+                    if (!showPistas) {
+                    setTimeout(() => {
+                        document.getElementById("exercise-hints")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 0);
+                    }
+                }}
+                title="Pistas"
+                >
+                <i className="fa-regular fa-lightbulb"></i>
+                {pistasProgress.total > 0 && (
+                    <span className="ej-badge">{pistasProgress.unlocked}/{pistasProgress.total}</span>
+                )}
                 </button>
 
                 <button className="ej-icon" title="Reportar bug (próx)">

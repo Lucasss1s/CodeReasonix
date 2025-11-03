@@ -17,6 +17,7 @@ import ofertasRouter from './routes/ofertas.js';
 import postulacionesRouter from './routes/postulaciones.js';
 import logrosRouter from "./routes/logros.js";
 import ejercicioComentariosRouter from "./routes/ejercicioComentarios.js"
+import ejercicioPistasRouter from "./routes/ejercicioPistas.js"
 
 const app = express(); // Instancia
 app.use(cors());
@@ -43,6 +44,7 @@ app.use('/postulaciones', postulacionesRouter);
 app.use("/gamificacion", gamificacionRoutes);
 app.use("/logros", logrosRouter);
 app.use("/ejercicio-comentarios", ejercicioComentariosRouter);
+app.use("/ejercicio-pistas", ejercicioPistasRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

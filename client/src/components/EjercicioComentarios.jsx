@@ -217,7 +217,7 @@ export default function EjercicioComentarios({
 
       if (data.deleted) {
         toast.success("Comentario eliminado");
-        // refetch para sincronizar 
+        //refresh 
         await fetchComments();
       } else if (data.softDeleted) {
         toast.success("Comentario marcado como eliminado");
