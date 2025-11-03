@@ -52,7 +52,6 @@ export default function DesafioDetalle() {
   useEffect(() => {
     cargar();
     cargarParticipante();
-    // eslint-disable-next-line
   }, [id]);
 
   const handleInscribirse = async () => {
@@ -65,7 +64,6 @@ export default function DesafioDetalle() {
         id_desafio: Number(id),
         id_cliente: Number(id_cliente),
       });
-      // recargar participante y preguntas asignadas
       await cargarParticipante();
       if (res.data && res.data.preguntas && res.data.preguntas.length > 0) {
         setModalOpen(true);

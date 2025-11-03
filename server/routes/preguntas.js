@@ -3,7 +3,6 @@ import { supabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET /preguntas
 router.get('/', async (_req, res) => {
   try {
     const { data, error } = await supabase.from('pregunta').select('*').order('id_pregunta', { ascending: true });
@@ -15,7 +14,6 @@ router.get('/', async (_req, res) => {
   }
 });
 
-// GET /preguntas/:id
 router.get('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
@@ -28,8 +26,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /preguntas
-// body: { texto, opciones (object like {"A":"...","B":"...","C":"...","D":"..."}), correcta }
 router.post('/', async (req, res) => {
   try {
     const { texto, opciones, correcta } = req.body;
@@ -54,7 +50,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /preguntas/:id
 router.put('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
@@ -76,7 +71,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /preguntas/:id
 router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {

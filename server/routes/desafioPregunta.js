@@ -3,7 +3,6 @@ import { supabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET /desafio-pregunta?desafio=ID
 router.get('/', async (req, res) => {
   try {
     const { desafio } = req.query;
@@ -18,8 +17,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /desafio-pregunta
-// body: { id_desafio, id_pregunta, puntos }
 router.post('/', async (req, res) => {
   try {
     const { id_desafio, id_pregunta, puntos } = req.body;
@@ -35,7 +32,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE /desafio-pregunta/:id
 router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {

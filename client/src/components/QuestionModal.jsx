@@ -3,7 +3,6 @@ import axios from "axios";
 import "../pages/desafios/questionModal.css";
 
 export default function QuestionModal({ open, onClose, preguntas, onAnswerSent }) {
-  // preguntas: array of participante_pregunta rows including `desafio_pregunta` and `pregunta`
   const [answers, setAnswers] = useState({});
   const [sending, setSending] = useState(false);
 
@@ -20,7 +19,6 @@ export default function QuestionModal({ open, onClose, preguntas, onAnswerSent }
   const handleSubmit = async () => {
     setSending(true);
     try {
-      // enviar cada respuesta; el backend ignora respuestas vacías
       for (const p of preguntas) {
         const id = p.id_participante_pregunta;
         const respuesta = answers[id];
@@ -40,11 +38,11 @@ export default function QuestionModal({ open, onClose, preguntas, onAnswerSent }
   };
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="modal-card">
         <header className="modal-header">
           <h3>Responde tus preguntas</h3>
-          <button className="close-btn" onClick={onClose}>
+          <button className="close-btn" onClick={onClose} aria-label="Cerrar">
             ✕
           </button>
         </header>
@@ -55,7 +53,7 @@ export default function QuestionModal({ open, onClose, preguntas, onAnswerSent }
               <div className="q-number">Pregunta {idx + 1}</div>
               <div className="q-text">{p.pregunta?.texto}</div>
 
-              <div className="q-options">
+              <div className="q-options" role="radiogroup">
                 {p.pregunta &&
                   Object.entries(p.pregunta.opciones).map(([key, text]) => (
                     <label key={key} className="q-option">

@@ -3,7 +3,6 @@ import { supabase } from '../config/db.js';
 
 const router = express.Router();
 
-// GET /desafios
 router.get('/', async (_req, res) => {
   try {
     const { data, error } = await supabase
@@ -18,7 +17,6 @@ router.get('/', async (_req, res) => {
   }
 });
 
-// GET /desafios/:id
 router.get('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
@@ -28,7 +26,6 @@ router.get('/:id', async (req, res) => {
       .eq('id_desafio', id)
       .single();
     if (error) throw error;
-    // si hp_restante es null, devolvemos hp_total como hp_restante para consumo frontend
     if (data && (data.hp_restante === null || data.hp_restante === undefined)) {
       data.hp_restante = data.hp_total;
     }
@@ -39,7 +36,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /desafios
 router.post('/', async (req, res) => {
   try {
     const { nombre, descripcion, imagen_url, fecha_inicio, fecha_fin, estado, hp_total, hp_restante, recompensa_xp, recompensa_moneda } = req.body;
@@ -74,12 +70,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /desafios/:id
 router.put('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
     const body = req.body;
-    // normalizar campos numéricos si vienen
     if (body.hp_total !== undefined) body.hp_total = Number(body.hp_total);
     if (body.hp_restante !== undefined) body.hp_restante = Number(body.hp_restante);
     if (body.recompensa_xp !== undefined) body.recompensa_xp = Number(body.recompensa_xp);
@@ -100,7 +94,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /desafios/:id
 router.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {

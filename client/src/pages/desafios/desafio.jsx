@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../../components/Navbar";
 import BossCard from "../../components/BossCard";
-import "./desafios.css"; // mismo estilo que usás en otras páginas
+import "./desafios.css"; 
 
 export default function Desafios() {
   const [desafios, setDesafios] = useState([]);
@@ -26,7 +26,7 @@ export default function Desafios() {
     <>
       <Navbar />
       <div className="page-container">
-        <h1>Desafíos</h1>
+        <h1 className="titulo-desafio">Desafíos</h1>
         <div className="desafios-list">
           {desafios.length === 0 && <div className="vacio">No hay desafíos disponibles.</div>}
           {desafios.map((d) => (
