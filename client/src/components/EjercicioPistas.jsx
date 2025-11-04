@@ -20,11 +20,6 @@ export default function EjercicioPistas({ idEjercicio, idCliente, onProgress }) 
         [pistas]
     );
 
-    const reportProgress = (list = pistas) => {
-        const u = list.filter(p => p.unlocked).length;
-        onProgress?.({ unlocked: u, total: list.length });
-    };
-
     const fetchPistas = async () => {
         if (!idEjercicio) return;
         setLoading(true);

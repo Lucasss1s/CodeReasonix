@@ -41,6 +41,7 @@ export default function Index() {
             new CustomEvent("reward", { detail: { amount: total, icon, note } })
           );
         }
+      // eslint-disable-next-line 
       } catch (_) {}
     })();
   }, []);

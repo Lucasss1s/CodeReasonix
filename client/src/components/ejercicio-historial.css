@@ -1,0 +1,241 @@
+.hist-box {
+  margin-top: 24px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+/* head */
+.hist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;        
+  gap: 8px;
+}
+
+.hist-title {
+  margin: 0 0 8px;
+  font-weight: 600;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.hist-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;        
+  justify-content: flex-end;
+}
+
+.hist-filters select {
+  background: #1e1e1e;
+  color: #f5f5f5;
+  border: 1px solid #444;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* contenedor KPIs */
+.hist-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hist-kpis .kpi {
+  font-size: 13px;
+  background: #1e1e1e;
+  border: 1px solid #444;
+  color: #ddd;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.kpi .ok { color: #4caf50; }
+
+.hist-empty {
+  margin-top: 8px;
+  color: #bbb;
+  font-style: italic;
+}
+
+/*Barras */
+.hist-strip {
+  display: flex;
+  gap: 6px;
+  padding: 10px 0 6px;
+  overflow-x: auto;
+}
+
+.hist-chip {
+  width: 24px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #3a3a3a;
+  background: #222;
+  flex: 0 0 auto;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.hist-chip.ok   { background: rgba(76,175,80,.8);  border-color: #2e7d32; }
+.hist-chip.fail { background: rgba(231,76,60,.8);  border-color: #b71c1c; }
+.hist-chip.is-active { outline: 2px solid #3498db55; }
+
+/* LISTA */
+
+.hist-list {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hist-row {
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.hist-row-main {
+  display: grid;
+  grid-template-columns: 12px 1fr auto auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #777;
+}
+.dot.ok   { background: #4caf50; }
+.dot.fail { background: #e74c3c; }
+
+.date  { color: #ddd; font-size: 14px; }
+.lang  { color: #bbb; font-size: 13px; }
+.state.ok   { color: #4caf50; font-weight: 600; }
+.state.fail { color: #e74c3c; font-weight: 600; }
+.meta  { color: #aaa; font-size: 12px; }
+.caret { color: #888; }
+
+.hist-row-detail {
+  border-top: 1px solid #2a2a2a;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detail-meta {
+  color: #ddd;
+  font-size: 13px;
+  display: grid;
+  gap: 4px;
+}
+
+.detail-actions {
+  display: flex;
+  align-items: flex-start;
+}
+
+.hist-load-more {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.ex-btn {
+  padding: 8px 14px;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.ex-btn:hover    { background: #2980b9; transform: translateY(-1px); }
+.ex-btn:disabled { background: #777;    cursor: not-allowed; }
+
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1100px) {
+  .hist-head {
+    align-items: flex-start;
+  }
+
+  .hist-title {
+    flex: 1 1 100%;
+    margin-bottom: 4px;
+  }
+
+  .hist-filters {
+    justify-content: flex-start;
+  }
+
+  .hist-filters select {
+    flex: 1 1 120px;
+  }
+
+  .hist-kpis {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1100px) {
+  .hist-row-main {
+    display: flex;           
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .hist-row-main .dot {
+    margin-right: 6px;
+  }
+
+  .hist-row-main .date {
+    flex: 1 1 100%;
+  }
+
+  .hist-row-main .lang,
+  .hist-row-main .state {
+    font-size: 12px;
+  }
+
+  .hist-row-main .meta {
+    flex: 1 1 100%;
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+  .hist-row-main .caret {
+    margin-left: auto;
+  }
+
+  .hist-row-detail {
+    flex-direction: column;
+  }
+
+  .detail-actions {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 900px) {
+  .hist-chip {
+    width: 18px;
+    height: 14px;
+  }
+}

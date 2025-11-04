@@ -7,6 +7,8 @@ import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import "./ejercicio.css";
 import EjercicioPistas from "../../components/EjercicioPistas.jsx";
+import EjercicioHistorial from "../../components/EjercicioHistorial.jsx";
+import EjercicioBugReport from "../../components/EjercicioBugReport.jsx";
 
 
 function Ejercicio() {
@@ -21,27 +23,57 @@ function Ejercicio() {
     const [resumen, setResumen] = useState(null);
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [loadingFinal, setLoadingFinal] = useState(false);
-    const [error, setError] = useState(null);
+    // eslint-disable-next-line 
+    const [error, setError] = useState(null); 
     const [saving, setSaving] = useState(false);
-    const [leftWidth, setLeftWidth] = useState(40);
+    const [leftWidth, setLeftWidth] = useState(() => {
+        if (typeof window === "undefined") return 40;
+        const stored = window.localStorage.getItem("ej_leftWidth");
+        const num = stored != null ? Number(stored) : NaN;
+        if (!Number.isFinite(num)) return 40;
+        return Math.min(60, Math.max(25, num));
+    });
     const containerRef = useRef(null);
     const isDragging = useRef(false);
-    const [editorHeight, setEditorHeight] = useState(70);
+    const [editorHeight, setEditorHeight] = useState(() => {
+        if (typeof window === "undefined") return 70;
+        const stored = window.localStorage.getItem("ej_editorHeight");
+        const num = stored != null ? Number(stored) : NaN;
+        if (!Number.isFinite(num)) return 70;
+        return Math.min(90, Math.max(35, num));
+    });
+
     const isDraggingVertical = useRef(false);
     const [commentCount, setCommentCount] = useState(0);
     const [order, setOrder] = useState("recientes");
     const [showComments, setShowComments] = useState(false);
-    const toggleComments = () => {
-    setShowComments(v => !v);
-    if (!showComments) {
-        setTimeout(() => {
-        document.getElementById("exercise-comments")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 0);
-    }
-    };
     const [showPistas, setShowPistas] = useState(false);
     const [pistasProgress, setPistasProgress] = useState({ unlocked: 0, total: 0 });
-
+    const [showHistorial, setShowHistorial] = useState(false);
+    const [histCount,   setHistCount]   = useState(0);
+    const handleLoadFromHistory = ({ lenguaje: lang, codigo: code }) => {
+        try {
+            if (lang && lang !== lenguaje) setLenguaje(lang);
+            if (typeof code === "string") setCodigo(code);
+        } catch (e) {
+            console.error("LoadFromHistory fail:", e);
+        }
+    };
+    const openOnly = (which) => {
+        setShowComments(which === "comments");
+        setShowPistas(which === "pistas");
+        setShowHistorial(which === "historial");
+        const anchorId =
+            which === "comments" ? "exercise-comments" :
+            which === "pistas" ? "exercise-hints" :
+            which === "historial" ? "exercise-history" : null;
+        if (anchorId) {
+            setTimeout(() => {
+            document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 0);
+        }
+    };
+    const [showBugReport, setShowBugReport] = useState(false);
 
 
     // Cargar ejercicio 
@@ -128,7 +160,70 @@ function Ejercicio() {
             }
         };
         loadCount();
-        }, [id]);
+    }, [id]);
+
+    // Contador pistas
+    useEffect(() => {
+    if (!id || !clienteId) return;
+
+    const loadPistasProgress = async () => {
+        try {
+        const res = await fetch(
+            `http://localhost:5000/ejercicio-pistas/${id}/progress?cliente=${clienteId}`
+        );
+
+        if (!res.ok) {
+            let body = null;
+            try {
+            body = await res.json();
+            // eslint-disable-next-line 
+            } catch (_) {}
+            console.error("Error pistas progress:", res.status, body);
+            return;
+        }
+
+        const data = await res.json();
+        setPistasProgress({
+            total: data.total ?? 0,
+            unlocked: data.unlocked ?? 0,
+        });
+        } catch (e) {
+        console.error("Error cargando progreso de pistas:", e);
+        }
+    };
+
+    loadPistasProgress();
+    }, [id, clienteId]);
+
+    // Contador historial 
+    useEffect(() => {
+    if (!id || !clienteId) return;
+
+    const loadHistCount = async () => {
+        try {
+        const res = await fetch(
+            `http://localhost:5000/historial/${clienteId}/ejercicio/${id}/count`
+        );
+        if (!res.ok) {
+            let body = null;
+            try {
+            body = await res.json();
+            // eslint-disable-next-line 
+            } catch (_) {}
+            console.error("Error historial count:", res.status, body);
+            return;
+        }
+        const data = await res.json();
+        setHistCount(data.count ?? 0);
+        } catch (e) {
+        console.error("Error cargando historial count:", e);
+        }
+    };
+
+    loadHistCount();
+    }, [id, clienteId]);
+
+
 
     //Drag horizontal (panel izquierdo)
     const startDrag = () => (isDragging.current = true);
@@ -139,17 +234,23 @@ function Ejercicio() {
         let newWidth = ((e.clientX - bounds.left) / bounds.width) * 100;
         newWidth = Math.max(25, Math.min(60, newWidth));
         setLeftWidth(newWidth);
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem("ej_leftWidth", String(newWidth));
+        }
     };
 
     //Drag vertical (editor / resultados)
     const startVerticalDrag = () => (isDraggingVertical.current = true);
     const stopVerticalDrag = () => (isDraggingVertical.current = false);
     const onVerticalDrag = (e) => {
-    if (!isDraggingVertical.current || !containerRef.current) return;
-    const bounds = containerRef.current.getBoundingClientRect();
-    let newHeight = ((e.clientY - bounds.top) / bounds.height) * 100;
-    newHeight = Math.max(35, Math.min(90, newHeight));
-    setEditorHeight(newHeight);
+        if (!isDraggingVertical.current || !containerRef.current) return;
+        const bounds = containerRef.current.getBoundingClientRect();
+        let newHeight = ((e.clientY - bounds.top) / bounds.height) * 100;
+        newHeight = Math.max(35, Math.min(90, newHeight));
+        setEditorHeight(newHeight);
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem("ej_editorHeight", String(newHeight));
+        }
     };
     
 
@@ -310,40 +411,62 @@ function Ejercicio() {
                     />
                 )}
 
+                {showHistorial && (
+                    <EjercicioHistorial
+                        idEjercicio={ejercicio.id_ejercicio}
+                        idCliente={clienteId}
+                        onCountChange={setHistCount}
+                        onLoadFromHistory={handleLoadFromHistory}
+                    />
+                )}
+
                 <div className="ej-toolbar">
+                {/* Comentarios */}
                 <button
                     className={`ej-icon ${showComments ? "is-active" : ""}`}
-                    onClick={toggleComments}
+                    onClick={() => openOnly(showComments ? "" : "comments")}
                     title="Comentarios"
                 >
                     <i className="fa-regular fa-comment"></i>
                     {commentCount > 0 && <span className="ej-badge">{commentCount}</span>}
                 </button>
 
+                {/* Pistas */}
                 <button
-                className={`ej-icon ${showPistas ? "is-active" : ""}`}
-                onClick={() => {
-                    setShowPistas(v => !v);
-                    if (!showPistas) {
-                    setTimeout(() => {
-                        document.getElementById("exercise-hints")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }, 0);
-                    }
-                }}
-                title="Pistas"
+                    className={`ej-icon ${showPistas ? "is-active" : ""}`}
+                    onClick={() => openOnly(showPistas ? "" : "pistas")}
+                    title="Pistas"
                 >
-                <i className="fa-regular fa-lightbulb"></i>
-                {pistasProgress.total > 0 && (
-                    <span className="ej-badge">{pistasProgress.unlocked}/{pistasProgress.total}</span>
-                )}
+                    <i className="fa-regular fa-lightbulb"></i>
+                    {pistasProgress.total > 0 && (
+                    <span className="ej-badge">
+                        {pistasProgress.unlocked}/{pistasProgress.total}
+                    </span>
+                    )}
                 </button>
 
-                <button className="ej-icon" title="Reportar bug (próx)">
-                    <i className="fa-regular fa-flag"></i>
+                {/* Historial */}
+                <button
+                    className={`ej-icon ${showHistorial ? "is-active" : ""}`}
+                    onClick={() => openOnly(showHistorial ? "" : "historial")}
+                    title="Historial"
+                >
+                    <i className="fa-solid fa-clock-rotate-left"></i>
+                    {histCount > 0 && <span className="ej-badge">{histCount}</span>}
+                </button>
+
+                {/* Reporte bug */}
+                <button
+                className={`ej-icon ${showBugReport ? "is-active" : ""}`}
+                onClick={() => setShowBugReport(true)}
+                title="Reportar problema en este ejercicio"
+                >
+                <i className="fa-regular fa-flag"></i>
                 </button>
 
                 <div className="ej-spacer" />
 
+                {/* Filtros comentarios */}
                 {showComments && (
                     <div className="ej-filters">
                     <button
@@ -458,6 +581,15 @@ function Ejercicio() {
                         )}
                     </div>
                 </div>
+                {showBugReport && (
+                    <EjercicioBugReport
+                        idEjercicio={ejercicio.id_ejercicio}
+                        idCliente={clienteId}
+                        lenguaje={lenguaje}
+                        codigoActual={codigo}
+                        onClose={() => setShowBugReport(false)}
+                    />
+                    )}
             </div>
         </div>
     );

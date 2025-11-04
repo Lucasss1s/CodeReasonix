@@ -29,6 +29,7 @@ p {
     position: relative;
     display: flex;
     flex-direction: column;
+    min-width: 260px;
 }
 
 .ejercicio-header,

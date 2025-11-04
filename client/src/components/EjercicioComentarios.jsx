@@ -116,7 +116,9 @@ export default function EjercicioComentarios({
     }
   };
 
-  useEffect(() => { fetchComments(); }, [idEjercicio]);
+  useEffect(() => { fetchComments(); 
+    // eslint-disable-next-line 
+  }, [idEjercicio]);
 
   const handleSend = async () => {
     if (!idCliente) return toast.info("Tenés que iniciar sesión para comentar.");

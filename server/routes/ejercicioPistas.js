@@ -121,4 +121,53 @@ router.post("/:id_ejercicio/unlock", async (req, res) => {
     }
 });
 
+router.get("/:id_ejercicio/progress", async (req, res) => {
+    const { id_ejercicio } = req.params;
+    const id_cliente =
+        req.query.cliente || req.headers["x-client-id"] || req.headers["x-client"];
+
+    if (!id_cliente) {
+        return res.status(400).json({ error: "id_cliente requerido" });
+    }
+
+    try {
+        const { data: pistas, error: e1 } = await supabase
+        .from("ejercicio_pista")
+        .select("id_pista")
+        .eq("id_ejercicio", id_ejercicio)
+        .order("orden", { ascending: true });
+
+        if (e1) {
+        console.error("error e1 get pistas:", e1);
+        throw e1;
+        }
+
+        const total = pistas?.length || 0;
+        if (total === 0) {
+        return res.json({ total: 0, unlocked: 0 });
+        }
+
+        const idsPistas = pistas.map((p) => p.id_pista);
+
+        const { count: unlocked, error: e2 } = await supabase
+        .from("ejercicio_pista_vista")
+        .select("*", { count: "exact", head: true })
+        .eq("id_cliente", id_cliente)
+        .in("id_pista", idsPistas);
+
+
+        return res.json({
+        total,
+        unlocked: unlocked || 0,
+        });
+    } catch (err) {
+        console.error("progress fallo:", err?.message, err);
+        return res.status(500).json({
+        error: "No se pudo obtener el progreso de pistas",
+        details: err?.message,
+        });
+    }
+});
+
+
 export default router;

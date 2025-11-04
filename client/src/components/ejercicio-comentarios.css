@@ -42,6 +42,7 @@
   justify-content: flex-end;
 }
 
+/* Botón genérico */
 .ex-btn {
   background: #3498db;
   border: none;
@@ -59,6 +60,14 @@
   background: transparent;
   border: 1px solid #444;
   color: #eee;
+}
+
+.ex-btn--danger {
+  border-color: #c0392b;
+  color: #ffdddd;
+}
+.ex-btn--danger:hover {
+  background: rgba(192, 57, 43, 0.15);
 }
 
 .ex-empty {
@@ -109,12 +118,20 @@
 .ex-comment__body {
   margin: 6px 0 8px;
   white-space: pre-wrap;
+  word-break: break-word; 
 }
 
 .ex-comment__actions {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;      
+  gap: 8px;
   align-items: center;
+  font-size: 12px;
+}
+
+/* botones */
+.ex-comment__actions .ex-btn {
+  padding: 4px 10px;
   font-size: 12px;
 }
 
@@ -139,14 +156,7 @@
   align-items: center;
 }
 
-.ex-btn--danger {
-  border-color: #c0392b;
-  color: #ffdddd;
-}
-.ex-btn--danger:hover {
-  background: rgba(192, 57, 43, 0.15);
-}
-
+/* Comentario eliminado */
 .ex-comment.is-deleted {
   opacity: 0.8;
   filter: grayscale(0.2);
@@ -156,3 +166,59 @@
   font-style: italic;
 }
 
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1100px) {
+  .ex-comment.is-reply {
+    margin-left: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  .ex-comment {
+    padding: 8px 10px;
+  }
+
+  .ex-comment__avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .ex-comment__header {
+    align-items: flex-start;
+  }
+
+  .ex-comment.is-reply {
+    margin-left: 14px;
+    border-left: 2px solid #333; 
+    padding-left: 8px;
+  }
+
+  .ex-comment__actions {
+    justify-content: flex-start;
+  }
+
+  .ex-replying {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .ex-comments-box {
+    padding: 12px;
+  }
+
+  .ex-title {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .ex-input {
+    font-size: 13px;
+  }
+
+  .ex-form__actions {
+    justify-content: flex-start;
+  }
+}
