@@ -16,17 +16,34 @@ export default function QuestionModal({ open, onClose, preguntas, onAnswerSent }
     setAnswers((prev) => ({ ...prev, [id]: val }));
   };
 
+  const allRespondidas = preguntas.length > 0 && preguntas.every(p => p.respondida === true);
+
   const handleSubmit = async () => {
     setSending(true);
     try {
+      if (allRespondidas) {
+        setSending(false);
+        return;
+      }
+
+      let sentAny = false;
       for (const p of preguntas) {
         const id = p.id_participante_pregunta;
+        if (p.respondida) continue;
         const respuesta = answers[id];
         if (!respuesta) continue;
+        sentAny = true;
         await axios.post(`http://localhost:5000/participante-pregunta/${id}/respond`, {
           respuesta,
         });
       }
+
+      if (!sentAny) {
+        alert("Seleccioná al menos una opción antes de enviar.");
+        setSending(false);
+        return;
+      }
+
       onAnswerSent && (await onAnswerSent());
       onClose();
     } catch (err) {
@@ -41,7 +58,7 @@ export default function QuestionModal({ open, onClose, preguntas, onAnswerSent }
     <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="modal-card">
         <header className="modal-header">
-          <h3>Responde tus preguntas</h3>
+          <h3>Responde tu pregunta</h3>
           <button className="close-btn" onClick={onClose} aria-label="Cerrar">
             ✕
           </button>
@@ -53,33 +70,50 @@ export default function QuestionModal({ open, onClose, preguntas, onAnswerSent }
               <div className="q-number">Pregunta {idx + 1}</div>
               <div className="q-text">{p.pregunta?.texto}</div>
 
-              <div className="q-options" role="radiogroup">
+              <div className="q-options">
                 {p.pregunta &&
                   Object.entries(p.pregunta.opciones).map(([key, text]) => (
-                    <label key={key} className="q-option">
+                    <label
+                      key={key}
+                      className={`q-option ${p.respondida ? 'disabled-option' : ''}`}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !p.respondida) handleChange(p.id_participante_pregunta, key); }}
+                    >
                       <input
                         type="radio"
                         name={`opt-${p.id_participante_pregunta}`}
                         value={key}
                         checked={answers[p.id_participante_pregunta] === key}
                         onChange={() => handleChange(p.id_participante_pregunta, key)}
+                        disabled={p.respondida}
+                        aria-label={`Opción ${key}`}
                       />
                       <span className="opt-label">
                         {key}. {text}
                       </span>
+                      {p.respondida && (
+                        <span style={{ marginLeft: 10 }}>
+                          {p.correcta ? <span className="badge-correct">✅</span> : <span className="badge-wrong">❌</span>}
+                        </span>
+                      )}
                     </label>
                   ))}
               </div>
             </div>
           ))}
+
+          {allRespondidas && (
+            <div className="vacio" style={{ marginTop: 12 }}>
+              Ya respondiste esta(s) pregunta(s).
+            </div>
+          )}
         </div>
 
         <footer className="modal-footer">
           <button className="btn-secondary" onClick={onClose} disabled={sending}>
-            Cancelar
+            Cerrar
           </button>
-          <button className="btn-primary" onClick={handleSubmit} disabled={sending}>
-            Enviar respuestas
+          <button className="btn-primary" onClick={handleSubmit} disabled={sending || allRespondidas}>
+            Enviar respuesta
           </button>
         </footer>
       </div>

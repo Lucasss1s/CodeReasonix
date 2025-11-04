@@ -4,7 +4,7 @@ import { supabase } from '../config/db.js';
 const router = express.Router();
 
 // helper: número de preguntas por inscripción (si querés cada usuario reciba 1 pregunta ahora, cambia a 1)
-const QUESTIONS_PER_PARTICIPANT = 1; 
+const QUESTIONS_PER_PARTICIPANT = 2; 
 
 router.post('/', async (req, res) => {
   try {

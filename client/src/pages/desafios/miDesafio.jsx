@@ -41,7 +41,7 @@ export default function MisDesafios() {
     <>
       <Navbar />
       <div className="page-container">
-        <h1 className="titulo-desafio">Mis Desafíos</h1>
+        <h1>Mis Desafíos</h1>
 
         {mis.length === 0 && <div className="vacio">No estás participando en ningún desafío.</div>}
 
