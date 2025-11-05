@@ -106,8 +106,12 @@ router.post('/:id/respond', async (req, res) => {
     if (updDesErr) throw updDesErr;
 
     let repartoIniciado = false;
+    let finalizado = false;
+    let ganadorId_cliente = null;
 
     if (newHp === 0 && desafioRow.estado === 'activo') {
+      ganadorId_cliente = partData.id_cliente || null;
+
       const { data: claimData, error: claimErr } = await supabase
         .from('desafio')
         .update({ estado: 'finalizando' })
@@ -129,10 +133,11 @@ router.post('/:id/respond', async (req, res) => {
           const monedaGiven = Number(desafioRow.recompensa_moneda || 0);
 
           for (const p of participants) {
-            await supabase
+            const { error: updRecErr } = await supabase
               .from('participante_desafio')
               .update({ recibio_recompensa: true })
               .eq('id_participante', p.id_participante);
+            if (updRecErr) console.warn('Error marcando recibio_recompensa:', updRecErr.message);
 
             const { data: ux, error: uxErr } = await supabase
               .from('usuario_xp')
@@ -185,9 +190,12 @@ router.post('/:id/respond', async (req, res) => {
           const { error: finalErr } = await supabase.from('desafio').update({ estado: 'finalizado' }).eq('id_desafio', dp.id_desafio);
           if (finalErr) console.warn('Error finalizando desafio:', finalErr.message);
 
+          finalizado = true;
+
         } catch (reErr) {
           console.error('Error repartiendo recompensas:', reErr);
           await supabase.from('desafio').update({ estado: 'finalizado' }).eq('id_desafio', dp.id_desafio);
+          finalizado = true;
         }
       }
     }
@@ -197,7 +205,9 @@ router.post('/:id/respond', async (req, res) => {
       correcta: esCorrecta,
       puntos_obtenidos: puntosObtenidos,
       hp_restante: newHp,
-      repartoIniciado
+      repartoIniciado,
+      finalizado,
+      ganadorId_cliente: ganadorId_cliente
     });
   } catch (err) {
     console.error('Error procesando respuesta:', err);

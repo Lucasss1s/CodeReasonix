@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../../components/Navbar";
@@ -11,8 +11,11 @@ export default function DesafioDetalle() {
   const [participante, setParticipante] = useState(null);
   const [preguntasAsignadas, setPreguntasAsignadas] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [preguntaActiva, setPreguntaActiva] = useState(null); 
+  const [preguntaActiva, setPreguntaActiva] = useState(null);
   const id_cliente = localStorage.getItem("cliente");
+
+  const imgRef = useRef(null);
+  const prevHpRef = useRef(null);
 
   const cargar = async () => {
     try {
@@ -22,8 +25,11 @@ export default function DesafioDetalle() {
         d.hp_restante = d.hp_total;
       }
       setDesafio(d);
+      if (prevHpRef.current == null) prevHpRef.current = d?.hp_restante ?? null;
+      return d;
     } catch (err) {
       console.error("Error cargando desafío:", err);
+      return null;
     }
   };
 
@@ -51,8 +57,11 @@ export default function DesafioDetalle() {
   };
 
   useEffect(() => {
-    cargar();
-    cargarParticipante();
+    (async () => {
+      const d = await cargar();
+      await cargarParticipante();
+      if (prevHpRef.current == null && d) prevHpRef.current = d.hp_restante ?? d.hp_total ?? null;
+    })();
     // eslint-disable-next-line
   }, [id]);
 
@@ -62,20 +71,12 @@ export default function DesafioDetalle() {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:5000/participante-desafio", {
+      await axios.post("http://localhost:5000/participante-desafio", {
         id_desafio: Number(id),
         id_cliente: Number(id_cliente),
       });
       await cargarParticipante();
-      if (res.data && res.data.preguntas && res.data.preguntas.length > 0) {
-        const notResponded = (res.data.preguntas || []).find(p => !p.respondida) || null;
-        if (notResponded) {
-          setPreguntaActiva(notResponded);
-          setModalOpen(true);
-          return;
-        }
-      }
-      alert("Inscripto correctamente.");
+      alert("Inscripto correctamente. Las preguntas asignadas aparecerán abajo.");
     } catch (err) {
       console.error("Error inscribiendo:", err);
       alert("No se pudo inscribir. Intenta nuevamente.");
@@ -88,11 +89,59 @@ export default function DesafioDetalle() {
     setModalOpen(true);
   };
 
-  const handleAfterAnswers = async () => {
-    await cargar();
-    await cargarParticipante();
-    setModalOpen(false);
-    setPreguntaActiva(null);
+  const handleAfterAnswers = async (results = []) => {
+    try {
+      await cargar();
+      await cargarParticipante();
+
+      setModalOpen(false);
+      setPreguntaActiva(null);
+
+      await new Promise((r) => setTimeout(r, 120));
+
+      const anyCorrect = Array.isArray(results) && results.some(r => r.correcta === true);
+      const anyIncorrect = Array.isArray(results) && results.some(r => r.correcta === false);
+
+      const imgNode = imgRef.current || document.querySelector('.detalle-image-center') || document.querySelector('.boss-image');
+      const hpFill = document.querySelector('.hp-fill');
+
+      if (hpFill) {
+        hpFill.classList.add('hp-pulse');
+        setTimeout(() => hpFill.classList.remove('hp-pulse'), 520);
+      }
+
+      if (anyCorrect) {
+        if (imgNode) {
+          imgNode.classList.remove('boss-anim-bounce','boss-anim-defeat','boss-flash-wrong');
+          imgNode.classList.add('boss-anim-damage');
+          setTimeout(() => imgNode.classList.remove('boss-anim-damage'), 900);
+        }
+      } else if (anyIncorrect) {
+        if (imgNode) {
+          imgNode.classList.remove('boss-anim-damage','boss-anim-defeat');
+          imgNode.classList.add('boss-anim-bounce','boss-flash-wrong');
+          setTimeout(() => imgNode.classList.remove('boss-anim-bounce','boss-flash-wrong'), 950);
+        }
+      }
+
+      const defeatHit = Array.isArray(results) && results.find(r => typeof r.nuevo_hp === "number" && r.nuevo_hp <= 0);
+      if (defeatHit && imgNode) {
+        setTimeout(() => {
+          imgNode.classList.remove('boss-anim-damage','boss-anim-bounce','boss-flash-wrong');
+          imgNode.classList.add('boss-anim-defeat');
+          setTimeout(() => imgNode.classList.remove('boss-anim-defeat'), 1400);
+        }, 350);
+      }
+
+      await cargar();
+      await cargarParticipante();
+    } catch (err) {
+      console.error("Error en handleAfterAnswers:", err);
+      await cargar();
+      await cargarParticipante();
+      setModalOpen(false);
+      setPreguntaActiva(null);
+    }
   };
 
   if (!desafio) return <div className="page-container">Cargando...</div>;
@@ -109,11 +158,12 @@ export default function DesafioDetalle() {
         <div className="detalle-card">
           <div className="detalle-header">
             <h1 className="detalle-titulo">{desafio.nombre}</h1>
+            <div className="detalle-sub" style={{ display: 'none' }}>{desafio.descripcion}</div>
           </div>
 
           <div className="detalle-media">
             {desafio.imagen_url ? (
-              <img src={desafio.imagen_url} alt="boss" className="detalle-image-center" />
+              <img ref={imgRef} src={desafio.imagen_url} alt="boss" className="detalle-image-center" />
             ) : (
               <div className="detalle-image-center placeholder">Boss</div>
             )}

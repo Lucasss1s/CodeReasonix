@@ -96,6 +96,8 @@
   object-fit: cover;
   border-radius: 12px;
   border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+  will-change: transform, filter;
 }
 
 .boss-image.placeholder {
@@ -354,6 +356,7 @@
   border-radius: 10px; 
 }
 
+/* inscripto badge sin brillo (se quitó box-shadow) */
 .inscripto-badge {
   background: linear-gradient(90deg,#4f46e5,#7c5cff);
   color: white;
@@ -361,6 +364,7 @@
   border-radius:999px;
   font-weight:600;
   display:inline-block;
+  box-shadow: none;
 }
 
 .preguntas-list { 
@@ -409,6 +413,83 @@
   pointer-events:none; 
 }
 
+/* === Animaciones del boss: daño (lado a lado), bounce (arriba-abajo), defeat === */
+
+/* Daño: movimiento horizontal (shake) */
+.detalle-image-center.boss-anim-damage,
+.boss-image.boss-anim-damage {
+  animation: boss-damage 0.66s cubic-bezier(.2,.8,.2,1) !important;
+  transform-origin: center !important;
+}
+@keyframes boss-damage {
+  0% { transform: translateX(0) scale(1); }
+  10% { transform: translateX(-10px) scale(1.02); }
+  25% { transform: translateX(10px) scale(1.01); }
+  45% { transform: translateX(-6px) scale(1.03); }
+  70% { transform: translateX(4px) scale(1.04); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+/* Bounce: movimiento vertical (no-damage / fallo) */
+.detalle-image-center.boss-anim-bounce,
+.boss-image.boss-anim-bounce {
+  animation: boss-bounce 0.68s cubic-bezier(.25,.8,.25,1) !important;
+  transform-origin: center !important;
+}
+@keyframes boss-bounce {
+  0% { transform: translateY(0) scale(1); }
+  20% { transform: translateY(-10px) scale(1.02); }
+  45% { transform: translateY(6px) scale(0.99); }
+  70% { transform: translateY(-4px) scale(1.01); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Defeat: achica y desvanece */
+.detalle-image-center.boss-anim-defeat,
+.boss-image.boss-anim-defeat {
+  animation: boss-defeat 0.95s cubic-bezier(.2,.9,.2,1) forwards !important;
+  transform-origin: center !important;
+}
+@keyframes boss-defeat {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  40%  { transform: scale(1.05) rotate(-6deg); opacity: 0.95; }
+  70%  { transform: scale(0.8) rotate(6deg); opacity: 0.6; }
+  100% { transform: scale(0.4) rotate(12deg); opacity: 0; }
+}
+
+/* HP pulse (para la barra) */
+.hp-fill.hp-pulse {
+  animation: hp-pulse 420ms ease !important;
+}
+@keyframes hp-pulse {
+  0% { transform: scaleX(1); }
+  50% { transform: scaleX(1.04); }
+  100% { transform: scaleX(1); }
+}
+
+/* pequeños estilos auxiliares que marcan el halo en fallo */
+.boss-flash-wrong {
+  box-shadow: 0 0 0 6px rgba(239,68,68,0.06) !important;
+  outline: 1px solid rgba(239,68,68,0.04) !important;
+}
+
+/* Respeta prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .detalle-image-center.boss-anim-damage,
+  .detalle-image-center.boss-anim-bounce,
+  .detalle-image-center.boss-anim-defeat,
+  .boss-image.boss-anim-damage,
+  .boss-image.boss-anim-bounce,
+  .boss-image.boss-anim-defeat,
+  .hp-fill.hp-pulse {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+
+/* small responsive tweaks for detail view */
 @media (max-width: 880px) {
   .detalle-image-center { width: 100%; max-width: 420px; height: auto; aspect-ratio: 1/1; }
   .hp-bar.full { width: 92%; }
@@ -439,4 +520,3 @@
   display: block !important;
   max-width: 100% !important;
 }
-

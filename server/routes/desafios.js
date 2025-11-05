@@ -5,10 +5,14 @@ const router = express.Router();
 
 router.get('/', async (_req, res) => {
   try {
+    const nowIso = new Date().toISOString();
     const { data, error } = await supabase
       .from('desafio')
       .select('*')
+      .eq('estado', 'activo')
+      .or(`fecha_fin.is.null,fecha_fin.gt.${nowIso}`)
       .order('fecha_inicio', { ascending: false });
+
     if (error) throw error;
     res.json(data);
   } catch (err) {
