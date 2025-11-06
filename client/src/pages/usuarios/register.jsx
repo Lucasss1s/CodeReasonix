@@ -13,6 +13,7 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
+      // eslint-disable-next-line 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,

@@ -21,6 +21,10 @@ import desafioPreguntaRouter from './routes/desafioPregunta.js';
 import preguntasRouter from './routes/preguntas.js';
 import participanteDesafioRouter from './routes/participanteDesafio.js';
 import participantePreguntaRouter from './routes/participantePregunta.js';
+import ejercicioComentariosRouter from "./routes/ejercicioComentarios.js"
+import ejercicioPistasRouter from "./routes/ejercicioPistas.js"
+import historialRouter from "./routes/historial.js";
+import ejercicioBugRouter from "./routes/ejercicioBug.js";
 
 const app = express(); // Instancia
 app.use(cors());
@@ -51,6 +55,10 @@ app.use('/desafio-pregunta', desafioPreguntaRouter);
 app.use('/preguntas', preguntasRouter);
 app.use('/participante-desafio', participanteDesafioRouter);
 app.use('/participante-pregunta', participantePreguntaRouter);
+app.use("/ejercicio-comentarios", ejercicioComentariosRouter);
+app.use("/ejercicio-pistas", ejercicioPistasRouter);
+app.use("/historial", historialRouter);
+app.use("/ejercicio-bug", ejercicioBugRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
