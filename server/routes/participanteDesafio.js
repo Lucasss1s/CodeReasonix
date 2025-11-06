@@ -1,10 +1,11 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
+import { nivelDesdeXP } from '../services/gamificacion.js'; 
 
 const router = express.Router();
 
 // helper: número de preguntas por inscripción (si querés cada usuario reciba 1 pregunta ahora, cambia a 1)
-const QUESTIONS_PER_PARTICIPANT = 2; 
+const QUESTIONS_PER_PARTICIPANT = 2;
 
 router.post('/', async (req, res) => {
   try {
@@ -152,6 +153,106 @@ router.get('/mis/:id_cliente', async (req, res) => {
   } catch (err) {
     console.error('Error obteniendo mis participaciones:', err);
     res.status(500).json({ error: 'Error obteniendo mis participaciones' });
+  }
+});
+
+router.post('/:id_participante/claim', async (req, res) => {
+  try {
+    const id_part = Number(req.params.id_participante);
+    if (!id_part || Number.isNaN(id_part)) {
+      return res.status(400).json({ error: 'id_participante inválido' });
+    }
+
+    const { data: partRow, error: partErr } = await supabase
+      .from('participante_desafio')
+      .select('*, desafio(id_desafio, estado, recompensa_xp, recompensa_moneda)')
+      .eq('id_participante', id_part)
+      .single();
+
+    if (partErr) {
+      console.error('Error leyendo participante:', partErr);
+      return res.status(404).json({ error: 'Participante no encontrado' });
+    }
+    if (!partRow) return res.status(404).json({ error: 'Participante no encontrado' });
+
+    const desafio = partRow.desafio;
+    if (!desafio) return res.status(400).json({ error: 'Desafío asociado no encontrado' });
+
+    if (!['finalizado', 'finalizando'].includes(String(desafio.estado))) {
+      return res.status(400).json({ error: 'El desafío aún no está finalizado. No se puede reclamar.' });
+    }
+
+    if (partRow.recibio_recompensa) {
+      return res.status(400).json({ error: 'Recompensa ya reclamada para este participante' });
+    }
+
+    const id_cliente = partRow.id_cliente;
+    const xpToGive = Number(desafio.recompensa_xp || 0);
+    const monedaToGive = Number(desafio.recompensa_moneda || 0);
+
+    let xpResult = { xp_otorgado: 0, xp_total: null, nivel: null };
+    if (xpToGive > 0) {
+      try {
+        const { data: uxRow, error: selUxErr } = await supabase
+          .from('usuario_xp')
+          .select('xp_total')
+          .eq('id_cliente', id_cliente)
+          .maybeSingle();
+
+        if (selUxErr && selUxErr.code !== 'PGRST116') {
+          console.warn('Error leyendo usuario_xp (claim):', selUxErr);
+        }
+
+        const currentXp = (uxRow && uxRow.xp_total != null) ? Number(uxRow.xp_total) : 0;
+        const nuevoTotal = currentXp + xpToGive;
+        const nuevoNivel = nivelDesdeXP(nuevoTotal);
+
+        const { error: upsertErr } = await supabase
+          .from('usuario_xp')
+          .upsert({
+            id_cliente,
+            xp_total: nuevoTotal,
+            nivel: nuevoNivel,
+            ultima_actualizacion: new Date().toISOString()
+          }, { onConflict: 'id_cliente' });
+
+        if (upsertErr) {
+          console.error('Error upsert usuario_xp en claim:', upsertErr);
+          return res.status(500).json({ error: 'No se pudo otorgar XP (upsert)' });
+        }
+
+        xpResult = {
+          xp_otorgado: xpToGive,
+          xp_total: nuevoTotal,
+          nivel: nuevoNivel
+        };
+      } catch (e) {
+        console.error('Error otorgando XP al reclamar (directo):', e);
+        return res.status(500).json({ error: 'No se pudo otorgar XP' });
+      }
+    }
+
+    const { data: updPart, error: updPartErr } = await supabase
+      .from('participante_desafio')
+      .update({ recibio_recompensa: true })
+      .eq('id_participante', id_part)
+      .select()
+      .single();
+    if (updPartErr) {
+      console.error('Error marcando participante como reclamó recompensa:', updPartErr);
+      return res.status(500).json({ error: 'Error marcando recompensa como reclamada' });
+    }
+
+    return res.json({
+      message: 'Recompensa reclamada correctamente',
+      xp: xpResult.xp_otorgado ?? 0,
+      xp_total: xpResult.xp_total ?? null,
+      nivel: xpResult.nivel ?? null,
+      moneda: monedaToGive
+    });
+  } catch (err) {
+    console.error('Error en /:id_participante/claim:', err);
+    res.status(500).json({ error: 'Error reclamando recompensa' });
   }
 });
 

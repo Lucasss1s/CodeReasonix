@@ -277,12 +277,74 @@
 }
 
 .mi-card .btn-secondary {
-  margin-top: 6px;
-  padding: 8px 12px;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.06);
-  color: #eaeaea;
-  display: inline-block;
+  display: none;
+}
+
+.mi-card .mi-actions {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-top:8px;
+}
+
+.mi-card .action-btn {
+  min-width: 160px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+
+.mi-card .action-btn.action-go {
+  background: linear-gradient(90deg, #00bfa6, #4ff3e4);
+  color: #071226;
+}
+.mi-card .action-btn.action-go:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 191, 166, 0.12);
+}
+
+.mi-card .action-btn.action-claim {
+  background: linear-gradient(90deg, #ffd166, #ffb86b);
+  color: #071226;
+}
+.mi-card .action-btn.action-claim:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 209, 102, 0.12);
+}
+
+/* estado reclamado: deshabilitado visual */
+.mi-card .action-btn.reclaimed,
+.mi-card .action-btn[disabled] {
+  background: rgba(255,255,255,0.04);
+  color: #d1ffd9;
+  cursor: default;
+  opacity: 0.95;
+  transform: none;
+  box-shadow: none;
+}
+
+/* versión 'reclamando' (feedback de carga) */
+.mi-card .action-btn.claiming {
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* Mi-card secondary link fallback (si en algún lado querés mostrar link) */
+.mi-card .action-link {
+  display:inline-block;
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.06);
+  color:#eaeaea;
+  text-decoration:none;
+}
+
+/* Ajuste del borde / card para que el botón no se pegue visualmente */
+.mi-card .mi-actions .action-btn + .action-btn {
+  margin-left: 8px;
 }
 
 /* === NUEVAS REGLAS para DesafioDetalle (imagen centrada, hp debajo, boton & preguntas) === */
@@ -487,8 +549,6 @@
   }
 }
 
-
-
 /* small responsive tweaks for detail view */
 @media (max-width: 880px) {
   .detalle-image-center { width: 100%; max-width: 420px; height: auto; aspect-ratio: 1/1; }
@@ -505,6 +565,7 @@
   .btn-inscribir { width:100%; }
 }
 
+/* Forzar estilo del header/título en detalle (alta prioridad) */
 .detalle-card .detalle-header {
   text-align: center !important;
   padding: 6px 12px !important;

@@ -110,93 +110,19 @@ router.post('/:id/respond', async (req, res) => {
     let ganadorId_cliente = null;
 
     if (newHp === 0 && desafioRow.estado === 'activo') {
-      ganadorId_cliente = partData.id_cliente || null;
-
       const { data: claimData, error: claimErr } = await supabase
         .from('desafio')
-        .update({ estado: 'finalizando' })
+        .update({ estado: 'finalizado' })
         .eq('id_desafio', dp.id_desafio)
         .eq('estado', 'activo')
         .select()
         .single();
 
-      if (!claimErr && claimData) {
-        repartoIniciado = true;
-        try {
-          const { data: participants, error: partListErr } = await supabase
-            .from('participante_desafio')
-            .select('*')
-            .eq('id_desafio', dp.id_desafio);
-          if (partListErr) throw partListErr;
-
-          const xpGiven = Number(desafioRow.recompensa_xp || 0);
-          const monedaGiven = Number(desafioRow.recompensa_moneda || 0);
-
-          for (const p of participants) {
-            const { error: updRecErr } = await supabase
-              .from('participante_desafio')
-              .update({ recibio_recompensa: true })
-              .eq('id_participante', p.id_participante);
-            if (updRecErr) console.warn('Error marcando recibio_recompensa:', updRecErr.message);
-
-            const { data: ux, error: uxErr } = await supabase
-              .from('usuario_xp')
-              .select('*')
-              .eq('id_cliente', p.id_cliente)
-              .single();
-
-            if (uxErr && uxErr.code === 'PGRST116') {
-              const { error: insUxErr } = await supabase.from('usuario_xp').insert([{
-                id_cliente: p.id_cliente,
-                xp_total: xpGiven,
-                nivel: 1,
-                ultima_actualizacion: new Date().toISOString()
-              }]);
-              if (insUxErr) console.warn('Error insertando usuario_xp:', insUxErr.message);
-            } else if (!uxErr) {
-              const nuevoXp = Number(ux.xp_total || 0) + xpGiven;
-              const nuevoNivel = 1 + Math.floor(nuevoXp / 200);
-              const { error: updUxErr } = await supabase.from('usuario_xp').update({
-                xp_total: nuevoXp,
-                nivel: nuevoNivel,
-                ultima_actualizacion: new Date().toISOString()
-              }).eq('id_cliente', p.id_cliente);
-              if (updUxErr) console.warn('Error actualizando usuario_xp:', updUxErr.message);
-            } else {
-              console.warn('Error leyendo usuario_xp:', uxErr.message);
-            }
-
-            const logs = [];
-            if (xpGiven > 0) logs.push({
-              id_cliente: p.id_cliente,
-              id_ranking: `desafio_${dp.id_desafio}`,
-              puntos: xpGiven,
-              motivo: 'derrota_boss_xp',
-              fecha: new Date().toISOString()
-            });
-            if (monedaGiven > 0) logs.push({
-              id_cliente: p.id_cliente,
-              id_ranking: `desafio_${dp.id_desafio}`,
-              puntos: monedaGiven,
-              motivo: 'derrota_boss_moneda',
-              fecha: new Date().toISOString()
-            });
-            if (logs.length) {
-              const { error: insLogsErr } = await supabase.from('puntuacion').insert(logs);
-              if (insLogsErr) console.warn('Error insertando logs de recompensa:', insLogsErr.message);
-            }
-          } 
-
-          const { error: finalErr } = await supabase.from('desafio').update({ estado: 'finalizado' }).eq('id_desafio', dp.id_desafio);
-          if (finalErr) console.warn('Error finalizando desafio:', finalErr.message);
-
-          finalizado = true;
-
-        } catch (reErr) {
-          console.error('Error repartiendo recompensas:', reErr);
-          await supabase.from('desafio').update({ estado: 'finalizado' }).eq('id_desafio', dp.id_desafio);
-          finalizado = true;
-        }
+      if (claimErr) {
+        console.warn('No se pudo marcar desafio como finalizado:', claimErr);
+      } else {
+        finalizado = true;
+        ganadorId_cliente = partData.id_cliente || null;
       }
     }
 
