@@ -11,6 +11,122 @@ import EjercicioHistorial from "../../components/EjercicioHistorial.jsx";
 import EjercicioBugReport from "../../components/EjercicioBugReport.jsx";
 
 
+function splitTemplatePorLenguaje(rawTemplate, lenguaje) {
+    if (!rawTemplate) return { header: "", driver: "" };
+    const template = rawTemplate
+        .replace(/\\n/g, "\n")
+        .replace(/\\t/g, "    ");
+    const lines = template.split(/\r?\n/);
+
+    //Java
+    if (lenguaje === "java") {
+        const idxMain = lines.findIndex((l) => l.includes("public static void main"));
+        if (idxMain === -1) {
+        return { header: template, driver: "" };
+        }
+        const idxMethod = lines.findIndex(
+        (l, i) =>
+            i < idxMain &&
+            l.includes("public") &&
+            l.includes("(") &&
+            l.includes(")") &&
+            !l.includes(" main(")
+        );
+
+        if (idxMethod === -1) {
+        return {
+            header: lines.slice(0, idxMain).join("\n"),
+            driver: lines.slice(idxMain).join("\n"),
+        };
+        }
+
+        const editableLines = lines.slice(idxMethod, idxMain);
+        const nonEmpty = editableLines.filter((l) => l.trim().length > 0);
+        let minIndent = 0;
+        if (nonEmpty.length) {
+        minIndent = Math.min(
+            ...nonEmpty.map((l) => (l.match(/^\s*/)?.[0].length ?? 0))
+        );
+        }
+
+        const dedented = editableLines
+        .map((l) =>
+            l.length >= minIndent ? l.slice(minIndent) : l
+        )
+        .join("\n")
+        .trimEnd();
+
+        return { header: dedented, driver: template };
+    }
+
+    //Python/Js
+    let cut = lines.length;
+    const idxEntrada = lines.findIndex((l) => l.includes("{entrada}"));
+    if (idxEntrada !== -1) cut = idxEntrada;
+
+    const header = lines.slice(0, cut).join("\n").trimEnd();
+    const driver = lines.slice(cut).join("\n");
+
+    return { header, driver };
+}
+
+function reconstructionCode(headerCode, rawTemplate, lenguaje) {
+    if (!rawTemplate) return headerCode;
+
+    const template = rawTemplate
+        .replace(/\\n/g, "\n")
+        .replace(/\\t/g, "    ");
+
+    const lines = template.split(/\r?\n/);
+
+    //Java
+    if (lenguaje === "java") {
+        const idxMain = lines.findIndex((l) => l.includes("public static void main"));
+        if (idxMain === -1) {
+        return headerCode;
+        }
+        const idxMethod = lines.findIndex(
+        (l, i) =>
+            i < idxMain &&
+            l.includes("public") &&
+            l.includes("(") &&
+            l.includes(")") &&
+            !l.includes(" main(")
+        );
+
+        if (idxMethod === -1) {
+        return template;
+        }
+
+        const before = lines.slice(0, idxMethod).join("\n");
+        const after = lines.slice(idxMain).join("\n");
+
+        //Indentacion 
+        const indentMatch = lines[idxMethod].match(/^\s*/);
+        const indent = indentMatch ? indentMatch[0] : "";
+
+        //Codigo usuario
+        const userLines = headerCode.replace(/\r?\n/g, "\n").split("\n");
+        const reindented = userLines
+        .map((l) => {
+            if (!l.trim()) return ""; 
+            return indent + l;
+        })
+        .join("\n")
+        .trimEnd();
+
+        return `${before}\n${reindented}\n${after}`;
+    }
+
+    //Python/js
+    const { driver } = splitTemplatePorLenguaje(rawTemplate, lenguaje);
+    if (!driver.trim()) return headerCode;
+
+    return `${headerCode.trimEnd()}\n\n${driver}`;
+}
+
+
+
 function Ejercicio() {
     const { clienteId } = useAuth({ redirectToLogin: true });
 
@@ -97,24 +213,29 @@ function Ejercicio() {
         const fetchCodigoGuardado = async () => {
             if (!clienteId || !ejercicio) return;
             try {
-                const res = await fetch(
-                    `http://localhost:5000/codigoGuardado/${clienteId}/${ejercicio.id_ejercicio}/${lenguaje}`
-                );
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
+            const res = await fetch(
+                `http://localhost:5000/codigoGuardado/${clienteId}/${ejercicio.id_ejercicio}/${lenguaje}`
+            );
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
 
-                if (data.codigo) {
-                    setCodigo(data.codigo);
-                } else {
-                    const plantilla = ejercicio.plantillas?.[lenguaje];
-                    setCodigo(
-                        plantilla
-                            ? plantilla.replace(/\\n/g, "\n").replace(/\\t/g, "    ")
-                            : ""
-                    );
-                }
+            if (data.codigo) {
+                const saved = data.codigo
+                ?.replace(/\\n/g, "\n")
+                .replace(/\\t/g, "    ");
+                setCodigo(saved || "");
+            } else {
+                const rawTpl = ejercicio.plantillas?.[lenguaje] || "";
+                const { header } = splitTemplatePorLenguaje(rawTpl, lenguaje);
+                const editable = header || rawTpl;
+                setCodigo(
+                editable
+                    ?.replace(/\\n/g, "\n")
+                    .replace(/\\t/g, "    ") || ""
+                );
+            }
             } catch (err) {
-                console.error("Error cargando código guardado:", err);
+            console.error("Error cargando código guardado:", err);
             }
         };
         fetchCodigoGuardado();
@@ -270,19 +391,28 @@ function Ejercicio() {
 
     const handleReset = async () => {
         if (!ejercicio) return;
-        const plantilla = ejercicio.plantillas?.[lenguaje]
+        const rawTpl = ejercicio.plantillas?.[lenguaje] || "";
+        const { header } = splitTemplatePorLenguaje(rawTpl, lenguaje);
+
+        const plantillaEditable =
+            header
             ?.replace(/\\n/g, "\n")
-            .replace(/\\t/g, "    ") || "";
-        setCodigo(plantilla);
+            .replace(/\\t/g, "    ") ||
+            rawTpl
+            ?.replace(/\\n/g, "\n")
+            .replace(/\\t/g, "    ") ||
+            "";
+
+        setCodigo(plantillaEditable);
 
         await fetch("http://localhost:5000/codigoGuardado", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                id_cliente: clienteId,
-                id_ejercicio: ejercicio.id_ejercicio,
-                lenguaje,
-                codigo: plantilla,
+            id_cliente: clienteId,
+            id_ejercicio: ejercicio.id_ejercicio,
+            lenguaje,
+            codigo: plantillaEditable,
             }),
         });
     };
@@ -295,16 +425,23 @@ function Ejercicio() {
         setResumen(null);
 
         try {
+            //Editor+plantilla
+            const fullSource = reconstructionCode(
+            codigo,
+            ejercicio.plantillas?.[lenguaje] || "",
+            lenguaje
+            );
             const res = await fetch("http://localhost:5000/submit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    id_cliente: clienteId,
-                    id_ejercicio: ejercicio.id_ejercicio,
-                    codigo_fuente: codigo,
-                    lenguaje,
-                }),
-            });
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id_cliente: clienteId,
+                id_ejercicio: ejercicio.id_ejercicio,
+                codigo_fuente: fullSource,
+                lenguaje,
+            }),
+    });
+
 
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
@@ -335,16 +472,23 @@ function Ejercicio() {
     const handleFinalSubmit = async () => {
         setLoadingFinal(true);
         try {
+            const fullSource = reconstructionCode(
+            codigo,
+            ejercicio.plantillas?.[lenguaje] || "",
+            lenguaje
+            );
+
             const res = await fetch("http://localhost:5000/submit-final", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     id_cliente: clienteId,
                     id_ejercicio: ejercicio.id_ejercicio,
-                    codigo_fuente: codigo,
+                    codigo_fuente: fullSource,
                     lenguaje,
                 }),
             });
+
             const data = await res.json();
 
             const idSubmit = data.insert?.id_submit_final ??data.id_submit_final ?? "";
@@ -582,14 +726,18 @@ function Ejercicio() {
                     </div>
                 </div>
                 {showBugReport && (
-                    <EjercicioBugReport
-                        idEjercicio={ejercicio.id_ejercicio}
-                        idCliente={clienteId}
-                        lenguaje={lenguaje}
-                        codigoActual={codigo}
-                        onClose={() => setShowBugReport(false)}
-                    />
+                <EjercicioBugReport
+                    idEjercicio={ejercicio.id_ejercicio}
+                    idCliente={clienteId}
+                    lenguaje={lenguaje}
+                    codigoActual={reconstructionCode(
+                    codigo,
+                    ejercicio.plantillas?.[lenguaje] || "",
+                    lenguaje
                     )}
+                    onClose={() => setShowBugReport(false)}
+                />
+                )}
             </div>
         </div>
     );

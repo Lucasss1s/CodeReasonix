@@ -43,6 +43,9 @@ export default function Login() {
         });
         const xpData = await resXp.json();
 
+        const today = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(`login_xp_last:${dataBackend.id_cliente}`, today);
+
         if (resXp.ok) {
           if (xpData.otorgado) {
             const a = xpData?.reward_login?.amount || 0;
