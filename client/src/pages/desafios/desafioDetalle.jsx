@@ -10,12 +10,13 @@ export default function DesafioDetalle() {
   const [desafio, setDesafio] = useState(null);
   const [participante, setParticipante] = useState(null);
   const [preguntasAsignadas, setPreguntasAsignadas] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [preguntaActiva, setPreguntaActiva] = useState(null);
   const id_cliente = localStorage.getItem("cliente");
 
   const imgRef = useRef(null);
   const prevHpRef = useRef(null);
+
+  const [activePreguntaId, setActivePreguntaId] = useState(null);
+  const preguntasSectionRef = useRef(null);
 
   const cargar = async () => {
     try {
@@ -65,6 +66,17 @@ export default function DesafioDetalle() {
     // eslint-disable-next-line
   }, [id]);
 
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!preguntasSectionRef.current) return;
+      if (!preguntasSectionRef.current.contains(e.target)) {
+        setActivePreguntaId(null);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
   const handleInscribirse = async () => {
     if (!id_cliente) {
       alert("Debes iniciar sesión para inscribirte");
@@ -76,17 +88,19 @@ export default function DesafioDetalle() {
         id_cliente: Number(id_cliente),
       });
       await cargarParticipante();
-      alert("Inscripto correctamente. Las preguntas asignadas aparecerán abajo.");
+      // intentamos abrir la primera pregunta una vez cargadas (si existe)
+      const first = (await (async () => {
+        const res = await axios.get(`http://localhost:5000/participante-desafio/mis/${id_cliente}`);
+        const part = (res.data || []).find((p) => Number(p.id_desafio) === Number(id));
+        if (!part) return null;
+        const { data } = await axios.get(`http://localhost:5000/participante-pregunta/por-participante/${part.id_participante}`);
+        return data?.[0] ?? null;
+      })()) ?? null;
+      if (first) setActivePreguntaId(first.id_participante_pregunta);
     } catch (err) {
       console.error("Error inscribiendo:", err);
       alert("No se pudo inscribir. Intenta nuevamente.");
     }
-  };
-
-  const abrirPregunta = (pp) => {
-    if (pp.respondida) return;
-    setPreguntaActiva(pp);
-    setModalOpen(true);
   };
 
   const handleAfterAnswers = async (results = []) => {
@@ -94,13 +108,8 @@ export default function DesafioDetalle() {
       await cargar();
       await cargarParticipante();
 
-      setModalOpen(false);
-      setPreguntaActiva(null);
-
-      await new Promise((r) => setTimeout(r, 120));
-
-      const anyCorrect = Array.isArray(results) && results.some(r => r.correcta === true);
-      const anyIncorrect = Array.isArray(results) && results.some(r => r.correcta === false);
+      const anyCorrect = Array.isArray(results) && results.some(r => r.correcta === true || (r?.ok && !r?.error));
+      const anyIncorrect = Array.isArray(results) && results.some(r => r.correcta === false || r?.error);
 
       const imgNode = imgRef.current || document.querySelector('.detalle-image-center') || document.querySelector('.boss-image');
       const hpFill = document.querySelector('.hp-fill');
@@ -139,8 +148,7 @@ export default function DesafioDetalle() {
       console.error("Error en handleAfterAnswers:", err);
       await cargar();
       await cargarParticipante();
-      setModalOpen(false);
-      setPreguntaActiva(null);
+      setActivePreguntaId(null);
     }
   };
 
@@ -199,7 +207,7 @@ export default function DesafioDetalle() {
           </div>
         </div>
 
-        <section className="preguntas-section">
+        <section className="preguntas-section" ref={preguntasSectionRef}>
           <h3>Preguntas asignadas</h3>
 
           {!participante && <div className="vacio">No estás inscripto en este desafío — haz click en Inscribirme para participar.</div>}
@@ -207,26 +215,50 @@ export default function DesafioDetalle() {
           {participante && preguntasAsignadas.length > 0 && (
             <>
               <div className="preguntas-list">
-                {preguntasAsignadas.map((pp) => (
-                  <div
-                    key={pp.id_participante_pregunta}
-                    className={`assigned-card clickable ${pp.respondida ? 'answered' : ''}`}
-                    onClick={() => abrirPregunta(pp)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') abrirPregunta(pp); }}
-                    aria-disabled={pp.respondida}
-                  >
-                    <div className="assigned-text">{pp.pregunta?.texto}</div>
-                    <div className="assigned-meta">
-                      {pp.respondida ? (
-                        pp.correcta ? <span className="badge-correct">✅ Correcta</span> : <span className="badge-wrong">❌ Incorrecta</span>
-                      ) : (
-                        <span className="badge-pending">Sin responder</span>
+                {preguntasAsignadas.map((pp) => {
+                  const isActive = activePreguntaId === pp.id_participante_pregunta;
+                  return (
+                    <div key={pp.id_participante_pregunta} style={{ marginBottom: 6 }}>
+                      <div
+                        className={`assigned-card clickable ${pp.respondida ? 'answered' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // si ya respondida, no permitimos abrir
+                          if (pp.respondida) return;
+                          setActivePreguntaId((cur) => (cur === pp.id_participante_pregunta ? null : pp.id_participante_pregunta));
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !pp.respondida) setActivePreguntaId((cur) => (cur === pp.id_participante_pregunta ? null : pp.id_participante_pregunta)); }}
+                        aria-disabled={pp.respondida}
+                      >
+                        <div className="assigned-text">{pp.pregunta?.texto}</div>
+                        <div className="assigned-meta">
+                          {pp.respondida ? (
+                            pp.correcta ? <span className="badge-correct">✅ Correcta</span> : <span className="badge-wrong">❌ Incorrecta</span>
+                          ) : (
+                            <span className="badge-pending">Sin responder</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {isActive && (
+                        <div
+                          style={{ marginTop: 8, marginLeft: 6, marginRight: 6, width: "100%" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <QuestionModal
+                            open={true}
+                            inline={true}
+                            preguntas={[pp]}
+                            onClose={() => setActivePreguntaId(null)}
+                            onAnswerSent={handleAfterAnswers}
+                          />
+                        </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {yaRespondioTodo && (
@@ -237,13 +269,6 @@ export default function DesafioDetalle() {
             </>
           )}
         </section>
-
-        <QuestionModal
-          open={modalOpen}
-          onClose={() => { setModalOpen(false); setPreguntaActiva(null); }}
-          preguntas={preguntaActiva ? [preguntaActiva] : []}
-          onAnswerSent={handleAfterAnswers}
-        />
       </div>
     </>
   );
