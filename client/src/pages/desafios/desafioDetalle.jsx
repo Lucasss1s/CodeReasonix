@@ -88,7 +88,6 @@ export default function DesafioDetalle() {
         id_cliente: Number(id_cliente),
       });
       await cargarParticipante();
-      // intentamos abrir la primera pregunta una vez cargadas (si existe)
       const first = (await (async () => {
         const res = await axios.get(`http://localhost:5000/participante-desafio/mis/${id_cliente}`);
         const part = (res.data || []).find((p) => Number(p.id_desafio) === Number(id));
@@ -223,7 +222,6 @@ export default function DesafioDetalle() {
                         className={`assigned-card clickable ${pp.respondida ? 'answered' : ''}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          // si ya respondida, no permitimos abrir
                           if (pp.respondida) return;
                           setActivePreguntaId((cur) => (cur === pp.id_participante_pregunta ? null : pp.id_participante_pregunta));
                         }}

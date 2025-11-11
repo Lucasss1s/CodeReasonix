@@ -29,33 +29,38 @@ export default function Postulacion() {
   return (
     <>
       <Navbar />
-      <div className="entrevistas-container">
-        <h1>Mis postulaciones</h1>
+      {/* Wrapper para aislar estilos de la vista de postulaciones */}
+      <div className="postulaciones-page">
+        <div className="entrevistas-container">
+          <h1 className="post-title">Mis postulaciones</h1>
 
-        {!id_cliente && (
-          <div className="vacio">Tenés que iniciar sesión para ver tus postulaciones.</div>
-        )}
+          {!id_cliente && (
+            <div className="vacio-dark">Tenés que iniciar sesión para ver tus postulaciones.</div>
+          )}
 
-        {id_cliente && items.length === 0 && (
-          <div className="vacio">Aún no te postulaste a ninguna oferta.</div>
-        )}
+          {id_cliente && items.length === 0 && (
+            <div className="vacio-dark">Aún no te postulaste a ninguna oferta.</div>
+          )}
 
-        {items.map((p) => (
-          <div key={p.id_postulacion} className="postulacion-card">
-            <div className="postulacion-header">
-              <h3>{p.oferta?.titulo || `Oferta #${p.id_oferta}`}</h3>
-              <span className={`estado badge-${p.estado || "pendiente"}`}>
-                {p.estado}
-              </span>
-            </div>
+          {items.map((p) => (
+            <article key={p.id_postulacion} className="post-card">
+              <header className="post-header">
+                <h3 className="post-heading">
+                  {p.oferta?.titulo || `Oferta #${p.id_oferta}`}
+                </h3>
+                <span className={`post-badge ${`status-${(p.estado || "pendiente").toLowerCase()}`}`}>
+                  {p.estado || "pendiente"}
+                </span>
+              </header>
 
-            <div className="postulacion-meta">
-              <span>ID Oferta: {p.id_oferta}</span>
-              <span>•</span>
-              <span>Fecha: {formatFechaHora(p.fecha)}</span>
-            </div>
-          </div>
-        ))}
+              <div className="post-meta">
+                <span className="meta-chip">ID Oferta: {p.id_oferta}</span>
+                <span className="dot">•</span>
+                <span className="meta-chip">Fecha: {formatFechaHora(p.fecha)}</span>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </>
   );
