@@ -10,6 +10,14 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import "../../components/achievement.css";
 import "./perfil.css";
 
+const FRAME_TIERS = [
+  { id: "basic",   minLevel: 1,  label: "Clásico" },
+  { id: "bronze",  minLevel: 5,  label: "Bronce" },
+  { id: "silver",  minLevel: 10, label: "Plata" },
+  { id: "gold",    minLevel: 20, label: "Oro" },
+  { id: "diamond", minLevel: 50, label: "Diamante" },
+];
+
 const detectPlatform = (url = "") => {
   const u = (url || "").toLowerCase();
   if (u.includes("github.com")) return { key: "github", icon: "fa-brands fa-github", label: "GitHub" };
@@ -27,6 +35,7 @@ const parseSocials = (raw) => {
   try {
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    // eslint-disable-next-line 
   } catch (_) {}
   return String(raw)
     .split(/[,\n]/)
@@ -34,9 +43,7 @@ const parseSocials = (raw) => {
     .filter(Boolean);
 };
 
-const stringifySocials = (arr) => {
-  try { return JSON.stringify(arr); } catch { return (arr || []).join(", "); }
-};
+const stringifySocials = (arr) => { try { return JSON.stringify(arr); } catch { return (arr || []).join(", "); } };
 
 /*barra progreso */
 function ProgressBar({ current, total }) {
@@ -49,7 +56,6 @@ function ProgressBar({ current, total }) {
     </div>
   );
 }
-
 
 function FeedDrawer({ open, onClose, feed }) {
   if (!open) return null;
@@ -92,7 +98,9 @@ export default function Perfil() {
     display_name: "",
     nombre: "",
     apellido: "",
-    username: ""
+    username: "",
+    avatar_frame: "basic",
+    banner_url: ""
   });
   const [mensaje, setMensaje] = useState("");
   const [preview, setPreview] = useState(null);
@@ -101,17 +109,22 @@ export default function Perfil() {
   const [socials, setSocials] = useState([]);
   const [feedOpen, setFeedOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [usuario, setUsuario] = useState({ id_usuario: null, nombre: "", email: "" });
 
   const id_cliente = useMemo(() => parseInt(localStorage.getItem("cliente") || "0", 10), []);
+  // eslint-disable-next-line 
   const { data: gami, loading: gLoading, error: gError, refetch } = useGamificacion(id_cliente);
+  // eslint-disable-next-line 
   const { loading: aLoading, error: aError, defs, unlocked, locked, refresh, recalc } = useAchievements(id_cliente);
+  // eslint-disable-next-line 
   const [checking, setChecking] = useState(false);
 
   const avatarDropRef = useRef(null);
   const fileInputRef = useRef(null);
+  const bannerInputRef = useRef(null);
 
   const cargarPerfil = async () => {
     if (!id_cliente) return;
@@ -137,17 +150,29 @@ export default function Perfil() {
     }
   };
 
-
   useEffect(() => { cargarPerfil(); }, []);
 
   const handleSave = async () => {
     try {
       setSavingProfile(true);
+
+      const nivelActual = gami?.nivel ?? 1;
+      const unlockedFrames = FRAME_TIERS.filter((f) => nivelActual >= f.minLevel);
+      const selectedFrameId = (() => {
+        const requested = perfil.avatar_frame || "basic";
+        const exists = FRAME_TIERS.some((f) => f.id === requested);
+        if (exists) return requested;
+        if (unlockedFrames.length) return unlockedFrames[unlockedFrames.length - 1].id;
+        return "basic";
+      })();
+
       const body = {
         biografia: perfil.biografia ?? "",
         skills: perfil.skills ?? "",
         redes_sociales: stringifySocials(socials),
-        foto_perfil: perfil.foto_perfil ?? null
+        foto_perfil: perfil.foto_perfil ?? null,
+        avatar_frame: selectedFrameId,
+        banner_url: perfil.banner_url ?? null
       };
       await axios.put(`http://localhost:5000/perfil/${id_cliente}`, body);
       setMensaje("Perfil actualizado ✅");
@@ -160,7 +185,6 @@ export default function Perfil() {
       setSavingProfile(false);
     }
   };
-
 
   const handleCancel = () => { setEditMode(false); cargarPerfil(); };
 
@@ -188,6 +212,50 @@ export default function Perfil() {
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     await doUpload(file);
+  };
+
+  // Banner upload
+  const doBannerUpload = async (file) => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("banner", file);
+    try {
+      setBannerUploading(true);
+      const res = await axios.post(`http://localhost:5000/perfil/${id_cliente}/banner`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const url = res.data?.url;
+      setPerfil((p) => ({ ...p, banner_url: url }));
+      toast.success("Banner actualizado");
+    } catch (err) {
+      console.error("Error subiendo banner:", err);
+      toast.error("Error al subir el banner");
+    } finally {
+      setBannerUploading(false);
+    }
+  };
+
+  const handleBannerChange = async (e) => {
+    const file = e.target.files?.[0];
+    await doBannerUpload(file);
+  };
+
+  const handleBannerClick = () => {
+    if (bannerInputRef.current) bannerInputRef.current.click();
+  };
+
+  const handleBannerRemove = async () => {
+    try {
+      setBannerUploading(true);
+      await axios.put(`http://localhost:5000/perfil/${id_cliente}`, { banner_url: null });
+      setPerfil((p) => ({ ...p, banner_url: null }));
+      toast.success("Banner eliminado");
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo eliminar el banner");
+    } finally {
+      setBannerUploading(false);
+    }
   };
 
   //avatar
@@ -243,105 +311,159 @@ export default function Perfil() {
   const progreso = gami?.progreso ?? { xpEnNivel: 0, xpParaSubir: 100, nextLevelRemaining: 100 };
   const hoy = gami?.hoy ?? {};
   const streak = gami?.streak ?? 0;
+  const nivelActual = gami?.nivel ?? 1;
 
-  const handleRecalc = async () => {
-    setChecking(true);
-    try {
-      const r = await recalc();
-      if (Array.isArray(r?.nuevos) && r.nuevos.length) {
-        r.nuevos.forEach((l) => {
-          toast.success(`¡Logro desbloqueado! ${l.icono || "🏆"} ${l.titulo}${l.xp_otorgado ? ` (+${l.xp_otorgado} XP)` : ""}`);
-        });
-      } else {
-        toast.info("Sin nuevos logros por ahora.");
-      }
-      await refresh();
-    } finally {
-      setChecking(false);
-    }
-  };
+  const unlockedFrames = useMemo(() => FRAME_TIERS.filter((f) => nivelActual >= f.minLevel), [nivelActual]);
+  const selectedFrameId = useMemo(() => {
+    const requested = perfil.avatar_frame || "basic";
+    const exists = FRAME_TIERS.some((f) => f.id === requested);
+    if (exists) return requested;
+    if (unlockedFrames.length) return unlockedFrames[unlockedFrames.length - 1].id;
+    return "basic";
+  }, [perfil.avatar_frame, unlockedFrames]);
+
+  const displayName = (perfil.display_name || "").trim() || usuario.nombre || "Mi Perfil";
+  const username = (perfil.username || "").trim();
 
   return (
     <>
       <Navbar />
       <div className="p-page">
         <div className="p-wrap">
-          {/*Header*/}
-          <header className="p-header">
-            <div className="p-header__left">
-              <div
-                className={`p-avatar ${uploading ? "is-uploading" : ""}`}
-                ref={avatarDropRef}
-                onClick={handleAvatarClick}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleAvatarClick()}
-                title="Clic o arrastrá una imagen para actualizar tu foto"
+          {/* Banner tipo Twitter */}
+          <div
+            className={`p-banner ${bannerUploading ? "is-uploading" : ""}`}
+            style={perfil.banner_url ? { backgroundImage: `url(${perfil.banner_url})` } : {}}
+            onClick={handleBannerClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleBannerClick()}
+            title="Clic para cambiar tu banner"
+          >
+            <div className="p-banner__overlay" />
+            <div className="p-banner__actions">
+              <button
+                type="button"
+                className="p-banner__btn"
+                onClick={(e) => { e.stopPropagation(); handleBannerClick(); }}
               >
-                {preview ? <img src={preview} alt="Avatar" /> : <div className="p-avatar__ph"><i className="fa-solid fa-user" /></div>}
-
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} hidden />
-
+                <i className="fa-solid fa-camera" />
+                <span>Cambiar banner</span>
+              </button>
+              {perfil.banner_url && (
                 <button
-                  className="p-btn p-btn--tiny p-btn--ghost p-avatar__upload"
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); handleAvatarClick(); }}
-                  aria-label="Cambiar foto de perfil"
-                  title="Cambiar foto de perfil"
+                  className="p-banner__btn"
+                  onClick={(e) => { e.stopPropagation(); handleBannerRemove(); }}
+                  disabled={bannerUploading}
                 >
-                  <i className="fa-solid fa-camera" />
+                  <i className="fa-solid fa-trash" />
+                  <span>Quitar</span>
                 </button>
+              )}
+            </div>
+            <input ref={bannerInputRef} type="file" accept="image/*" hidden onChange={handleBannerChange} />
+          </div>
 
-                {preview && (
+          {/* Header + avatar + nombre/username abajo */}
+          <div className="p-profile-header">
+            <div className="p-profile-header__top">
+              <div className="p-avatar-shell">
+                <div
+                  className={`p-avatar p-avatar--frame-${selectedFrameId} ${uploading ? "is-uploading" : ""}`}
+                  ref={avatarDropRef}
+                  onClick={handleAvatarClick}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleAvatarClick()}
+                  title="Clic o arrastrá una imagen para actualizar tu foto"
+                >
+                  {preview ? <img src={preview} alt="Avatar" /> : <div className="p-avatar__ph"><i className="fa-solid fa-user" /></div>}
+
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} hidden />
+
                   <button
-                    className="p-btn p-btn--tiny p-btn--ghost p-avatar__remove"
+                    className="p-btn p-btn--tiny p-btn--ghost p-avatar__upload"
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }}
-                    disabled={uploading}
-                    title="Quitar foto"
-                    aria-label="Quitar foto"
+                    onClick={(e) => { e.stopPropagation(); handleAvatarClick(); }}
+                    aria-label="Cambiar foto de perfil"
+                    title="Cambiar foto de perfil"
                   >
-                    <i className="fa-solid fa-trash" />
+                    <i className="fa-solid fa-camera" />
                   </button>
-                )}
+
+                  {preview && (
+                    <button
+                      className="p-btn p-btn--tiny p-btn--ghost p-avatar__remove"
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }}
+                      disabled={uploading}
+                      title="Quitar foto"
+                      aria-label="Quitar foto"
+                    >
+                      <i className="fa-solid fa-trash" />
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="p-user">
-                <h1>
-                  {(perfil.display_name || "").trim() || usuario.nombre || "Mi Perfil"}
-                </h1>
-                {!!(perfil.username || "").trim() && (
-                  <div className="p-muted" style={{ fontSize: 13 }}>
-                    @{perfil.username.trim()}
+              <div className="p-header__right">
+                {!editMode ? (
+                  <div className="p-actions">
+                    <button className="p-iconbtn p-iconbtn--round" title="Ajustes de cuenta" onClick={() => setSettingsOpen(true)}>
+                      <i className="fa-solid fa-gear" />
+                    </button>
+                    <button className="p-btn" onClick={() => setEditMode(true)}>
+                      <i className="fa-solid fa-pen" /> Editar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-actions">
+                    <button className="p-btn" onClick={handleSave} disabled={savingProfile}>
+                      <i className="fa-solid fa-floppy-disk" /> {savingProfile ? "Guardando…" : "Guardar"}
+                    </button>
+                    <button className="p-btn p-btn--ghost" onClick={handleCancel}>
+                      <i className="fa-solid fa-xmark" /> Cancelar
+                    </button>
                   </div>
                 )}
               </div>
-
-
             </div>
 
-            <div className="p-header__right">
-              {!editMode ? (
-                <div className="p-actions">
-                  <button className="p-iconbtn p-iconbtn--round" title="Ajustes de cuenta" onClick={() => setSettingsOpen(true)}>
-                    <i className="fa-solid fa-gear" />
-                  </button>
-                  <button className="p-btn" onClick={() => setEditMode(true)}>
-                    <i className="fa-solid fa-pen" /> Editar
-                  </button>
+            <div className="p-profile-header__bottom">
+              <div className="p-user">
+                <h1 className="p-displayname">{displayName}</h1>
+                <div className="p-user__meta">
+                  {username && <span className="p-username">@{username}</span>}
+                  <span className="p-level-chip">Nivel {gami?.nivel ?? 1}</span>
                 </div>
-              ) : (
-                <div className="p-actions">
-                  <button className="p-btn" onClick={handleSave} disabled={savingProfile}>
-                    <i className="fa-solid fa-floppy-disk" /> {savingProfile ? "Guardando…" : "Guardar"}
-                  </button>
-                  <button className="p-btn p-btn--ghost" onClick={handleCancel}>
-                    <i className="fa-solid fa-xmark" /> Cancelar
-                  </button>
-                </div>
-              )}
+
+                {/* Selector de marco (solo en modo editar) */}
+                {editMode && (
+                  <div className="p-frame-picker">
+                    {FRAME_TIERS.map((frame) => {
+                      const unlockedFrame = nivelActual >= frame.minLevel;
+                      const isActive = selectedFrameId === frame.id;
+                      return (
+                        <button
+                          key={frame.id}
+                          type="button"
+                          className={`p-frame-chip ${isActive ? "is-active" : ""} ${!unlockedFrame ? "is-locked" : ""}`}
+                          onClick={() => unlockedFrame && setPerfil((prev) => ({ ...prev, avatar_frame: frame.id }))}
+                          disabled={!unlockedFrame}
+                          title={unlockedFrame ? `${frame.label} (nivel ${frame.minLevel}+ desbloqueado)` : `Se desbloquea al nivel ${frame.minLevel}`}
+                        >
+                          <span className={`p-frame-chip__preview p-frame-chip__preview--${frame.id}`} />
+                          <span className="p-frame-chip__label">{frame.label}</span>
+                          <span className="p-frame-chip__lvl">Lv {frame.minLevel}+</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
-          </header>
+          </div>
 
           {mensaje && <div className="p-alert">{mensaje}</div>}
 
@@ -379,8 +501,12 @@ export default function Perfil() {
                     {skillsArr.length > 0 ? skillsArr.map((s, i) => <span className="p-tag" key={i}>{s}</span>) : <span className="p-muted">Sin skills cargadas.</span>}
                   </div>
                 ) : (
-                  <input className="p-input" placeholder="Separá por coma. Ej: JavaScript, React, SQL, Node, Arduino" 
-                    value={perfil.skills || ""} onChange={(e) => setPerfil({ ...perfil, skills: e.target.value })} />
+                  <input
+                    className="p-input"
+                    placeholder="Separá por coma. Ej: JavaScript, React, SQL, Node, Arduino"
+                    value={perfil.skills || ""}
+                    onChange={(e) => setPerfil({ ...perfil, skills: e.target.value })}
+                  />
                 )}
               </div>
 
@@ -407,9 +533,13 @@ export default function Perfil() {
                 ) : (
                   <>
                     <div className="p-addsocial">
-                      <input className="p-input" placeholder="Pegá una URL: https://github.com/tuuser"
-                            value={newSocial} onChange={(e) => setNewSocial(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && addSocial()} />
+                      <input
+                        className="p-input"
+                        placeholder="Pegá una URL: https://github.com/tuuser"
+                        value={newSocial}
+                        onChange={(e) => setNewSocial(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addSocial()}
+                      />
                       <button className="p-btn" onClick={addSocial}><i className="fa-solid fa-plus" /> Agregar</button>
                     </div>
                     <ul className="p-socials p-socials--edit">
@@ -527,7 +657,7 @@ export default function Perfil() {
         onClose={() => setSettingsOpen(false)}
         id_cliente={id_cliente}
         onIdentityUpdated={(partial) => {
-
+          
           if ("display_name" in partial || "username" in partial) {
             setPerfil((prev) => ({ ...prev, ...partial }));
           }

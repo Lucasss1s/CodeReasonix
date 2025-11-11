@@ -63,8 +63,7 @@ router.post('/register', async (req, res) => {
         {
           id_cliente: clientData.id_cliente,
           biografia: "",
-          skills: "",
-          nivel: 1,             
+          skills: "",            
           reputacion: 0,        
           redes_sociales: null,
           foto_perfil: null

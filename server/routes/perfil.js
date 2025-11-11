@@ -11,7 +11,7 @@ router.get("/:id_cliente", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("perfil")
-      .select("id_perfil, id_cliente, biografia, skills, nivel, reputacion, redes_sociales, foto_perfil, display_name, username")
+      .select("id_perfil, id_cliente, biografia, skills, reputacion, redes_sociales, foto_perfil, display_name, username, avatar_frame, banner_url")
       .eq("id_cliente", id_cliente)
       .single();
 
@@ -26,7 +26,7 @@ router.get("/:id_cliente", async (req, res) => {
 router.put('/:id_cliente', async (req, res) => {
   const { id_cliente } = req.params;
 
-  const allowed = ['biografia', 'skills', 'redes_sociales', 'foto_perfil', 'display_name', 'username'];
+  const allowed = ['biografia', 'skills', 'redes_sociales', 'foto_perfil', 'display_name', 'username', 'avatar_frame', 'banner_url'];
   const updateData = {};
   for (const k of allowed) {
     if (Object.prototype.hasOwnProperty.call(req.body, k)) {
@@ -52,7 +52,7 @@ router.put('/:id_cliente', async (req, res) => {
       .from('perfil')
       .update(updateData)
       .eq('id_cliente', id_cliente)
-      .select('id_perfil, id_cliente, biografia, skills, nivel, reputacion, redes_sociales, foto_perfil, display_name, username')
+      .select('id_perfil, id_cliente, biografia, skills, reputacion, redes_sociales, foto_perfil, display_name, username, avatar_frame, banner_url')
       .single();
 
     if (error) throw error;
@@ -133,5 +133,49 @@ router.get('/username/availability/:username', async (req, res) => {
     res.status(500).json({ ok: false, reason: 'error' });
   }
 });
+
+router.post( "/:id_cliente/banner", upload.single("banner"), async (req, res) => {
+    const id_cliente = Number(req.params.id_cliente);
+    if (!id_cliente) {
+      return res.status(400).json({ error: "id_cliente inválido" });
+    }
+
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: "No se recibió archivo banner" });
+    }
+
+    try {
+      const ext = file.originalname.split(".").pop() || "jpg";
+      const fileName = `banner_${id_cliente}_${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("perfil-fotos") 
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+        .from("perfil-fotos")
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from("perfil")
+        .update({ banner_url: publicUrl.publicUrl })
+        .eq("id_cliente", id_cliente);
+
+      if (updateError) throw updateError;
+
+      return res.json({ url: publicUrl.publicUrl });
+    } catch (e) {
+      console.error("[perfil banner] error:", e);
+      return res.status(500).json({ error: "No se pudo guardar el banner" });
+    }
+  }
+);
+
 
 export default router;
