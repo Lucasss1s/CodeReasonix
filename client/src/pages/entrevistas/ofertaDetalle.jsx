@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
@@ -39,7 +39,6 @@ export default function OfertaDetalle() {
   useEffect(() => {
     cargarOferta();
     cargarSiPostule();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const handlePostularme = async () => {
@@ -76,43 +75,48 @@ export default function OfertaDetalle() {
   return (
     <>
       <Navbar />
-      <div className="entrevistas-container">
-        <Link to="/entrevistas" className="volver-link">← Volver a ofertas</Link>
+      <div className="oferta-page">
+        <div className="entrevistas-container">
+          <div className="oferta-detalle-card">
+            <header className="oferta-detalle-header">
+              <div className="oferta-detalle-header-left">
+                <h1 className="oferta-titulo">{oferta.titulo}</h1>
+                <p className="oferta-company">
+                  {oferta.empresa?.nombre ?? "Empresa"}
+                  {oferta.empresa?.sector ? ` • ${oferta.empresa.sector}` : ""}
+                </p>
+              </div>
+              <div className="oferta-detalle-meta">
+                {oferta.ubicacion && <div>{oferta.ubicacion}</div>}
+                {oferta.fecha_publicacion && (
+                  <div className="oferta-small-muted">
+                    {new Date(oferta.fecha_publicacion).toLocaleDateString("es-ES")}
+                  </div>
+                )}
+              </div>
+            </header>
 
-        <div className="detalle-card">
-          <header className="detalle-header">
-            <div>
-              <h1 className="detalle-titulo">{oferta.titulo}</h1>
-              <p className="detalle-company">
-                {oferta.empresa?.nombre ?? "Empresa"} {oferta.empresa?.sector ? `• ${oferta.empresa.sector}` : ""}
-              </p>
-            </div>
-            <div className="detalle-meta">
-              {oferta.ubicacion && <div>{oferta.ubicacion}</div>}
-              {oferta.fecha_publicacion && <div className="small-muted">{new Date(oferta.fecha_publicacion).toLocaleDateString("es-ES")}</div>}
-            </div>
-          </header>
-
-          <section className="detalle-section">
-            <h3>Descripción</h3>
-            <p className="whitespace-pre-wrap">{oferta.descripcion || "—"}</p>
-          </section>
-
-          {oferta.requisitos && (
-            <section className="detalle-section">
-              <h3>Requisitos</h3>
-              <p className="whitespace-pre-wrap">{oferta.requisitos}</p>
+            <section className="oferta-detalle-section">
+              <h3>Descripción</h3>
+              <p className="whitespace-pre-wrap">{oferta.descripcion || "—"}</p>
             </section>
-          )}
 
-          <div className="detalle-actions">
-            <button
-              className="btn-primary"
-              onClick={handlePostularme}
-              disabled={posting || yaPostulado}
-            >
-              {yaPostulado ? "Ya te postulaste" : posting ? "Enviando..." : "Postularme"}
-            </button>
+            {oferta.requisitos && (
+              <section className="oferta-detalle-section">
+                <h3>Requisitos</h3>
+                <p className="whitespace-pre-wrap">{oferta.requisitos}</p>
+              </section>
+            )}
+
+            <div className="oferta-detalle-actions">
+              <button
+                className="oferta-btn-primary"
+                onClick={handlePostularme}
+                disabled={posting || yaPostulado}
+              >
+                {yaPostulado ? "Ya te postulaste" : posting ? "Enviando..." : "Postularme"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

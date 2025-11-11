@@ -38,39 +38,47 @@ export default function Oferta() {
   return (
     <>
       <Navbar />
-      <div className="entrevistas-container">
-        <h1>Ofertas laborales</h1>
+      {/* Wrapper que activa los estilos oscuros del listado */}
+      <div className="ofertas-page">
+        <div className="entrevistas-container">
+          <h1 className="ofertas-title">Ofertas laborales</h1>
 
-        {ofertas.length === 0 && (
-          <div className="vacio">No hay ofertas disponibles.</div>
-        )}
+          {ofertas.length === 0 && (
+            <div className="vacio">No hay ofertas disponibles.</div>
+          )}
 
-        <div className="grid-ofertas">
-          {ofertas.map((of) => (
-            <article
-              key={of.id_oferta}
-              className="oferta-card-clickable"
-              onClick={() => navigate(`/entrevistas/oferta/${of.id_oferta}`)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter") navigate(`/entrevistas/oferta/${of.id_oferta}`); }}
-            >
-              <div className="oferta-card-main">
-                <div className="oferta-left">
-                  <h3 className="oferta-title">{of.titulo}</h3>
-                  <p className="oferta-company">
-                    {of.empresa?.nombre || "Empresa"}{of.empresa?.sector ? ` • ${of.empresa.sector}` : ""}
-                  </p>
-                  <p className="oferta-snippet">{snippet(of.descripcion || of.requisitos)}</p>
+          <div className="grid-ofertas">
+            {ofertas.map((of) => (
+              <article
+                key={of.id_oferta}
+                className="oferta-card-clickable oferta-card-dark"
+                onClick={() => navigate(`/entrevistas/oferta/${of.id_oferta}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") navigate(`/entrevistas/oferta/${of.id_oferta}`);
+                }}
+              >
+                <div className="oferta-card-main">
+                  <div className="oferta-left">
+                    <h3 className="oferta-title-dark">{of.titulo}</h3>
+                    <p className="oferta-company-dark">
+                      {of.empresa?.nombre || "Empresa"}
+                      {of.empresa?.sector ? ` • ${of.empresa.sector}` : ""}
+                    </p>
+                    <p className="oferta-snippet-dark">
+                      {snippet(of.descripcion || of.requisitos)}
+                    </p>
+                  </div>
+
+                  <div className="oferta-right-dark">
+                    {of.ubicacion && <div className="meta-line">{of.ubicacion}</div>}
+                    <div className="meta-line">{formatFecha(of.fecha_publicacion)}</div>
+                  </div>
                 </div>
-
-                <div className="oferta-right">
-                  {of.ubicacion && <div className="meta-line">{of.ubicacion}</div>}
-                  <div className="meta-line">{formatFecha(of.fecha_publicacion)}</div>
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </>
