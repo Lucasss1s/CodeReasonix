@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../config/supabase.js";
 import { toast } from "sonner";
+import "./auth.css";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -12,9 +13,9 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     let rewardState = null;
-    
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({email, password});
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
       const res = await fetch("http://localhost:5000/usuarios/login", {
@@ -34,7 +35,6 @@ export default function Login() {
       localStorage.setItem("usuario", JSON.stringify(dataBackend.usuario));
       localStorage.setItem("cliente", dataBackend.id_cliente);
 
-      //xp por login diario 
       try {
         const resXp = await fetch("http://localhost:5000/gamificacion/login-xp", {
           method: "POST",
@@ -53,10 +53,7 @@ export default function Login() {
             const total = a + b;
 
             if (total > 0) {
-              rewardState = {
-                amount: total,
-                icon: b > 0 ? "🔥" : "💎",
-              };
+              rewardState = { amount: total, icon: b > 0 ? "🔥" : "💎" };
             }
 
             if (Array.isArray(xpData?.nuevosLogros) && xpData.nuevosLogros.length) {
@@ -64,7 +61,6 @@ export default function Login() {
                 toast.success(`¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`);
               });
             }
-            
           } else {
             console.log("ya tenia xp de login hoy, no se otorga");
           }
@@ -76,51 +72,45 @@ export default function Login() {
       }
 
       setMensaje("Login exitoso ✅");
-
-      navigate("/", {
-        replace: true,
-        state: rewardState ? { reward: rewardState } : {},
-      });
+      navigate("/", { replace: true, state: rewardState ? { reward: rewardState } : {} });
     } catch (err) {
       console.error(err);
       setMensaje(err.message || "Error al iniciar sesión ❌");
       toast.error("Error al iniciar sesión");
-    }    
+    }
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "40px" }}>
-      <h2>Iniciar Sesión</h2>
-      <form
-        onSubmit={handleLogin}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          maxWidth: "300px",
-          margin: "0 auto",
-        }}
-      >
-        <input
-          type="email"
-          placeholder="Correo"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ margin: "10px 0", padding: "8px" }}
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          style={{ margin: "10px 0", padding: "8px" }}
-        />
-        <button type="submit" style={{ padding: "10px", cursor: "pointer" }}>
-          Iniciar Sesión
-        </button>
-      </form>
-      {mensaje && <p>{mensaje}</p>}
+    <div className="auth-page">
+      <div className="auth-card">
+        <h2 className="auth-title">Iniciar Sesión</h2>
+
+        <form onSubmit={handleLogin} className="auth-form">
+          <input
+            type="email"
+            placeholder="Correo"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="auth-input"
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="auth-input"
+          />
+          <button type="submit" className="auth-button">Iniciar Sesión</button>
+        </form>
+
+        {mensaje && <p className="auth-message">{mensaje}</p>}
+
+        <div className="auth-secondary">
+          ¿No tenés cuenta? <Link to="/register">Registrate</Link>
+        </div>
+      </div>
     </div>
   );
 }
