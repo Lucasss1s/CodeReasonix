@@ -47,27 +47,36 @@ router.post("/", async (req, res) => {
 
     if (existingError && existingError.code !== "PGRST116") throw existingError;
 
-    let data;
     if (existing) {
+      if (existing.tipo === tipo) {
+        const { error: deleteError } = await supabase
+          .from("reaccion")
+          .delete()
+          .eq("id_reaccion", existing.id_reaccion);
+
+        if (deleteError) throw deleteError;
+        return res.json({ deleted: true });
+      }
+
       const { data: updated, error: updateError } = await supabase
         .from("reaccion")
         .update({ tipo, fecha: new Date() })
         .eq("id_reaccion", existing.id_reaccion)
         .select()
         .single();
+
       if (updateError) throw updateError;
-      data = updated;
-    } else {
-      const { data: inserted, error: insertError } = await supabase
-        .from("reaccion")
-        .insert([{ id_publicacion, id_cliente, tipo, fecha: new Date() }])
-        .select()
-        .single();
-      if (insertError) throw insertError;
-      data = inserted;
+      return res.json(updated);
     }
 
-    res.json(data);
+    const { data: inserted, error: insertError } = await supabase
+      .from("reaccion")
+      .insert([{ id_publicacion, id_cliente, tipo, fecha: new Date() }])
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+    res.json(inserted);
   } catch (err) {
     console.error("Error creando reacción:", err);
     res.status(500).json({ error: "Error creando reacción" });

@@ -10,6 +10,7 @@ router.get("/", async (req, res) => {
       .select(`
         id_publicacion,
         contenido,
+        imagen_url,
         fecha,
         cliente (
           id_cliente,

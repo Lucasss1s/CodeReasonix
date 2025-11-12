@@ -24,11 +24,22 @@ export default function Reacciones({ idPublicacion, reacciones = [], onUpdate })
 
   const likes = reacciones.filter(r => r.tipo === "like").length;
   const dislikes = reacciones.filter(r => r.tipo === "dislike").length;
+  const miReaccion = reacciones.find(r => String(r.cliente?.id_cliente) === String(id_cliente));
 
   return (
     <div className="reacciones">
-      <button onClick={() => handleReaccion("like")}>👍 {likes}</button>
-      <button onClick={() => handleReaccion("dislike")}>👎 {dislikes}</button>
+      <button
+        className={`reaccion-btn ${miReaccion?.tipo === "like" ? "is-active-like" : ""}`}
+        onClick={() => handleReaccion("like")}
+      >
+        👍 <span>{likes}</span>
+      </button>
+      <button
+        className={`reaccion-btn ${miReaccion?.tipo === "dislike" ? "is-active-dislike" : ""}`}
+        onClick={() => handleReaccion("dislike")}
+      >
+        👎 <span>{dislikes}</span>
+      </button>
     </div>
   );
 }

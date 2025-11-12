@@ -36,6 +36,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/logout" element={<Logout />} />
         <Route path="/comunidad" element={<Feed />} />
         <Route path="/perfil" element={<Perfil />} />
+        <Route path="/perfil/:id_cliente" element={<Perfil />} />
         <Route path="/entrevistas" element={<Oferta />} />
         <Route path="/entrevistas/mis-postulaciones" element={<Postulacion />} />
         <Route path="/entrevistas/oferta/:id" element={<OfertaDetalle />} />

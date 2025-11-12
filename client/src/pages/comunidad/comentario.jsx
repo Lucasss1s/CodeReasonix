@@ -18,8 +18,8 @@ export default function Comentarios({ idPublicacion, comentarios = [], onUpdate 
         id_cliente,
         contenido: nuevoComentario,
       });
-      setNuevoComentario(""); 
-      if (onUpdate) onUpdate(); 
+      setNuevoComentario("");
+      if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Error creando comentario:", err);
     }
@@ -28,11 +28,31 @@ export default function Comentarios({ idPublicacion, comentarios = [], onUpdate 
   return (
     <div className="comentarios">
       <h4>Comentarios</h4>
-      {comentarios.map(com => (
-        <div key={com.id_comentario}>
-          <strong>{com.cliente.usuario?.nombre || "Usuario"}:</strong> {com.contenido}
+
+      {comentarios.length > 0 && (
+        <div className="comentarios-lista">
+          {comentarios.map(com => (
+            <div key={com.id_comentario} className="comentario-item">
+              <div className="comentario-avatar">
+                <div className="comentario-avatar__ph">
+                  {(com.cliente?.usuario?.nombre || "U").charAt(0).toUpperCase()}
+                </div>
+              </div>
+              <div className="comentario-body">
+                <div className="comentario-header">
+                  <span className="comentario-name">
+                    {com.cliente.usuario?.nombre || "Usuario"}
+                  </span>
+                </div>
+                <div className="comentario-text">
+                  {com.contenido}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
+
       <form onSubmit={handleComentario}>
         <input
           type="text"

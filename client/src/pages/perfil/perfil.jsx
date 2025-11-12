@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import Navbar from "../../components/Navbar";
@@ -114,7 +115,12 @@ export default function Perfil() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [usuario, setUsuario] = useState({ id_usuario: null, nombre: "", email: "" });
 
-  const id_cliente = useMemo(() => parseInt(localStorage.getItem("cliente") || "0", 10), []);
+  const { id_cliente: id_cliente_param } = useParams();
+
+  const id_cliente_logueado = useMemo(() => parseInt(localStorage.getItem("cliente") || "0", 10), []);
+  const id_cliente = useMemo(() => (id_cliente_param ? parseInt(id_cliente_param, 10) : id_cliente_logueado), [id_cliente_param, id_cliente_logueado]);
+  const isOwnProfile = !id_cliente_param || parseInt(id_cliente_param, 10) === id_cliente_logueado;
+
   // eslint-disable-next-line 
   const { data: gami, loading: gLoading, error: gError, refetch } = useGamificacion(id_cliente);
   // eslint-disable-next-line 
@@ -150,9 +156,10 @@ export default function Perfil() {
     }
   };
 
-  useEffect(() => { cargarPerfil(); }, []);
+  useEffect(() => { cargarPerfil(); }, [id_cliente]);
 
   const handleSave = async () => {
+    if (!isOwnProfile) return;
     try {
       setSavingProfile(true);
 
@@ -189,7 +196,7 @@ export default function Perfil() {
   const handleCancel = () => { setEditMode(false); cargarPerfil(); };
 
   const doUpload = async (file) => {
-    if (!file) return;
+    if (!file || !isOwnProfile) return;
     const formData = new FormData();
     formData.append("foto", file);
     try {
@@ -216,7 +223,7 @@ export default function Perfil() {
 
   // Banner upload
   const doBannerUpload = async (file) => {
-    if (!file) return;
+    if (!file || !isOwnProfile) return;
     const formData = new FormData();
     formData.append("banner", file);
     try {
@@ -241,10 +248,12 @@ export default function Perfil() {
   };
 
   const handleBannerClick = () => {
+    if (!isOwnProfile) return;
     if (bannerInputRef.current) bannerInputRef.current.click();
   };
 
   const handleBannerRemove = async () => {
+    if (!isOwnProfile) return;
     try {
       setBannerUploading(true);
       await axios.put(`http://localhost:5000/perfil/${id_cliente}`, { banner_url: null });
@@ -258,8 +267,9 @@ export default function Perfil() {
     }
   };
 
-  //avatar
+  //avatar en tu propio perfil
   useEffect(() => {
+    if (!isOwnProfile) return;
     const el = avatarDropRef.current;
     if (!el) return;
     const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -274,13 +284,15 @@ export default function Perfil() {
       el.removeEventListener("dragleave", onDragLeave);
       el.removeEventListener("drop", onDrop);
     };
-  }, []);
+  }, [isOwnProfile]);
 
   const handleAvatarClick = () => {
+    if (!isOwnProfile) return;
     if (fileInputRef.current) fileInputRef.current.click();
   };
 
   const handleRemovePhoto = async () => {
+    if (!isOwnProfile) return;
     try {
       setUploading(true);
       await axios.put(`http://localhost:5000/perfil/${id_cliente}`, { foto_perfil: null });
@@ -322,7 +334,7 @@ export default function Perfil() {
     return "basic";
   }, [perfil.avatar_frame, unlockedFrames]);
 
-  const displayName = (perfil.display_name || "").trim() || usuario.nombre || "Mi Perfil";
+  const displayName = (perfil.display_name || "").trim() || usuario.nombre || (isOwnProfile ? "Mi Perfil" : "Perfil de usuario");
   const username = (perfil.username || "").trim();
 
   return (
@@ -330,39 +342,43 @@ export default function Perfil() {
       <Navbar />
       <div className="p-page">
         <div className="p-wrap">
-          {/* Banner tipo Twitter */}
+          {/* Banner */}
           <div
             className={`p-banner ${bannerUploading ? "is-uploading" : ""}`}
             style={perfil.banner_url ? { backgroundImage: `url(${perfil.banner_url})` } : {}}
-            onClick={handleBannerClick}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleBannerClick()}
-            title="Clic para cambiar tu banner"
+            onClick={isOwnProfile ? handleBannerClick : undefined}
+            role={isOwnProfile ? "button" : undefined}
+            tabIndex={isOwnProfile ? 0 : -1}
+            onKeyDown={isOwnProfile ? (e => (e.key === "Enter" || e.key === " ") && handleBannerClick()) : undefined}
+            title={isOwnProfile ? "Clic para cambiar tu banner" : undefined}
           >
             <div className="p-banner__overlay" />
-            <div className="p-banner__actions">
-              <button
-                type="button"
-                className="p-banner__btn"
-                onClick={(e) => { e.stopPropagation(); handleBannerClick(); }}
-              >
-                <i className="fa-solid fa-camera" />
-                <span>Cambiar banner</span>
-              </button>
-              {perfil.banner_url && (
-                <button
-                  type="button"
-                  className="p-banner__btn"
-                  onClick={(e) => { e.stopPropagation(); handleBannerRemove(); }}
-                  disabled={bannerUploading}
-                >
-                  <i className="fa-solid fa-trash" />
-                  <span>Quitar</span>
-                </button>
-              )}
-            </div>
-            <input ref={bannerInputRef} type="file" accept="image/*" hidden onChange={handleBannerChange} />
+            {isOwnProfile && (
+              <>
+                <div className="p-banner__actions">
+                  <button
+                    type="button"
+                    className="p-banner__btn"
+                    onClick={(e) => { e.stopPropagation(); handleBannerClick(); }}
+                  >
+                    <i className="fa-solid fa-camera" />
+                    <span>Cambiar banner</span>
+                  </button>
+                  {perfil.banner_url && (
+                    <button
+                      type="button"
+                      className="p-banner__btn"
+                      onClick={(e) => { e.stopPropagation(); handleBannerRemove(); }}
+                      disabled={bannerUploading}
+                    >
+                      <i className="fa-solid fa-trash" />
+                      <span>Quitar</span>
+                    </button>
+                  )}
+                </div>
+                <input ref={bannerInputRef} type="file" accept="image/*" hidden onChange={handleBannerChange} />
+              </>
+            )}
           </div>
 
           {/* Header + avatar + nombre/username abajo */}
@@ -372,62 +388,68 @@ export default function Perfil() {
                 <div
                   className={`p-avatar p-avatar--frame-${selectedFrameId} ${uploading ? "is-uploading" : ""}`}
                   ref={avatarDropRef}
-                  onClick={handleAvatarClick}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleAvatarClick()}
-                  title="Clic o arrastrá una imagen para actualizar tu foto"
+                  onClick={isOwnProfile ? handleAvatarClick : undefined}
+                  role={isOwnProfile ? "button" : undefined}
+                  tabIndex={isOwnProfile ? 0 : -1}
+                  onKeyDown={isOwnProfile ? (e => (e.key === "Enter" || e.key === " ") && handleAvatarClick()) : undefined}
+                  title={isOwnProfile ? "Clic o arrastrá una imagen para actualizar tu foto" : undefined}
                 >
                   {preview ? <img src={preview} alt="Avatar" /> : <div className="p-avatar__ph"><i className="fa-solid fa-user" /></div>}
 
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} hidden />
 
-                  <button
-                    className="p-btn p-btn--tiny p-btn--ghost p-avatar__upload"
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleAvatarClick(); }}
-                    aria-label="Cambiar foto de perfil"
-                    title="Cambiar foto de perfil"
-                  >
-                    <i className="fa-solid fa-camera" />
-                  </button>
+                  {isOwnProfile && (
+                    <>
+                      <button
+                        className="p-btn p-btn--tiny p-btn--ghost p-avatar__upload"
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleAvatarClick(); }}
+                        aria-label="Cambiar foto de perfil"
+                        title="Cambiar foto de perfil"
+                      >
+                        <i className="fa-solid fa-camera" />
+                      </button>
 
-                  {preview && (
-                    <button
-                      className="p-btn p-btn--tiny p-btn--ghost p-avatar__remove"
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }}
-                      disabled={uploading}
-                      title="Quitar foto"
-                      aria-label="Quitar foto"
-                    >
-                      <i className="fa-solid fa-trash" />
-                    </button>
+                      {preview && (
+                        <button
+                          className="p-btn p-btn--tiny p-btn--ghost p-avatar__remove"
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }}
+                          disabled={uploading}
+                          title="Quitar foto"
+                          aria-label="Quitar foto"
+                        >
+                          <i className="fa-solid fa-trash" />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
-              <div className="p-header__right">
-                {!editMode ? (
-                  <div className="p-actions">
-                    <button className="p-iconbtn p-iconbtn--round" title="Ajustes de cuenta" onClick={() => setSettingsOpen(true)}>
-                      <i className="fa-solid fa-gear" />
-                    </button>
-                    <button className="p-btn" onClick={() => setEditMode(true)}>
-                      <i className="fa-solid fa-pen" /> Editar
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-actions">
-                    <button className="p-btn" onClick={handleSave} disabled={savingProfile}>
-                      <i className="fa-solid fa-floppy-disk" /> {savingProfile ? "Guardando…" : "Guardar"}
-                    </button>
-                    <button className="p-btn p-btn--ghost" onClick={handleCancel}>
-                      <i className="fa-solid fa-xmark" /> Cancelar
-                    </button>
-                  </div>
-                )}
-              </div>
+              {isOwnProfile && (
+                <div className="p-header__right">
+                  {!editMode ? (
+                    <div className="p-actions">
+                      <button className="p-iconbtn p-iconbtn--round" title="Ajustes de cuenta" onClick={() => setSettingsOpen(true)}>
+                        <i className="fa-solid fa-gear" />
+                      </button>
+                      <button className="p-btn" onClick={() => setEditMode(true)}>
+                        <i className="fa-solid fa-pen" /> Editar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-actions">
+                      <button className="p-btn" onClick={handleSave} disabled={savingProfile}>
+                        <i className="fa-solid fa-floppy-disk" /> {savingProfile ? "Guardando…" : "Guardar"}
+                      </button>
+                      <button className="p-btn p-btn--ghost" onClick={handleCancel}>
+                        <i className="fa-solid fa-xmark" /> Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="p-profile-header__bottom">
@@ -438,8 +460,8 @@ export default function Perfil() {
                   <span className="p-level-chip">Nivel {gami?.nivel ?? 1}</span>
                 </div>
 
-                {/* Selector de marco (solo en modo editar) */}
-                {editMode && (
+                {/* Selector de marco (solo en modo editar y en propio perfil) */}
+                {editMode && isOwnProfile && (
                   <div className="p-frame-picker">
                     {FRAME_TIERS.map((frame) => {
                       const unlockedFrame = nivelActual >= frame.minLevel;
@@ -475,9 +497,9 @@ export default function Perfil() {
               <div className="p-block">
                 <div className="p-block__head">
                   <h3>Biografía</h3>
-                  {editMode && <small className="p-muted" aria-live="polite">{perfil.biografia?.length || 0}/600</small>}
+                  {editMode && isOwnProfile && <small className="p-muted" aria-live="polite">{perfil.biografia?.length || 0}/600</small>}
                 </div>
-                {!editMode ? (
+                {!editMode || !isOwnProfile ? (
                   <p className={`p-bio ${(!perfil.biografia || !perfil.biografia.trim()) ? "is-empty" : ""}`}>
                     {perfil.biografia?.trim() || "Aún no agregaste una biografía. Contanos en qué estás trabajando y qué te apasiona."}
                   </p>
@@ -496,7 +518,7 @@ export default function Perfil() {
               {/* Skills */}
               <div className="p-block">
                 <div className="p-block__head"><h3>Skills</h3></div>
-                {!editMode ? (
+                {!editMode || !isOwnProfile ? (
                   <div className="p-tags">
                     {skillsArr.length > 0 ? skillsArr.map((s, i) => <span className="p-tag" key={i}>{s}</span>) : <span className="p-muted">Sin skills cargadas.</span>}
                   </div>
@@ -513,7 +535,7 @@ export default function Perfil() {
               {/*Redes */}
               <div className="p-block">
                 <div className="p-block__head"><h3>Redes</h3></div>
-                {!editMode ? (
+                {!editMode || !isOwnProfile ? (
                   <ul className="p-socials">
                     {socials.length === 0 ? (
                       <li className="p-muted">No agregaste redes aún.</li>
@@ -651,22 +673,22 @@ export default function Perfil() {
 
       <FeedDrawer open={feedOpen} onClose={() => setFeedOpen(false)} feed={gami?.feed || []} />
 
-      {/* Modal ajustes */}
-      <AccountSettingsModal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        id_cliente={id_cliente}
-        onIdentityUpdated={(partial) => {
-          
-          if ("display_name" in partial || "username" in partial) {
-            setPerfil((prev) => ({ ...prev, ...partial }));
-          }
-
-          if ("nombre" in partial || "email" in partial) {
-            setUsuario((u) => ({ ...u, ...partial }));
-          }
-        }}
-      />
+      {/* Modal ajustes solo en propio perfil */}
+      {isOwnProfile && (
+        <AccountSettingsModal
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          id_cliente={id_cliente}
+          onIdentityUpdated={(partial) => {
+            if ("display_name" in partial || "username" in partial) {
+              setPerfil((prev) => ({ ...prev, ...partial }));
+            }
+            if ("nombre" in partial || "email" in partial) {
+              setUsuario((u) => ({ ...u, ...partial }));
+            }
+          }}
+        />
+      )}
     </>
   );
 }
