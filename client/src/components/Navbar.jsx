@@ -22,14 +22,12 @@ export default function Navbar() {
     return location.pathname.startsWith(prefix);
   };
 
-  // Datos usuario + foto perfil
   useEffect(() => {
     const fetchUsuario = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData.session?.user;
 
       if (user) {
-        // Nombre
         const { data, error } = await supabase
           .from("usuario")
           .select("nombre")
@@ -43,7 +41,6 @@ export default function Navbar() {
           setUsuario(data);
         }
 
-        // Foto perfil
         if (id_cliente) {
           try {
             const res = await axios.get(
@@ -74,7 +71,6 @@ export default function Navbar() {
     return () => listener.subscription.unsubscribe();
   }, [id_cliente]);
 
-  // Cerrar menú si clic fuera
   useEffect(() => {
     const handleClickFuera = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -85,7 +81,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickFuera);
   }, []);
 
-  // XP login diario
   useEffect(() => {
     const id = localStorage.getItem("cliente");
     if (!id) return;
@@ -188,7 +183,6 @@ export default function Navbar() {
             </div>
           ) : (
             <>
-              <Link to="/register" className="btn-nav auth">Registrarse</Link>
               <Link to="/login" className="btn-nav auth">Iniciar Sesión</Link>
             </>
           )}

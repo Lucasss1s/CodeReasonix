@@ -29,7 +29,6 @@ export default function Postulacion() {
   return (
     <>
       <Navbar />
-      {/* Wrapper para aislar estilos de la vista de postulaciones */}
       <div className="postulaciones-page">
         <div className="entrevistas-container">
           <h1 className="post-title">Mis postulaciones</h1>

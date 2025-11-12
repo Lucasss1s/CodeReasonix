@@ -38,7 +38,6 @@ export default function Oferta() {
   return (
     <>
       <Navbar />
-      {/* Wrapper que activa los estilos oscuros del listado */}
       <div className="ofertas-page">
         <div className="entrevistas-container">
           <h1 className="ofertas-title">Ofertas laborales</h1>

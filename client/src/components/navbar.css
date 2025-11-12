@@ -11,11 +11,9 @@
   box-sizing: border-box;
 }
 
-/* Zonas */
 .nav-left { z-index: 2; }
 .nav-right { z-index: 2; display: flex; align-items: center; gap: 10px; }
 
-/* Centro ABSOLUTO (siempre centrado, sin importar el ancho de izquierda/derecha) */
 .nav-center {
   position: absolute;
   left: 50%;
@@ -25,14 +23,12 @@
   align-items: center;
 }
 
-/* Logo */
 .logo {
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: .4px;
 }
 
-/* Botones NAV (neón theme, sin fondo) */
 .btn-nav {
   padding: 6px 12px;
   text-decoration: none;
@@ -46,19 +42,16 @@
   outline: none;
 }
 
-/* Hover sutil, sin fondo */
 .btn-nav:hover {
   opacity: 1;
   color: #eaf7ff;
 }
 
-/* Estado activo: solo brillo y color acentuado */
 .btn-nav.active {
   color: #4ff3e4;
   text-shadow: 0 0 8px rgba(79, 243, 228, 0.55);
 }
 
-/* Links de auth a la derecha: se dejan iguales visualmente a los nav (sin fondo) */
 .btn-nav.auth {
   color: #eaeaea;
 }
@@ -66,7 +59,6 @@
   color: #ffffff;
 }
 
-/* Avatar y menú (sin cambios) */
 .avatar {
   width: 40px;
   height: 40px;
@@ -74,7 +66,7 @@
   cursor: pointer;
   object-fit: cover;
   margin-left: 10px;
-  border: 2px solid #4ff3e4; /* se mantiene como pediste */
+  border: 2px solid #4ff3e4; 
 }
 
 .menu-container {
@@ -104,10 +96,9 @@
 }
 
 .menu-dropdown .dropdown-item:hover {
-  background: #ff7a00; /* lo dejamos igual como pediste */
+  background: #2d7c76; 
 }
 
-/* Responsivo: si el centro no entra, que haga wrap suave */
 @media (max-width: 720px) {
   .nav-center {
     gap: 10px;
