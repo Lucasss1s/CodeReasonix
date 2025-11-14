@@ -3,8 +3,16 @@ import "../pages/desafios/desafios.css";
 
 export default function BossCard({ desafio, onClick }) {
   const hpTotal = Number(desafio.hp_total || 0);
-  const hpRest = Number(desafio.hp_restante == null ? desafio.hp_total : desafio.hp_restante);
-  const pct = hpTotal > 0 ? Math.max(0, Math.min(100, Math.round((hpRest / hpTotal) * 100))) : 0;
+  const hpRest = Number(
+    desafio.hp_restante == null ? desafio.hp_total : desafio.hp_restante
+  );
+  const pct =
+    hpTotal > 0
+      ? Math.max(0, Math.min(100, Math.round((hpRest / hpTotal) * 100)))
+      : 0;
+
+  const dificultad = (desafio?.dificultad || "").toLowerCase(); 
+  const lenguaje = (desafio?.lenguaje || "").toLowerCase();     
 
   const imgRef = useRef(null);
 
@@ -13,7 +21,12 @@ export default function BossCard({ desafio, onClick }) {
     const node = imgRef.current;
     if (!node) return;
 
-    node.classList.remove("boss-anim-hit", "boss-anim-wrong", "boss-anim-defeat", "boss-flash-wrong");
+    node.classList.remove(
+      "boss-anim-hit",
+      "boss-anim-wrong",
+      "boss-anim-defeat",
+      "boss-flash-wrong"
+    );
 
     const type = desafio.anim;
     if (type === "hit") {
@@ -26,7 +39,12 @@ export default function BossCard({ desafio, onClick }) {
 
     const duration = type === "defeat" ? 950 : type === "wrong" ? 700 : 550;
     const tid = setTimeout(() => {
-      node.classList.remove("boss-anim-hit", "boss-anim-wrong", "boss-anim-defeat", "boss-flash-wrong");
+      node.classList.remove(
+        "boss-anim-hit",
+        "boss-anim-wrong",
+        "boss-anim-defeat",
+        "boss-flash-wrong"
+      );
     }, duration + 30);
 
     return () => clearTimeout(tid);
@@ -45,11 +63,26 @@ export default function BossCard({ desafio, onClick }) {
       <div className="boss-left">
         <h3 className="boss-title">{desafio.nombre}</h3>
         <p className="boss-desc">{desafio.descripcion}</p>
+
         <div className="boss-meta">
-          <span>
-            Inicio: {desafio.fecha_inicio ? new Date(desafio.fecha_inicio).toLocaleDateString() : "-"}
+          <span className={`chip chip--diff chip--diff-${dificultad || "facil"}`}>
+            {dificultad || "—"}
           </span>
-          {desafio.fecha_fin && <span> • Fin: {new Date(desafio.fecha_fin).toLocaleDateString()}</span>}
+          <span className={`chip chip--lang chip--lang-${lenguaje || "java"}`}>
+            {lenguaje || "—"}
+          </span>
+
+          <span>
+            Inicio:{" "}
+            {desafio.fecha_inicio
+              ? new Date(desafio.fecha_inicio).toLocaleDateString()
+              : "-"}
+          </span>
+          {desafio.fecha_fin && (
+            <span>
+              {" "}| Fin: {new Date(desafio.fecha_fin).toLocaleDateString()}
+            </span>
+          )}
         </div>
       </div>
 

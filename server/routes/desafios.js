@@ -3,16 +3,22 @@ import { supabase } from '../config/db.js';
 
 const router = express.Router();
 
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
   try {
     const nowIso = new Date().toISOString();
-    const { data, error } = await supabase
+    const { dificultad, lenguaje } = req.query;
+
+    let q = supabase
       .from('desafio')
       .select('*')
       .eq('estado', 'activo')
       .or(`fecha_fin.is.null,fecha_fin.gt.${nowIso}`)
       .order('fecha_inicio', { ascending: false });
 
+    if (dificultad) q = q.eq('dificultad', dificultad);
+    if (lenguaje) q = q.eq('lenguaje', lenguaje);
+
+    const { data, error } = await q;
     if (error) throw error;
     res.json(data);
   } catch (err) {
@@ -30,6 +36,7 @@ router.get('/:id', async (req, res) => {
       .eq('id_desafio', id)
       .single();
     if (error) throw error;
+
     if (data && (data.hp_restante === null || data.hp_restante === undefined)) {
       data.hp_restante = data.hp_total;
     }
@@ -42,7 +49,21 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { nombre, descripcion, imagen_url, fecha_inicio, fecha_fin, estado, hp_total, hp_restante, recompensa_xp, recompensa_moneda } = req.body;
+    const {
+      nombre,
+      descripcion,
+      imagen_url,
+      fecha_inicio,
+      fecha_fin,
+      estado,
+      hp_total,
+      hp_restante,
+      recompensa_xp,
+      recompensa_moneda,
+      dificultad, 
+      lenguaje,   
+    } = req.body;
+
     if (!nombre || hp_total == null) {
       return res.status(400).json({ error: 'nombre y hp_total son obligatorios' });
     }
@@ -57,7 +78,9 @@ router.post('/', async (req, res) => {
       hp_total: Number(hp_total),
       hp_restante: hp_restante != null ? Number(hp_restante) : Number(hp_total),
       recompensa_xp: recompensa_xp ?? 100,
-      recompensa_moneda: recompensa_moneda ?? 50
+      recompensa_moneda: recompensa_moneda ?? 50,
+      dificultad: dificultad ?? null,
+      lenguaje: lenguaje ?? null,
     };
 
     const { data, error } = await supabase
@@ -77,15 +100,26 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const id = Number(req.params.id);
   try {
-    const body = req.body;
+    const body = req.body ?? {};
+
     if (body.hp_total !== undefined) body.hp_total = Number(body.hp_total);
     if (body.hp_restante !== undefined) body.hp_restante = Number(body.hp_restante);
     if (body.recompensa_xp !== undefined) body.recompensa_xp = Number(body.recompensa_xp);
     if (body.recompensa_moneda !== undefined) body.recompensa_moneda = Number(body.recompensa_moneda);
 
+    const allowed = new Set([
+      'nombre','descripcion','imagen_url','fecha_inicio','fecha_fin','estado',
+      'hp_total','hp_restante','recompensa_xp','recompensa_moneda',
+      'dificultad','lenguaje'
+    ]);
+    const update = {};
+    Object.keys(body).forEach(k => {
+      if (allowed.has(k)) update[k] = body[k];
+    });
+
     const { data, error } = await supabase
       .from('desafio')
-      .update(body)
+      .update(update)
       .eq('id_desafio', id)
       .select()
       .single();
