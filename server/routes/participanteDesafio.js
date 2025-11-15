@@ -145,7 +145,21 @@ router.get('/mis/:id_cliente', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('participante_desafio')
-      .select('*, desafio(id_desafio,nombre,imagen_url,estado,hp_total,hp_restante)')
+      .select(`
+        *,
+        desafio (
+          id_desafio,
+          nombre,
+          imagen_url,
+          estado,
+          hp_total,
+          hp_restante,
+          recompensa_xp,
+          recompensa_moneda,
+          dificultad,
+          lenguaje
+        )
+      `)
       .eq('id_cliente', id_cliente)
       .order('fecha_inscripcion', { ascending: false });
     if (error) throw error;
