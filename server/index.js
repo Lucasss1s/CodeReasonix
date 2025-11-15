@@ -25,6 +25,8 @@ import ejercicioComentariosRouter from "./routes/ejercicioComentarios.js"
 import ejercicioPistasRouter from "./routes/ejercicioPistas.js"
 import historialRouter from "./routes/historial.js";
 import ejercicioBugRouter from "./routes/ejercicioBug.js";
+import preferenciasRouter from "./routes/preferencias.js";
+import recomendacionesRouter from "./routes/recomendaciones.js"
 
 const app = express(); // Instancia
 app.use(cors());
@@ -59,6 +61,8 @@ app.use("/ejercicio-comentarios", ejercicioComentariosRouter);
 app.use("/ejercicio-pistas", ejercicioPistasRouter);
 app.use("/historial", historialRouter);
 app.use("/ejercicio-bug", ejercicioBugRouter);
+app.use("/preferencias", preferenciasRouter);
+app.use("/recomendaciones", recomendacionesRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

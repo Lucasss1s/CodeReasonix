@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function useAuth({ redirectToLogin = true } = {}) {
+export default function useSesion({ redirectToLogin = true } = {}) {
     const [usuario, setUsuario] = useState(null);
     const [clienteId, setClienteId] = useState(null);
+    const [cargandoSesion, setCargandoSesion] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -24,7 +25,9 @@ export default function useAuth({ redirectToLogin = true } = {}) {
         console.warn("No hay sesión activa. Redirigiendo a login.");
         navigate("/login");
         }
+
+        setCargandoSesion(false);
     }, [navigate, redirectToLogin]);
 
-    return { usuario, clienteId };
+    return { usuario, clienteId, cargandoSesion };
 }

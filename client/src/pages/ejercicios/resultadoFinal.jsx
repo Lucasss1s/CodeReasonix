@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import useAuth from "../../hooks/useAuth";
+import useSesion from "../../hooks/useSesion";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bar } from "react-chartjs-2";
@@ -18,7 +18,7 @@ import RewardOnRoute from "../../components/RewardOnRoute";
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function ResultadoFinal() {
-    const {clienteId} = useAuth({ redirectToLogin: true });
+    const {clienteId} = useSesion({ redirectToLogin: true });
 
     const { id } = useParams();
     const navigate = useNavigate();

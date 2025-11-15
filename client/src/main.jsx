@@ -16,6 +16,7 @@ import RewardOnRoute from './components/RewardOnRoute';
 import Desafio from "./pages/desafios/desafio.jsx";
 import DesafioDetalle from "./pages/desafios/desafioDetalle.jsx";
 import MisDesafios from "./pages/desafios/miDesafio.jsx";
+import FormPreferencias from "./pages/preferencias/formPreferencias.jsx";
 
 import { Toaster } from "sonner";
 
@@ -43,6 +44,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/desafios" element={<Desafio />} />
         <Route path="/mis-desafios" element={<MisDesafios />} />
         <Route path="/desafios/:id" element={<DesafioDetalle />} />
+        <Route path="/form-preferencias" element={<FormPreferencias/>}/>
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

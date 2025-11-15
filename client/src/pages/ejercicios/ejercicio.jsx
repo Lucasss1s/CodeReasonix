@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import EjercicioComentarios from "../../components/EjercicioComentarios.jsx";
 import Editor from "@monaco-editor/react";
-import useAuth from "../../hooks/useAuth";
+import useSesion from "../../hooks/useSesion.js";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import "./ejercicio.css";
@@ -128,13 +128,19 @@ function reconstructionCode(headerCode, rawTemplate, lenguaje) {
 
 
 function Ejercicio() {
-    const { clienteId } = useAuth({ redirectToLogin: true });
+    const { clienteId } = useSesion({ redirectToLogin: true });
 
     const { id } = useParams();
     const navigate = useNavigate();
     const [ejercicio, setEjercicio] = useState(null);
     const [codigo, setCodigo] = useState("");
-    const [lenguaje, setLenguaje] = useState("python");
+    const [lenguaje, setLenguaje] = useState(() => {
+    if (typeof window === "undefined") return "python";
+        const perExercise = window.localStorage.getItem(`ej_lang_${id}`);
+        if (perExercise) return perExercise;
+        const globalPref = window.localStorage.getItem("crx_pref_lenguaje");
+        return globalPref || "python";
+    });
     const [resultados, setResultados] = useState([]);
     const [resumen, setResumen] = useState(null);
     const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -344,6 +350,13 @@ function Ejercicio() {
     loadHistCount();
     }, [id, clienteId]);
 
+    //Guardar ultimo lenguaje usado 
+    useEffect(() => {
+        if (!id) return;
+        if (typeof window === "undefined") return;
+        window.localStorage.setItem(`ej_lang_${id}`, lenguaje);
+    }, [id, lenguaje]);
+
 
 
     //Drag horizontal (panel izquierdo)
@@ -532,7 +545,7 @@ function Ejercicio() {
                     <h2>{ejercicio.titulo}</h2>
                     <p className="descripcion">{ejercicio.descripcion}</p>
                     <p className="dificultad">
-                        Dificultad: {["Fácil", "Medio", "Difícil", "Muy Difícil"][ejercicio.dificultad - 1]}
+                        Dificultad: {["Fácil", "Medio", "Difícil", "Experto"][ejercicio.dificultad - 1]}
                     </p>
                 </div>
                 <div className="casos-container">
