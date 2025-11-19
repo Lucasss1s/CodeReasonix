@@ -8,15 +8,15 @@ import { checkAndGrantLogros } from "../services/logros.js";
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-    //debug + validacion temprana
+    //debug + validacion 
     console.log("[submit-final] body recibido:", JSON.stringify(req.body));
 
     let { id_cliente, id_ejercicio, codigo_fuente, lenguaje } = req.body;
 
-    //normalizar id_cliente a nro
+    //normalizar id_cliente 
     const idClienteNum = Number(id_cliente);
 
-    //validaciones previas
+    //validaciones prev
     if (!Number.isInteger(idClienteNum) || !id_ejercicio || !codigo_fuente || !lenguaje) {
         console.warn("[submit-final] faltan/invalidos:", { id_cliente, id_ejercicio, lenguaje });
         return res.status(400).json({ error: 'Faltan datos obligatorios o id_cliente inválido' });
@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
 
         const aceptado = resultados.every(r => r.resultado === 'aceptado');
 
-        //insertar submit_final con idClienteNum 
+        //insertar submit_final  
         const { data: inserted, error: errorInsert } = await supabase
         .from('submit_final')
         .insert([{
@@ -207,9 +207,9 @@ router.post('/', async (req, res) => {
         console.error('Error en submit-final:', err);
         res.status(500).json({ error: 'Error procesando submit-final' });
     }
-    });
+});
 
-    router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -229,52 +229,81 @@ router.post('/', async (req, res) => {
         console.error('Error GET submit-final/:id', err);
         res.status(500).json({ error: 'Error obteniendo submit-final' });
     }
-    });
+});
 
-    router.get('/comparacion/:id_ejercicio', async (req, res) => {
+router.get('/comparacion/:id_ejercicio', async (req, res) => {
     const { id_ejercicio } = req.params;
+    const lenguaje = (req.query.lenguaje || "").toLowerCase(); 
 
     try {
-        const { data, error } = await supabase
+        let query = supabase
         .from('submit_final')
-        .select('detalles, memoria_usada')
-        .eq('id_ejercicio', id_ejercicio);
+        .select('detalles, memoria_usada, lenguaje, resultado')
+        .eq('id_ejercicio', id_ejercicio)
+        .eq('resultado', true); 
+
+        if (lenguaje) {
+        query = query.eq('lenguaje', lenguaje); 
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
-        if (!data || data.length === 0)
-        return res.json({ mejorTiempo: 0, promedioTiempo: 0, mejorMemoria: 0, promedioMemoria: 0 });
+
+        if (!data || data.length === 0) {
+        return res.json({
+            mejorTiempo: 0,
+            promedioTiempo: 0,
+            mejorMemoria: 0,
+            promedioMemoria: 0,
+            totalEnvios: 0,
+        });
+        }
 
         const tiempos = data
-        .map(r => {
+        .map((r) => {
             if (!Array.isArray(r.detalles)) return null;
-            const maxCaso = r.detalles.reduce((max, c) =>
-            parseFloat(c.tiempo || 0) > parseFloat(max.tiempo || 0) ? c : max,
+            const maxCaso = r.detalles.reduce(
+            (max, c) =>
+                parseFloat(c.tiempo || 0) > parseFloat(max.tiempo || 0) ? c : max,
             { tiempo: 0 }
             );
             return parseFloat(maxCaso.tiempo || 0);
         })
-        .filter(t => t > 0);
+        .filter((t) => t > 0);
 
-        const memorias = data.map(r => r.memoria_usada).filter(m => m && m > 0);
+        const memorias = data
+        .map((r) => r.memoria_usada)
+        .filter((m) => typeof m === "number" && m > 0);
 
-        if (tiempos.length === 0)
-        return res.json({ mejorTiempo: 0, promedioTiempo: 0, mejorMemoria: 0, promedioMemoria: 0 });
+        if (tiempos.length === 0) {
+        return res.json({
+            mejorTiempo: 0,
+            promedioTiempo: 0,
+            mejorMemoria: 0,
+            promedioMemoria: 0,
+            totalEnvios: data.length,
+        });
+        }
 
         const mejorTiempo = Math.min(...tiempos);
         const promedioTiempo = tiempos.reduce((a, b) => a + b, 0) / tiempos.length;
 
-        const mejorMemoria = Math.min(...memorias);
-        const promedioMemoria = memorias.reduce((a, b) => a + b, 0) / memorias.length;
+        const mejorMemoria = memorias.length ? Math.min(...memorias) : 0;
+        const promedioMemoria = memorias.length
+        ? memorias.reduce((a, b) => a + b, 0) / memorias.length
+        : 0;
 
         res.json({
-        mejorTiempo: parseFloat(mejorTiempo.toFixed(3)),
-        promedioTiempo: parseFloat(promedioTiempo.toFixed(3)),
+        mejorTiempo: Number(mejorTiempo.toFixed(3)),
+        promedioTiempo: Number(promedioTiempo.toFixed(3)),
         mejorMemoria,
-        promedioMemoria: Math.round(promedioMemoria)
+        promedioMemoria: Math.round(promedioMemoria),
+        totalEnvios: data.length,
         });
     } catch (err) {
         console.error('Error GET /submit-final/comparacion/:id_ejercicio', err);
-        res.status(500).json({ error: 'Error obteniendo comparación global' });
+        res.status(500).json({ error: 'Error obteniendo comparacion' });
     }
 });
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import EjercicioComentarios from "../../components/EjercicioComentarios.jsx";
 import Editor from "@monaco-editor/react";
-import useSesion from "../../hooks/useSesion.js";
+import useRequirePreferencias from "../../hooks/useRequirePreferencias";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import "./ejercicio.css";
@@ -128,7 +128,7 @@ function reconstructionCode(headerCode, rawTemplate, lenguaje) {
 
 
 function Ejercicio() {
-    const { clienteId } = useSesion({ redirectToLogin: true });
+    const { clienteId } = useRequirePreferencias();
 
     const { id } = useParams();
     const navigate = useNavigate();
@@ -505,8 +505,6 @@ function Ejercicio() {
             const data = await res.json();
 
             const idSubmit = data.insert?.id_submit_final ??data.id_submit_final ?? "";
-            
-            //navigate(`/resultado/${data.insert?.id_submit_final ?? ""}`);
 
             if (data.resultado === "aceptado" && data.reward?.amount) {
                 const qs = new URLSearchParams({
@@ -522,7 +520,7 @@ function Ejercicio() {
 
                 navigate(`/resultado/${idSubmit}?${qs}`, {
                     replace: false,
-                    state: { reward: data.reward },
+                    state: { reward: data.reward, codigoEditor: codigo },
                 });
                 } else {
                 navigate(`/resultado/${idSubmit}`);

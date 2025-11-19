@@ -33,11 +33,15 @@ async function evalCondition(cond, id_cliente) {
     case "ejercicios_resueltos": {
       const cantidad = cond.cantidad ?? 1;
       const { count, error } = await supabase
-        .from("submit_final")
+        .from("usuario_ejercicio_resuelto")
         .select("*", { count: "exact", head: true })
-        .eq("id_cliente", id_cliente)
-        .eq("resultado", true);
-      if (error) return false;
+        .eq("id_cliente", id_cliente);
+
+      if (error) {
+        console.error("error contando ejercicios resueltos:", error);
+        return false;
+      }
+
       return (count ?? 0) >= cantidad;
     }
 
@@ -67,10 +71,7 @@ async function evalCondition(cond, id_cliente) {
   }
 }
 
-/** 
- * Calcula progreso para cada tipo de condicion usando metricas precargadas
- * metrics: { loginCount, ejerciciosOK, nivel, xp_total, streak_actual }
- */
+/*Calcular progreso*/
 function buildProgress(cond, metrics) {
   if (!cond || !cond.tipo) return null;
 
@@ -137,7 +138,7 @@ function buildProgress(cond, metrics) {
   }
 }
 
-/*Metricas basicas para armar progreso sin N consultas por logro*/
+/*Metricas*/
 async function getUserProgressMetrics(id_cliente) {
   const [loginAgg, ejerciciosAgg, xpRow, streakRow] = await Promise.all([
     supabase
@@ -146,10 +147,9 @@ async function getUserProgressMetrics(id_cliente) {
       .eq("id_cliente", id_cliente)
       .in("tipo", ["login", "login_diario"]),
     supabase
-      .from("submit_final")
+      .from("usuario_ejercicio_resuelto")
       .select("*", { count: "exact", head: true })
-      .eq("id_cliente", id_cliente)
-      .eq("resultado", true),
+      .eq("id_cliente", id_cliente),
     supabase
       .from("usuario_xp")
       .select("xp_total, nivel")
@@ -171,7 +171,7 @@ async function getUserProgressMetrics(id_cliente) {
   };
 }
 
-/*Verifica y da logros faltantes */
+/*Verificar/Dar logros */
 export async function checkAndGrantLogros(id_cliente) {
   if (!id_cliente) throw new Error("id_cliente requerido");
 
@@ -247,10 +247,7 @@ export async function checkAndGrantLogros(id_cliente) {
   return nuevos;
 }
 
-/** 
- * - obtenidos de user
- * - defs: definiciones activas, con "unlocked" (bool) y "progress"({label,current,goal,percent})
- */
+/*Obtener def usuario*/
 export async function getLogrosWithProgress(id_cliente) {
   if (!id_cliente) throw new Error("id_cliente requerido");
 

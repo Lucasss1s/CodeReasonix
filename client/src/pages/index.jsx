@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import useSesion from "../hooks/useSesion";
+import useRequirePreferencias from "../hooks/useRequirePreferencias";
 import Navbar from "../components/Navbar";
 import "../index.css";
 
@@ -19,6 +19,7 @@ function formatEtiqueta(nombre) {
 }
 
 export default function Index() {
+  const navigate = useNavigate();
   const [ejercicios, setEjercicios] = useState([]);
   const [recomendados, setRecomendados] = useState([]);
   const [retomar, setRetomar] = useState([]);
@@ -35,16 +36,20 @@ export default function Index() {
   const [lenguajePreferido, setLenguajePreferido] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const { clienteId, cargandoSesion, usuario } = useSesion();
-  const navigate = useNavigate();
+  const {clienteId, usuario, preferencias, cargandoSesion, cargandoPreferencias} = useRequirePreferencias();
 
   //Lenguaje pref
   useEffect(() => {
+    if (preferencias?.lenguaje_pref) {
+      setLenguajePreferido(preferencias.lenguaje_pref);
+      return;
+    }
+
     if (typeof window !== "undefined") {
       const prefLang = window.localStorage.getItem("crx_pref_lenguaje");
       if (prefLang) setLenguajePreferido(prefLang);
     }
-  }, []);
+  }, [preferencias]);
 
   useEffect(() => {
     if (!cargandoSesion && !clienteId) {
@@ -59,26 +64,7 @@ export default function Index() {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-        try {
-          const prefRes = await axios.get(`http://localhost:5000/preferencias/${clienteId}`);
-          const pref = prefRes.data;
-          if (pref?.lenguaje_pref) {
-            if (typeof window !== "undefined") {
-              window.localStorage.setItem("crx_pref_lenguaje", pref.lenguaje_pref);
-            }
-            setLenguajePreferido(pref.lenguaje_pref);
-          }
-        } catch (err) {
-          if (err.response && err.response.status === 404) {
-            navigate("/form-preferencias", { replace: true });
-            return;
-          } else {
-            console.error("Error al verificar preferencias:", err);
-          }
-          console.error("Error al verificar preferencias:", err);
-        }
 
-        //Data home
         const [resEj, resRec, resRet] = await Promise.all([
           axios.get("http://localhost:5000/ejercicios"),
           axios.get(`http://localhost:5000/recomendaciones/home/${clienteId}`),
@@ -108,9 +94,9 @@ export default function Index() {
     };
 
     cargarDatos();
-  }, [cargandoSesion, clienteId, navigate]);
+  }, [cargandoSesion, cargandoPreferencias, clienteId]);
 
-  if (loading || cargandoSesion) {
+  if (loading || cargandoSesion || cargandoPreferencias) {
     return (
       <>
         <Navbar />

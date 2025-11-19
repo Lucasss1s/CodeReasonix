@@ -12,6 +12,17 @@
   letter-spacing: 1px;
 }
 
+.feed-loading-card{
+  max-width: 400px;
+  margin: 4rem auto 0;
+  padding: 1rem 1.4rem;
+  border-radius: 14px;
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  text-align: center;
+  color: #e5e7eb;
+}
+
 .publicacion-form {
   background: #2a2a3a;
   border-radius: 10px;

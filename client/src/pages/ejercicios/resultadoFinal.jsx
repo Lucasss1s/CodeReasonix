@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import useSesion from "../../hooks/useSesion";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+// eslint-disable-next-line 
 import { motion } from "framer-motion";
 import { Bar } from "react-chartjs-2";
 import {
@@ -12,22 +12,25 @@ import {
     Tooltip,
     Legend,
 } from "chart.js";
+import useRequirePreferencias from "../../hooks/useRequirePreferencias";
 import "./resultadoFinal.css";
 import RewardOnRoute from "../../components/RewardOnRoute";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function ResultadoFinal() {
-    const {clienteId} = useSesion({ redirectToLogin: true });
+    useRequirePreferencias();
 
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [resultado, setResultado] = useState(null);
     const [comparacion, setComparacion] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showAllCases, setShowAllCases] = useState(false);
     const [chartMode, setChartMode] = useState("tiempo");
+    const codigoEditable = location.state?.codigoEditor;
 
     useEffect(() => {
         const fetchResultado = async () => {
@@ -37,7 +40,7 @@ function ResultadoFinal() {
                 const data = await res.json();
                 setResultado(data);
 
-                const resComp = await fetch(`http://localhost:5000/submit-final/comparacion/${data.id_ejercicio}`);
+                const resComp = await fetch(`http://localhost:5000/submit-final/comparacion/${data.id_ejercicio}?lenguaje=${encodeURIComponent(data.lenguaje)}`);
                 if (resComp.ok) {
                     const comp = await resComp.json();
                     setComparacion(comp);
@@ -65,6 +68,7 @@ function ResultadoFinal() {
 
     const tiempoMax = Math.max(...detalles.map(d => d.tiempo || 0), 0);
     const memoriaMax = Math.max(...detalles.map(d => d.memoria || 0), 0);
+    const isAceptado = !!resultado.resultado;
 
     // Datos para el grafic
     const chartData = comparacion
@@ -89,7 +93,7 @@ function ResultadoFinal() {
             
             <RewardOnRoute position="top-center" size="lg" duration={2600} />
 
-            {/* HEADER */}
+            {/* Header */}
             <motion.div
                 className="resultado-header"
                 initial={{ y: -20, opacity: 0 }}
@@ -104,24 +108,26 @@ function ResultadoFinal() {
                 </div>
             </motion.div>
 
-            {/* METRICAS */}
-            <div className="metricas">
-                <motion.div className="card-metrica" whileHover={{ scale: 1.05 }}>
-                    <h4>⏱️ Tiempo máx</h4>
-                    <p>{tiempoMax}s</p>
-                </motion.div>
-                <motion.div className="card-metrica" whileHover={{ scale: 1.05 }}>
-                    <h4>💾 Memoria máx</h4>
-                    <p>{memoriaMax} KB</p>
-                </motion.div>
-                <motion.div className="card-metrica" whileHover={{ scale: 1.05 }}>
-                    <h4>📊 Casos totales</h4>
-                    <p>{detalles.length}</p>
-                </motion.div>
-            </div>
+            {/* Metricas */}
+            {isAceptado && (
+                <div className="metricas">
+                    <motion.div className="card-metrica" whileHover={{ scale: 1.05 }}>
+                        <h4>⏱️ Tiempo máx</h4>
+                        <p>{tiempoMax}s</p>
+                    </motion.div>
+                    <motion.div className="card-metrica" whileHover={{ scale: 1.05 }}>
+                        <h4>💾 Memoria máx</h4>
+                        <p>{memoriaMax} KB</p>
+                    </motion.div>
+                    <motion.div className="card-metrica" whileHover={{ scale: 1.05 }}>
+                        <h4>📊 Casos totales</h4>
+                        <p>{detalles.length}</p>
+                    </motion.div>
+                </div>
+            )}
 
-            {/* GRAFICO COMPARATIVO */}
-            {comparacion && (
+            {/* Grafico comparativo */}
+            {isAceptado && comparacion && (
                 <div className="chart-container">
                     <div className="chart-tabs">
                         <button
@@ -157,14 +163,14 @@ function ResultadoFinal() {
                 </div>
             )}
 
-            {/* CODIGO */}
+            {/* Codigo */}
             <div className="codigo-container">
                 <h3>Tu código</h3>
-                <pre>{resultado.codigo_fuente}</pre>
+                <pre>{codigoEditable || resultado.codigo_fuente}</pre>
                 <button className="btn-copy">📋 Copiar</button>
             </div>
 
-            {/* CASOS */}
+            {/* Casos */}
             <div className="detalles-container">
                 {firstFail ? (
                     <motion.div className="panel-fallo" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

@@ -5,6 +5,7 @@ import Navbar from "../../components/Navbar";
 import Publicacion from "./publicacion.jsx";
 import Comentario from "./comentario.jsx";
 import Reaccion from "./reaccion.jsx";
+import useRequirePreferencias from "../../hooks/useRequirePreferencias"; 
 import "./feed.css";
 
 const extraerHashtags = (texto = "") => {
@@ -16,10 +17,12 @@ const extraerHashtags = (texto = "") => {
     };
 
     export default function Feed() {
+    const { clienteId, cargandoSesion, cargandoPreferencias } = useRequirePreferencias();
+    const id_cliente = clienteId; 
+
     const [publicaciones, setPublicaciones] = useState([]);
     const [menuAbierto, setMenuAbierto] = useState(null);
     const [hashtagFiltro, setHashtagFiltro] = useState("");
-    const id_cliente = localStorage.getItem("cliente");
 
     const cargarFeed = async () => {
         try {
@@ -30,7 +33,11 @@ const extraerHashtags = (texto = "") => {
         }
     };
 
-    useEffect(() => { cargarFeed(); }, []);
+    useEffect(() => {
+        if (cargandoSesion || cargandoPreferencias) return;
+        if (!clienteId) return;
+        cargarFeed();
+    }, [cargandoSesion, cargandoPreferencias, clienteId]);
 
     useEffect(() => {
         const handleClickFuera = (e) => {
@@ -69,6 +76,19 @@ const extraerHashtags = (texto = "") => {
             )
         )
         : publicaciones;
+
+    if (cargandoSesion || cargandoPreferencias) {
+        return (
+        <>
+            <Navbar />
+            <div className="feed-container">
+                <div className="feed-loading-card">
+                    <p>Cargando comunidad...</p>
+                </div>
+            </div>
+        </>
+        );
+    }
 
     return (
         <>
