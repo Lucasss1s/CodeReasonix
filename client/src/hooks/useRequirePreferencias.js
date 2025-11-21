@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import useSesion from "./useSesion";
+import API_BASE from "../config/api";
 
 export default function useRequirePreferencias() {
     const { clienteId, cargandoSesion, usuario } = useSesion({
@@ -17,7 +18,7 @@ export default function useRequirePreferencias() {
 
         const check = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/preferencias/${clienteId}`);
+            const res = await axios.get(`${API_BASE}/preferencias/${clienteId}`);
             const pref = res.data;
             setPreferencias(pref);
 

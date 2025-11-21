@@ -66,5 +66,5 @@ app.use("/preferencias", preferenciasRouter);
 app.use("/recomendaciones", recomendacionesRouter);
 app.use("/ranking", rankingRouter);
 
-const PORT = 5000;
+const PORT =  process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

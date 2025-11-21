@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
@@ -10,9 +11,7 @@ export default function Postulacion() {
   const cargar = async () => {
     if (!id_cliente) return;
     try {
-      const res = await axios.get(
-        `http://localhost:5000/postulaciones/mias/${id_cliente}`
-      );
+      const res = await axios.get(`${API_BASE}/postulaciones/mias/${id_cliente}`);
       setItems(res.data || []);
     } catch (err) {
       console.error("Error cargando postulaciones:", err);

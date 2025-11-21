@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
+import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
 import useGamificacion from "../../hooks/useGamificacion";
 import useAchievements from "../../hooks/useAchievements";
@@ -136,8 +137,8 @@ export default function Perfil() {
     if (!id_cliente) return;
     try {
       const [pRes, uRes] = await Promise.all([
-        axios.get(`http://localhost:5000/perfil/${id_cliente}`),
-        axios.get(`http://localhost:5000/usuarios/by-cliente/${id_cliente}`)
+        axios.get(`${API_BASE}/perfil/${id_cliente}`),
+        axios.get(`${API_BASE}/usuarios/by-cliente/${id_cliente}`)
       ]);
 
       const p = pRes.data || {};
@@ -181,7 +182,7 @@ export default function Perfil() {
         avatar_frame: selectedFrameId,
         banner_url: perfil.banner_url ?? null
       };
-      await axios.put(`http://localhost:5000/perfil/${id_cliente}`, body);
+      await axios.put(`${API_BASE}/perfil/${id_cliente}`, body);
       setMensaje("Perfil actualizado ✅");
       setEditMode(false);
       setTimeout(() => setMensaje(""), 1500);
@@ -201,7 +202,7 @@ export default function Perfil() {
     formData.append("foto", file);
     try {
       setUploading(true);
-      const res = await axios.post(`http://localhost:5000/perfil/${id_cliente}/foto`, formData, {
+      const res = await axios.post(`${API_BASE}/perfil/${id_cliente}/foto`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const url = res.data?.url;
@@ -228,7 +229,7 @@ export default function Perfil() {
     formData.append("banner", file);
     try {
       setBannerUploading(true);
-      const res = await axios.post(`http://localhost:5000/perfil/${id_cliente}/banner`, formData, {
+      const res = await axios.post(`${API_BASE}/perfil/${id_cliente}/banner`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const url = res.data?.url;
@@ -256,7 +257,7 @@ export default function Perfil() {
     if (!isOwnProfile) return;
     try {
       setBannerUploading(true);
-      await axios.put(`http://localhost:5000/perfil/${id_cliente}`, { banner_url: null });
+      await axios.put(`${API_BASE}/perfil/${id_cliente}`, { banner_url: null });
       setPerfil((p) => ({ ...p, banner_url: null }));
       toast.success("Banner eliminado");
     } catch (e) {
@@ -295,7 +296,7 @@ export default function Perfil() {
     if (!isOwnProfile) return;
     try {
       setUploading(true);
-      await axios.put(`http://localhost:5000/perfil/${id_cliente}`, { foto_perfil: null });
+      await axios.put(`${API_BASE}/perfil/${id_cliente}`, { foto_perfil: null });
       setPreview(null);
       setPerfil((p) => ({ ...p, foto_perfil: null }));
       toast.success("Foto eliminada");

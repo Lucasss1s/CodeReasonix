@@ -6,6 +6,7 @@ import Publicacion from "./publicacion.jsx";
 import Comentario from "./comentario.jsx";
 import Reaccion from "./reaccion.jsx";
 import useRequirePreferencias from "../../hooks/useRequirePreferencias"; 
+import API_BASE from "../../config/api";
 import "./feed.css";
 
 const extraerHashtags = (texto = "") => {
@@ -26,7 +27,7 @@ const extraerHashtags = (texto = "") => {
 
     const cargarFeed = async () => {
         try {
-        const res = await axios.get("http://localhost:5000/feed");
+        const res = await axios.get(`${API_BASE}/feed`);
         setPublicaciones(res.data);
         } catch (err) {
         console.error("Error cargando feed:", err);
@@ -58,7 +59,7 @@ const extraerHashtags = (texto = "") => {
 
     const handleEliminar = async (idPublicacion) => {
         try {
-        await axios.delete(`http://localhost:5000/publicaciones/${idPublicacion}`, {
+        await axios.delete(`${API_BASE}/publicaciones/${idPublicacion}`, {
             data: { id_cliente }
         });
         cargarFeed();

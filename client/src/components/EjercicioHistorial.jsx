@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import "./ejercicio-historial.css";
-
-const API = "http://localhost:5000";
+import API_BASE from "../config/api";
 
 export default function EjercicioHistorial({
   idEjercicio,
@@ -31,9 +30,7 @@ export default function EjercicioHistorial({
       if (filters.lenguaje) params.set("lenguaje", filters.lenguaje);
       if (filters.estado) params.set("estado", filters.estado);
 
-      const res = await fetch(
-        `${API}/historial/${idCliente}/ejercicio/${idEjercicio}?` + params.toString()
-      );
+      const res = await fetch(`${API_BASE}/historial/${idCliente}/ejercicio/${idEjercicio}?` + params.toString());
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
@@ -87,9 +84,7 @@ export default function EjercicioHistorial({
     if (!id_submit_final) return;
     setFetchingCode(id_submit_final);
     try {
-      const res = await fetch(
-        `${API}/historial/submit/${id_submit_final}?id_cliente=${idCliente}`
-      );
+      const res = await fetch(`${API_BASE}/historial/submit/${id_submit_final}?id_cliente=${idCliente}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
 

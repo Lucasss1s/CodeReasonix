@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import API_BASE from "../config/api";
 import "./ejercicio-pistas.css";
-
-const API = "http://localhost:5000";
 
 export default function EjercicioPistas({ idEjercicio, idCliente, onProgress }) {
     const [pistas, setPistas] = useState([]);
@@ -24,7 +23,7 @@ export default function EjercicioPistas({ idEjercicio, idCliente, onProgress }) 
         if (!idEjercicio) return;
         setLoading(true);
         try {
-        const url = `${API}/ejercicio-pistas/${idEjercicio}/pistas?cliente=${idCliente ?? ""}`;
+        const url = `${API_BASE}/ejercicio-pistas/${idEjercicio}/pistas?cliente=${idCliente ?? ""}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -51,7 +50,7 @@ export default function EjercicioPistas({ idEjercicio, idCliente, onProgress }) 
 
         setUnlocking(true);
         try {
-        const res = await fetch(`${API}/ejercicio-pistas/${idEjercicio}/unlock`, {
+        const res = await fetch(`${API_BASE}/ejercicio-pistas/${idEjercicio}/unlock`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id_cliente: idCliente }),

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
@@ -10,7 +11,7 @@ export default function Oferta() {
 
   const cargarOfertas = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/ofertas");
+      const res = await axios.get(`${API_BASE}/ofertas`);
       setOfertas(res.data || []);
     } catch (err) {
       console.error("Error cargando ofertas:", err);

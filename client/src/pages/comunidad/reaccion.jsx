@@ -1,4 +1,5 @@
 import axios from "axios";
+import API_BASE from "../../config/api";
 
 export default function Reacciones({ idPublicacion, reacciones = [], onUpdate }) {
   const id_cliente = localStorage.getItem("cliente");
@@ -10,7 +11,7 @@ export default function Reacciones({ idPublicacion, reacciones = [], onUpdate })
     }
 
     try {
-      await axios.post("http://localhost:5000/reacciones", {
+      await axios.post(`${API_BASE}/reacciones`, {
         id_publicacion: idPublicacion,
         id_cliente,
         tipo,

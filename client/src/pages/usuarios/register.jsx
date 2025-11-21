@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { supabase } from "../../config/supabase.js";
+import API_BASE from "../../config/api";
 import { toast } from "sonner";
 import "./auth.css";
 
@@ -37,7 +38,7 @@ export default function Register() {
       const { error: authError } = await supabase.auth.signUp({ email, password });
       if (authError) throw authError;
 
-      const res = await axios.post("http://localhost:5000/usuarios/register", {
+      const res = await axios.post(`${API_BASE}/usuarios/register`, {
         nombre,
         email,
         password,
@@ -56,7 +57,7 @@ export default function Register() {
 
       // XP de login diario
       try {
-        const resXp = await fetch("http://localhost:5000/gamificacion/login-xp", {
+        const resXp = await fetch(`${API_BASE}/gamificacion/login-xp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id_cliente }),

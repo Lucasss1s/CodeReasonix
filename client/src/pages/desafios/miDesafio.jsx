@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
+import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
 import "./desafios.css";
 
@@ -15,9 +16,7 @@ export default function MisDesafios() {
   const cargar = async () => {
     if (!id_cliente) return setMis([]);
     try {
-      const res = await axios.get(
-        `http://localhost:5000/participante-desafio/mis/${id_cliente}`
-      );
+      const res = await axios.get(`${API_BASE}/participante-desafio/mis/${id_cliente}`);
       setMis(res.data || []);
     } catch (err) {
       console.error("Error cargando mis desafíos:", err);
@@ -123,9 +122,7 @@ export default function MisDesafios() {
 
     try {
       setLoadingClaim(idp);
-      const res = await axios.post(
-        `http://localhost:5000/participante-desafio/${idp}/claim`
-      );
+      const res = await axios.post(`${API_BASE}/participante-desafio/${idp}/claim`);
       const data = res.data || {};
 
       const xp =

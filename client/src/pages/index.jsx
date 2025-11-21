@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import useRequirePreferencias from "../hooks/useRequirePreferencias";
+import API_BASE from "../config/api";
 import Navbar from "../components/Navbar";
 import "../index.css";
 
@@ -66,9 +67,9 @@ export default function Index() {
         setLoading(true);
 
         const [resEj, resRec, resRet] = await Promise.all([
-          axios.get("http://localhost:5000/ejercicios"),
-          axios.get(`http://localhost:5000/recomendaciones/home/${clienteId}`),
-          axios.get(`http://localhost:5000/recomendaciones/retomar/${clienteId}`),
+          axios.get(`${API_BASE}/ejercicios`),
+          axios.get(`${API_BASE}/recomendaciones/home/${clienteId}`),
+          axios.get(`${API_BASE}/recomendaciones/retomar/${clienteId}`),
         ]);
 
         const ejerciciosApi = resEj.data || [];

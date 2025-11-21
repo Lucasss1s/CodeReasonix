@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
+import API_BASE from "../config/api";
 import "./account-settings.css";
 
-const API = "http://localhost:5000"; 
 
 function Strength({ value }) {
   const label = value >= 80 ? "Fuerte" : value >= 50 ? "Media" : "Débil";
@@ -64,7 +64,7 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
       setLoading(true);
       try {
         //usuario de cliente
-        const u = await axios.get(`${API}/usuarios/by-cliente/${id_cliente}`);
+        const u = await axios.get(`${API_BASE}/usuarios/by-cliente/${id_cliente}`);
         const user = u.data || {};
         setUsuario({
           id_usuario: user.id_usuario,
@@ -75,7 +75,7 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
         setTmpEmail(user.email || "");
 
         //perfil
-        const p = await axios.get(`${API}/perfil/${id_cliente}`);
+        const p = await axios.get(`${API_BASE}/perfil/${id_cliente}`);
         const pp = p.data || {};
         setPerfil({
           display_name: pp.display_name || "",
@@ -114,7 +114,7 @@ const saveProfileIdentity = async () => {
   };
   try {
     setLoading(true);
-    await axios.put(`${API}/perfil/${id_cliente}`, payload);
+    await axios.put(`${API_BASE}/perfil/${id_cliente}`, payload);
     toast.success("Perfil actualizado");
     onIdentityUpdated?.(payload);
   } catch (e) {
@@ -138,7 +138,7 @@ const saveProfileIdentity = async () => {
     if (!name) return toast.info("Ingresá un nombre");
     try {
       setLoading(true);
-      await axios.put(`${API}/usuarios/${usuario.id_usuario}`, { nombre: name });
+      await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}`, { nombre: name });
       setUsuario((u) => ({ ...u, nombre: name }));
       toast.success("Nombre actualizado");
       onIdentityUpdated?.({ nombre: name }); // ✅ refresca header
@@ -161,7 +161,7 @@ const saveProfileIdentity = async () => {
     }
     try {
       setLoading(true);
-      await axios.put(`${API}/usuarios/${usuario.id_usuario}`, { email: target });
+      await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}`, { email: target });
       setUsuario((u) => ({ ...u, email: target }));
       toast.success("Email actualizado");
       onIdentityUpdated?.({ email: target }); 
@@ -183,7 +183,7 @@ const saveProfileIdentity = async () => {
     if (newPass === currPass) return toast.error("La nueva debe ser distinta a la actual");
     try {
       setLoading(true);
-      await axios.put(`${API}/usuarios/${usuario.id_usuario}`, { password: newPass });
+      await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}`, { password: newPass });
       setCurrPass(""); setNewPass(""); setNewPass2("");
       toast.success("Contraseña actualizada ✅");
     } catch (e) {

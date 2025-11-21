@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import API_BASE from "../../config/api";
 
 export default function PublicacionForm({ setPublicaciones }) {
   const [contenido, setContenido] = useState("");
@@ -37,14 +38,14 @@ export default function PublicacionForm({ setPublicaciones }) {
       formData.append("contenido", contenido);
       if (imagen) formData.append("imagen", imagen);
 
-      await axios.post("http://localhost:5000/publicaciones", formData, {
+      await axios.post(`${API_BASE}/publicaciones`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       setContenido("");
       handleClearImagen();
 
-      const res = await axios.get("http://localhost:5000/feed");
+      const res = await axios.get(`${API_BASE}/feed`);
       setPublicaciones(res.data);
     } catch (err) {
       console.error("Error creando publicación:", err);

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../config/supabase.js";
+import API_BASE from "../../config/api";
 import { toast } from "sonner";
 import "./auth.css";
 
@@ -18,7 +19,7 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      const res = await fetch("http://localhost:5000/usuarios/login", {
+      const res = await fetch(`${API_BASE}/usuarios/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -36,7 +37,7 @@ export default function Login() {
       localStorage.setItem("cliente", dataBackend.id_cliente);
 
       try {
-        const resXp = await fetch("http://localhost:5000/gamificacion/login-xp", {
+        const resXp = await fetch(`${API_BASE}/gamificacion/login-xp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id_cliente: dataBackend.id_cliente }),

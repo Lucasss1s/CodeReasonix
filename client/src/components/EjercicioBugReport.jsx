@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import "./ejercicio-bug.css";
-
-const API = "http://localhost:5000";
+import API_BASE from "../config/api";
 
 export default function EjercicioBugReport({
     idEjercicio,
@@ -26,7 +25,7 @@ export default function EjercicioBugReport({
 
         setSending(true);
         try {
-        const res = await fetch(`${API}/ejercicio-bug`, {
+        const res = await fetch(`${API_BASE}/ejercicio-bug`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

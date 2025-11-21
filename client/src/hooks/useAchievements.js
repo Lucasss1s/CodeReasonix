@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-
-const API = "http://localhost:5000";
+import API_BASE from "../config/api";
 
 async function readSafeJson(res) {
     const ct = res.headers.get("content-type") || "";
@@ -23,7 +22,7 @@ async function readSafeJson(res) {
         setLoading(true);
         setError(null);
         try {
-        const res = await fetch(`${API}/logros/me/${id_cliente}`);
+        const res = await fetch(`${API_BASE}/logros/me/${id_cliente}`);
         const data = await readSafeJson(res);
 
         if (!res.ok) {
@@ -57,7 +56,7 @@ async function readSafeJson(res) {
     const recalc = useCallback(async () => {
         if (!id_cliente) return { nuevos: [] };
         try {
-        const res = await fetch(`${API}/logros/check/${id_cliente}`, { method: "POST" });
+        const res = await fetch(`${API_BASE}/logros/check/${id_cliente}`, { method: "POST" });
         const data = await readSafeJson(res);
         if (!res.ok) throw new Error(`POST /logros/check → HTTP ${res.status}${data?.error ? " · " + data.error : ""}`);
         await fetchList();

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
+import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
 import BossCard from "../../components/BossCard";
 import "./desafios.css";
@@ -30,7 +31,7 @@ export default function Desafios() {
 
   const cargar = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/desafios${query}`);
+      const res = await axios.get(`${API_BASE}/desafios${query}`);
       setDesafios(res.data || []);
     } catch (err) {
       console.error("Error cargando desafíos:", err);

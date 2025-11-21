@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
 import QuestionModal from "../../components/QuestionModal";
 import "./desafios.css";
@@ -24,7 +25,7 @@ export default function DesafioDetalle() {
 
   const cargar = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/desafios/${id}`);
+      const res = await axios.get(`${API_BASE}/desafios/${id}`);
       const d = res.data;
       if (d && (d.hp_restante === null || d.hp_restante === undefined)) {
         d.hp_restante = d.hp_total;
@@ -45,17 +46,13 @@ export default function DesafioDetalle() {
         setPreguntasAsignadas([]);
         return;
       }
-      const res = await axios.get(
-        `http://localhost:5000/participante-desafio/mis/${id_cliente}`
-      );
+      const res = await axios.get(`${API_BASE}/participante-desafio/mis/${id_cliente}`);
       const part = (res.data || []).find(
         (p) => Number(p.id_desafio) === Number(id)
       );
       setParticipante(part || null);
       if (part) {
-        const { data } = await axios.get(
-          `http://localhost:5000/participante-pregunta/por-participante/${part.id_participante}`
-        );
+        const { data } = await axios.get(`${API_BASE}/participante-pregunta/por-participante/${part.id_participante}`);
         setPreguntasAsignadas(data || []);
       } else {
         setPreguntasAsignadas([]);
@@ -93,22 +90,18 @@ export default function DesafioDetalle() {
       return;
     }
     try {
-      await axios.post("http://localhost:5000/participante-desafio", {
+      await axios.post(`${API_BASE}/participante-desafio`, {
         id_desafio: Number(id),
         id_cliente: Number(id_cliente),
       });
       await cargarParticipante();
 
-      const res2 = await axios.get(
-        `http://localhost:5000/participante-desafio/mis/${id_cliente}`
-      );
+      const res2 = await axios.get(`${API_BASE}/participante-desafio/mis/${id_cliente}`);
       const part2 = (res2.data || []).find(
         (p) => Number(p.id_desafio) === Number(id)
       );
       if (!part2) return;
-      const { data } = await axios.get(
-        `http://localhost:5000/participante-pregunta/por-participante/${part2.id_participante}`
-      );
+      const { data } = await axios.get(`${API_BASE}/participante-pregunta/por-participante/${part2.id_participante}`);
       const first = data?.[0] ?? null;
       if (first) setActivePreguntaId(first.id_participante_pregunta);
     } catch (err) {

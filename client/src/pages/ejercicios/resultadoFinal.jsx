@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import API_BASE from "../../config/api";
 // eslint-disable-next-line 
 import { motion } from "framer-motion";
 import { Bar } from "react-chartjs-2";
@@ -35,12 +36,12 @@ function ResultadoFinal() {
     useEffect(() => {
         const fetchResultado = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/submit-final/${id}`);
+                const res = await fetch(`${API_BASE}/submit-final/${id}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 setResultado(data);
 
-                const resComp = await fetch(`http://localhost:5000/submit-final/comparacion/${data.id_ejercicio}?lenguaje=${encodeURIComponent(data.lenguaje)}`);
+                const resComp = await fetch(`${API_BASE}/submit-final/comparacion/${data.id_ejercicio}?lenguaje=${encodeURIComponent(data.lenguaje)}`);
                 if (resComp.ok) {
                     const comp = await resComp.json();
                     setComparacion(comp);

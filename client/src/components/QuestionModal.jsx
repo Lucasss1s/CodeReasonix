@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import API_BASE from "../config/api";
 import "../pages/desafios/questionModal.css";
 
 export default function QuestionModal({
@@ -43,7 +44,7 @@ export default function QuestionModal({
         if (!respuesta) continue;
         sentAny = true;
         const res = await axios.post(
-          `http://localhost:5000/participante-pregunta/${id}/respond`,
+          `${API_BASE}/participante-pregunta/${id}/respond`,
           { respuesta }
         );
         results.push(res?.data ?? { id_participante_pregunta: id, ok: true });

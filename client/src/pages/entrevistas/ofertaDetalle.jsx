@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
@@ -15,7 +16,7 @@ export default function OfertaDetalle() {
 
   const cargarOferta = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/ofertas/${id}`);
+      const res = await axios.get(`${API_BASE}/ofertas/${id}`);
       setOferta(res.data);
     } catch (err) {
       console.error("Error cargando oferta:", err);
@@ -27,7 +28,7 @@ export default function OfertaDetalle() {
   const cargarSiPostule = async () => {
     if (!id_cliente) return setYaPostulado(false);
     try {
-      const res = await axios.get(`http://localhost:5000/postulaciones/mias/${id_cliente}`);
+      const res = await axios.get(`${API_BASE}/postulaciones/mias/${id_cliente}`);
       const lista = res.data || [];
       const found = lista.some((p) => Number(p.id_oferta) === Number(id));
       setYaPostulado(found);
@@ -53,7 +54,7 @@ export default function OfertaDetalle() {
 
     try {
       setPosting(true);
-      await axios.post("http://localhost:5000/postulaciones", {
+      await axios.post(`${API_BASE}/postulaciones`, {
         id_oferta: Number(id),
         id_cliente: Number(id_cliente),
         estado: "pendiente",

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import useSesion from "../../hooks/useSesion";
+import API_BASE from "../../config/api";
 import "./formPreferencias.css";
 
 export default function OnboardingPreferencias() {
@@ -27,7 +28,7 @@ export default function OnboardingPreferencias() {
     try {
       setLoading(true);
 
-      await axios.post("http://localhost:5000/preferencias", {
+      await axios.post(`${API_BASE}/preferencias`, {
         id_cliente: Number(clienteId),
         lenguaje_pref: lenguaje,
         dificultad_objetivo: Number(nivel),

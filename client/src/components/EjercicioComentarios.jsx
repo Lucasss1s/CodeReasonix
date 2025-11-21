@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import "./ejercicio-comentarios.css";
-
-const API = "http://localhost:5000";
+import API_BASE from "../config/api";
 
 function CommentItem({ comment, currentClientId, onReply, onToggleReact, onDelete }) {
   const [confirming, setConfirming] = useState(false);
@@ -103,7 +102,7 @@ export default function EjercicioComentarios({
     if (!idEjercicio) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}/ejercicio-comentarios/${idEjercicio}/comentarios`);
+      const res = await fetch(`${API_BASE}/ejercicio-comentarios/${idEjercicio}/comentarios`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setComments(data || []);
@@ -130,7 +129,7 @@ export default function EjercicioComentarios({
       const payload = { id_cliente: idCliente, contenido };
       if (replyTo?.parent_id) payload.parent_id = replyTo.parent_id;
 
-      const res = await fetch(`${API}/ejercicio-comentarios/${idEjercicio}/comentarios`, {
+      const res = await fetch(`${API_BASE}/ejercicio-comentarios/${idEjercicio}/comentarios`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -179,7 +178,7 @@ export default function EjercicioComentarios({
 
     //Llamada real
     try {
-      const res = await fetch(`${API}/ejercicio-comentarios/comentarios/${idComentario}/reaccion`, {
+      const res = await fetch(`${API_BASE}/ejercicio-comentarios/comentarios/${idComentario}/reaccion`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_cliente: idCliente, tipo }),
@@ -206,7 +205,7 @@ export default function EjercicioComentarios({
   const deleteComment = async (idComentario) => {
     if (!idCliente) return toast.info("Logueate para borrar tu comentario.");
     try {
-      const res = await fetch(`${API}/ejercicio-comentarios/comentarios/${idComentario}`, {
+      const res = await fetch(`${API_BASE}/ejercicio-comentarios/comentarios/${idComentario}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

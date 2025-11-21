@@ -5,6 +5,7 @@ import { supabase } from "../config/supabase.js";
 import { toast } from "sonner";
 import "./navbar.css";
 import RewardOnRoute from "./RewardOnRoute";
+import API_BASE from "../config/api";
 
 export default function Navbar() {
   const [usuario, setUsuario] = useState(null);
@@ -43,9 +44,7 @@ export default function Navbar() {
 
         if (id_cliente) {
           try {
-            const res = await axios.get(
-              `http://localhost:5000/perfil/${id_cliente}`
-            );
+            const res = await axios.get(`${API_BASE}/perfil/${id_cliente}`);
             setFotoPerfil(res.data?.foto_perfil || "/default-avatar.png");
           } catch {
             setFotoPerfil("/default-avatar.png");
@@ -93,7 +92,7 @@ export default function Navbar() {
 
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/gamificacion/login-xp", {
+        const res = await fetch(`${API_BASE}/gamificacion/login-xp`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id_cliente: Number(id) }),

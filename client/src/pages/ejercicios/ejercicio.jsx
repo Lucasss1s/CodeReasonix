@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import EjercicioComentarios from "../../components/EjercicioComentarios.jsx";
 import Editor from "@monaco-editor/react";
 import useRequirePreferencias from "../../hooks/useRequirePreferencias";
+import API_BASE from "../../config/api";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import "./ejercicio.css";
@@ -202,7 +203,7 @@ function Ejercicio() {
     useEffect(() => {
         const fetchEjercicio = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/ejercicios/${id}`);
+                const res = await fetch(`${API_BASE}/ejercicios/${id}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 setEjercicio(data);
@@ -219,9 +220,7 @@ function Ejercicio() {
         const fetchCodigoGuardado = async () => {
             if (!clienteId || !ejercicio) return;
             try {
-            const res = await fetch(
-                `http://localhost:5000/codigoGuardado/${clienteId}/${ejercicio.id_ejercicio}/${lenguaje}`
-            );
+            const res = await fetch(`${API_BASE}/codigoGuardado/${clienteId}/${ejercicio.id_ejercicio}/${lenguaje}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
 
@@ -255,7 +254,7 @@ function Ejercicio() {
         const timeout = setTimeout(async () => {
             setSaving(true);
             try {
-                await fetch("http://localhost:5000/codigoGuardado", {
+                await fetch(`${API_BASE}/codigoGuardado`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -278,7 +277,7 @@ function Ejercicio() {
         if (!id) return;
         const loadCount = async () => {
             try {
-            const res = await fetch(`http://localhost:5000/ejercicio-comentarios/${id}/count`);
+            const res = await fetch(`${API_BASE}/ejercicio-comentarios/${id}/count`);
             if (!res.ok) return;
             const { count } = await res.json();
             setCommentCount(count ?? 0);
@@ -295,9 +294,7 @@ function Ejercicio() {
 
     const loadPistasProgress = async () => {
         try {
-        const res = await fetch(
-            `http://localhost:5000/ejercicio-pistas/${id}/progress?cliente=${clienteId}`
-        );
+        const res = await fetch(`${API_BASE}/ejercicio-pistas/${id}/progress?cliente=${clienteId}`);
 
         if (!res.ok) {
             let body = null;
@@ -328,9 +325,7 @@ function Ejercicio() {
 
     const loadHistCount = async () => {
         try {
-        const res = await fetch(
-            `http://localhost:5000/historial/${clienteId}/ejercicio/${id}/count`
-        );
+        const res = await fetch(`${API_BASE}/historial/${clienteId}/ejercicio/${id}/count`);
         if (!res.ok) {
             let body = null;
             try {
@@ -418,7 +413,7 @@ function Ejercicio() {
 
         setCodigo(plantillaEditable);
 
-        await fetch("http://localhost:5000/codigoGuardado", {
+        await fetch(`${API_BASE}/codigoGuardado`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -444,7 +439,7 @@ function Ejercicio() {
             ejercicio.plantillas?.[lenguaje] || "",
             lenguaje
             );
-            const res = await fetch("http://localhost:5000/submit", {
+            const res = await fetch(`${API_BASE}/submit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -491,7 +486,7 @@ function Ejercicio() {
             lenguaje
             );
 
-            const res = await fetch("http://localhost:5000/submit-final", {
+            const res = await fetch(`${API_BASE}/submit-final`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
