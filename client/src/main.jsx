@@ -17,6 +17,7 @@ import Desafio from "./pages/desafios/desafio.jsx";
 import DesafioDetalle from "./pages/desafios/desafioDetalle.jsx";
 import MisDesafios from "./pages/desafios/miDesafio.jsx";
 import FormPreferencias from "./pages/preferencias/formPreferencias.jsx";
+import RankingPage from "./pages/ranking/ranking.jsx";
 
 import { Toaster } from "sonner";
 
@@ -45,6 +46,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/mis-desafios" element={<MisDesafios />} />
         <Route path="/desafios/:id" element={<DesafioDetalle />} />
         <Route path="/form-preferencias" element={<FormPreferencias/>}/>
+        <Route path="/ranking" element={<RankingPage />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

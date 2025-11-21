@@ -1,0 +1,359 @@
+.ranking-pagina {
+  max-width: 1060px;
+  margin: 1.8rem auto;
+  padding: 1.5rem 1.6rem 3rem;
+  color: #e5e7eb;
+}
+
+.ranking-encabezado {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.ranking-encabezado h1 {
+  font-size: 2rem;
+  letter-spacing: 0.2px;
+  margin: 0 0 0.25rem 0;
+}
+
+.ranking-encabezado p {
+  color: #9ca3af;
+  font-size: 0.98rem;
+  margin: 0;
+}
+
+.ranking-pestanas {
+  display: flex;
+  gap: 0.4rem;
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 0.25rem;
+  border-radius: 999px;
+}
+
+.ranking-pestana {
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: 0.18s ease;
+}
+
+.ranking-pestana:hover {
+  background: rgba(148, 163, 184, 0.08);
+  color: #fff;
+}
+
+.ranking-pestana.esta-activa {
+  background: #111827;
+  color: #fff;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.ranking-grilla-tarjetas {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1rem;
+  margin: 1rem 0 1.6rem;
+}
+
+.ranking-tarjeta {
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+}
+
+.ranking-tarjeta--hoy {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: radial-gradient(1200px 500px at 90% -140%, rgba(34,197,94,0.16), transparent),#020617;
+}
+
+.ranking-tarjeta-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.ranking-tarjeta-cabecera h2 {
+  font-size: 1.05rem;
+  margin: 0;
+  font-weight: 650;
+}
+
+.ranking-tarjeta-etiqueta {
+  font-size: 0.72rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  color: #cbd5e1;
+  border: 1px solid rgba(148,163,184,0.35);
+  background: rgba(148,163,184,0.06);
+}
+
+.ranking-yo-contenido {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.ranking-yo-posicion {
+  min-width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid #22c55e;
+  color: #bbf7d0;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.ranking-yo-nombre {
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+.ranking-yo-meta {
+  font-size: 0.92rem;
+  color: #9ca3af;
+}
+
+.ranking-yo-vacio {
+  font-size: 0.92rem;
+  color: #9ca3af;
+}
+
+.ranking-error {
+  color: #fecaca;
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+}
+
+.hoy-estadisticas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+}
+
+.hoy-estadistica {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148,163,184,0.25);
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+}
+
+.hoy-estadistica-etiqueta {
+  display: block;
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.hoy-estadistica-valor {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #e5e7eb;
+}
+
+.hoy-pie {
+  margin-top: 0.8rem;
+  color: #9ca3af;
+  font-size: 0.88rem;
+}
+
+.ranking-seccion-tabla {
+  margin-top: 0.5rem;
+}
+
+.ranking-tabla-cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.ranking-tabla-cabecera h2 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.ranking-tabla-cabecera p {
+  font-size: 0.88rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.ranking-vacio {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.ranking-tabla-contenedor {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #0f172a;
+  background: #020617;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+}
+
+.ranking-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.ranking-tabla thead {
+  background: #0b1220;
+}
+
+.ranking-tabla th,
+.ranking-tabla td {
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid #111827;
+  color: #e5e7eb;
+}
+
+.ranking-tabla th {
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+}
+
+.col-centro {
+  text-align: center;
+}
+.col-posicion {
+  width: 72px;
+  text-align: center;
+}
+
+.posicion-pastilla {
+  display: inline-flex;
+  min-width: 2.1rem;
+  justify-content: center;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(148,163,184,0.08);
+  border: 1px solid rgba(148,163,184,0.25);
+  font-weight: 800;
+}
+
+.ranking-usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.ranking-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #0f172a;
+  border: 1px solid rgba(148,163,184,0.35);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #cbd5e1;
+}
+
+.ranking-usuario-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ranking-usuario-nombre {
+  font-weight: 600;
+}
+
+.ranking-chip-yo {
+  padding: 0.05rem 0.45rem;
+  font-size: 0.7rem;
+  border-radius: 999px;
+  background: rgba(34,197,94,0.12);
+  color: #bbf7d0;
+  border: 1px solid #22c55e;
+}
+
+.ranking-chip-fuera {
+  padding: 0.05rem 0.45rem;
+  font-size: 0.7rem;
+  border-radius: 999px;
+  background: rgba(59,130,246,0.12);
+  color: #bfdbfe;
+  border: 1px solid rgba(59,130,246,0.6);
+}
+
+.ranking-tabla tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.25);
+}
+
+.ranking-tabla tbody tr:hover {
+  background: rgba(148,163,184,0.06);
+}
+
+.ranking-row-yo {
+  background: rgba(34, 197, 94, 0.06) !important;
+}
+
+.ranking-row-yo td {
+  border-bottom-color: rgba(34, 197, 94, 0.28);
+}
+
+.ranking-row-solo-yo {
+  outline: 1px dashed rgba(148,163,184,0.5);
+  outline-offset: -1px;
+}
+
+.ranking-separador td {
+  text-align: center;
+  color: #64748b;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  background: #020617;
+}
+
+@media (max-width: 900px) {
+  .ranking-grilla-tarjetas {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-encabezado {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ranking-tabla {
+    font-size: 0.88rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .ranking-pagina {
+    padding: 1rem;
+  }
+
+  .ranking-tabla th:nth-child(6),
+  .ranking-tabla td:nth-child(6) {
+    display: none; 
+  }
+
+  .hoy-estadisticas {
+    grid-template-columns: 1fr;
+  }
+}
