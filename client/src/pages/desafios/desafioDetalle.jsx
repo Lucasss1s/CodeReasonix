@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../../components/Navbar";
 import QuestionModal from "../../components/QuestionModal";
@@ -7,9 +7,13 @@ import "./desafios.css";
 
 export default function DesafioDetalle() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [desafio, setDesafio] = useState(null);
   const [participante, setParticipante] = useState(null);
   const [preguntasAsignadas, setPreguntasAsignadas] = useState([]);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+
   const id_cliente = localStorage.getItem("cliente");
 
   const imgRef = useRef(null);
@@ -41,8 +45,12 @@ export default function DesafioDetalle() {
         setPreguntasAsignadas([]);
         return;
       }
-      const res = await axios.get(`http://localhost:5000/participante-desafio/mis/${id_cliente}`);
-      const part = (res.data || []).find((p) => Number(p.id_desafio) === Number(id));
+      const res = await axios.get(
+        `http://localhost:5000/participante-desafio/mis/${id_cliente}`
+      );
+      const part = (res.data || []).find(
+        (p) => Number(p.id_desafio) === Number(id)
+      );
       setParticipante(part || null);
       if (part) {
         const { data } = await axios.get(
@@ -61,7 +69,9 @@ export default function DesafioDetalle() {
     (async () => {
       const d = await cargar();
       await cargarParticipante();
-      if (prevHpRef.current == null && d) prevHpRef.current = d.hp_restante ?? d.hp_total ?? null;
+      if (prevHpRef.current == null && d) {
+        prevHpRef.current = d.hp_restante ?? d.hp_total ?? null;
+      }
     })();
     // eslint-disable-next-line
   }, [id]);
@@ -88,13 +98,18 @@ export default function DesafioDetalle() {
         id_cliente: Number(id_cliente),
       });
       await cargarParticipante();
-      const first = (await (async () => {
-        const res = await axios.get(`http://localhost:5000/participante-desafio/mis/${id_cliente}`);
-        const part = (res.data || []).find((p) => Number(p.id_desafio) === Number(id));
-        if (!part) return null;
-        const { data } = await axios.get(`http://localhost:5000/participante-pregunta/por-participante/${part.id_participante}`);
-        return data?.[0] ?? null;
-      })()) ?? null;
+
+      const res2 = await axios.get(
+        `http://localhost:5000/participante-desafio/mis/${id_cliente}`
+      );
+      const part2 = (res2.data || []).find(
+        (p) => Number(p.id_desafio) === Number(id)
+      );
+      if (!part2) return;
+      const { data } = await axios.get(
+        `http://localhost:5000/participante-pregunta/por-participante/${part2.id_participante}`
+      );
+      const first = data?.[0] ?? null;
       if (first) setActivePreguntaId(first.id_participante_pregunta);
     } catch (err) {
       console.error("Error inscribiendo:", err);
@@ -104,45 +119,101 @@ export default function DesafioDetalle() {
 
   const handleAfterAnswers = async (results = []) => {
     try {
-      await cargar();
-      await cargarParticipante();
+      const anyCorrect =
+        Array.isArray(results) &&
+        results.some(
+          (r) => r.correcta === true || (r?.ok && !r?.error)
+        );
+      const anyIncorrect =
+        Array.isArray(results) &&
+        results.some((r) => r.correcta === false || r?.error);
 
-      const anyCorrect = Array.isArray(results) && results.some(r => r.correcta === true || (r?.ok && !r?.error));
-      const anyIncorrect = Array.isArray(results) && results.some(r => r.correcta === false || r?.error);
+      const defeatByResult =
+        Array.isArray(results) &&
+        results.some(
+          (r) =>
+            typeof r.nuevo_hp === "number" && r.nuevo_hp <= 0
+        );
 
-      const imgNode = imgRef.current || document.querySelector('.detalle-image-center') || document.querySelector('.boss-image');
-      const hpFill = document.querySelector('.hp-fill');
+      const imgNode =
+        imgRef.current ||
+        document.querySelector(".detalle-image-center") ||
+        document.querySelector(".boss-image");
+      const hpFill = document.querySelector(".hp-fill");
 
       if (hpFill) {
-        hpFill.classList.add('hp-pulse');
-        setTimeout(() => hpFill.classList.remove('hp-pulse'), 520);
+        hpFill.classList.add("hp-pulse");
+        setTimeout(() => hpFill.classList.remove("hp-pulse"), 520);
       }
 
       if (anyCorrect) {
         if (imgNode) {
-          imgNode.classList.remove('boss-anim-bounce','boss-anim-defeat','boss-flash-wrong');
-          imgNode.classList.add('boss-anim-damage');
-          setTimeout(() => imgNode.classList.remove('boss-anim-damage'), 900);
+          imgNode.classList.remove(
+            "boss-anim-bounce",
+            "boss-anim-defeat",
+            "boss-flash-wrong"
+          );
+          imgNode.classList.add("boss-anim-damage");
+          setTimeout(
+            () => imgNode.classList.remove("boss-anim-damage"),
+            900
+          );
         }
       } else if (anyIncorrect) {
         if (imgNode) {
-          imgNode.classList.remove('boss-anim-damage','boss-anim-defeat');
-          imgNode.classList.add('boss-anim-bounce','boss-flash-wrong');
-          setTimeout(() => imgNode.classList.remove('boss-anim-bounce','boss-flash-wrong'), 950);
+          imgNode.classList.remove("boss-anim-damage", "boss-anim-defeat");
+          imgNode.classList.add("boss-anim-bounce", "boss-flash-wrong");
+          setTimeout(
+            () =>
+              imgNode.classList.remove(
+                "boss-anim-bounce",
+                "boss-flash-wrong"
+              ),
+            950
+          );
         }
       }
 
-      const defeatHit = Array.isArray(results) && results.find(r => typeof r.nuevo_hp === "number" && r.nuevo_hp <= 0);
-      if (defeatHit && imgNode) {
+      if (defeatByResult && imgNode) {
         setTimeout(() => {
-          imgNode.classList.remove('boss-anim-damage','boss-anim-bounce','boss-flash-wrong');
-          imgNode.classList.add('boss-anim-defeat');
-          setTimeout(() => imgNode.classList.remove('boss-anim-defeat'), 1400);
+          imgNode.classList.remove(
+            "boss-anim-damage",
+            "boss-anim-bounce",
+            "boss-flash-wrong"
+          );
+          imgNode.classList.add("boss-anim-defeat");
+          setTimeout(
+            () => imgNode.classList.remove("boss-anim-defeat"),
+            1400
+          );
         }, 350);
       }
 
-      await cargar();
+      const d = await cargar();
       await cargarParticipante();
+
+      let finalHp = null;
+
+      if (defeatByResult) {
+        const lastWithHp = [...results]
+          .reverse()
+          .find((r) => typeof r.nuevo_hp === "number");
+        finalHp =
+          lastWithHp && typeof lastWithHp.nuevo_hp === "number"
+            ? lastWithHp.nuevo_hp
+            : 0;
+      } else if (d) {
+        if (typeof d.hp_restante === "number") {
+          finalHp = d.hp_restante;
+        } else if (typeof d.hp_total === "number") {
+          finalHp = d.hp_total;
+        }
+      }
+
+      if (finalHp !== null && finalHp <= 0) {
+        setShowCompletionModal(true);
+        setActivePreguntaId(null);
+      }
     } catch (err) {
       console.error("Error en handleAfterAnswers:", err);
       await cargar();
@@ -161,18 +232,50 @@ export default function DesafioDetalle() {
   return (
     <>
       <Navbar />
+
+      {showCompletionModal && (
+        <div className="completion-overlay">
+          <div className="completion-modal">
+            <h2>¡Desafío completado! 🎉</h2>
+            <p>
+              Has derrotado al boss y finalizado este desafío.
+            </p>
+            <div className="completion-modal-actions">
+              <button
+                className="btn-primary completion-btn"
+                onClick={() => navigate("/desafios")}
+              >
+                Volver a desafíos
+              </button>
+              <div className="completion-subtext">
+                Podés revisar tus otros desafíos en “Mis Desafíos”.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="page-container">
         <div className="detalle-card">
           <div className="detalle-header">
             <h1 className="detalle-titulo">{desafio.nombre}</h1>
-            <div className="detalle-sub" style={{ display: 'none' }}>{desafio.descripcion}</div>
+            <div className="detalle-sub" style={{ display: "none" }}>
+              {desafio.descripcion}
+            </div>
           </div>
 
           <div className="detalle-media">
             {desafio.imagen_url ? (
-              <img ref={imgRef} src={desafio.imagen_url} alt="boss" className="detalle-image-center" />
+              <img
+                ref={imgRef}
+                src={desafio.imagen_url}
+                alt="boss"
+                className="detalle-image-center"
+              />
             ) : (
-              <div className="detalle-image-center placeholder">Boss</div>
+              <div className="detalle-image-center placeholder">
+                Boss
+              </div>
             )}
 
             <div className="hp-block">
@@ -180,19 +283,35 @@ export default function DesafioDetalle() {
                 <div
                   className="hp-fill"
                   style={{
-                    width: `${desafio.hp_total > 0 ? Math.max(0, Math.min(100, Math.round((desafio.hp_restante / desafio.hp_total) * 100))) : 0}%`,
+                    width: `${desafio.hp_total > 0
+                        ? Math.max(
+                          0,
+                          Math.min(
+                            100,
+                            Math.round(
+                              (desafio.hp_restante / desafio.hp_total) *
+                              100
+                            )
+                          )
+                        )
+                        : 0
+                      }%`,
                   }}
                 />
               </div>
               <div className="hp-text center">
-                HP: {desafio.hp_restante ?? desafio.hp_total} / {desafio.hp_total}
+                HP: {desafio.hp_restante ?? desafio.hp_total} /{" "}
+                {desafio.hp_total}
               </div>
             </div>
           </div>
 
           <div className="detalle-footer">
             {!participante ? (
-              <button className="btn-primary btn-inscribir" onClick={handleInscribirse}>
+              <button
+                className="btn-primary btn-inscribir"
+                onClick={handleInscribirse}
+              >
                 Inscribirme
               </button>
             ) : (
@@ -200,56 +319,129 @@ export default function DesafioDetalle() {
             )}
 
             <div className="detalle-meta-right">
-              <div>Recompensa: <strong>{desafio.recompensa_xp} XP</strong> • <strong>{desafio.recompensa_moneda} monedas</strong></div>
-              <div className="small-muted">Desde: {desafio.fecha_inicio ? new Date(desafio.fecha_inicio).toLocaleDateString() : "-" } {desafio.fecha_fin ? ` • Hasta: ${new Date(desafio.fecha_fin).toLocaleDateString()}` : ""}</div>
+              <div className="small-muted">
+                Recompensa:{" "}
+                <span>
+                  ⚡ <strong>{desafio.recompensa_xp}</strong> XP
+                </span>{" "}
+                •{" "}
+                <span>
+                  🪙 <strong>{desafio.recompensa_moneda}</strong> monedas
+                </span>
+              </div>
+              <div className="small-muted">
+                📅 Desde:{" "}
+                {desafio.fecha_inicio
+                  ? new Date(desafio.fecha_inicio).toLocaleDateString()
+                  : "-"}{" "}
+                {desafio.fecha_fin
+                  ? ` • Hasta: ${new Date(
+                    desafio.fecha_fin
+                  ).toLocaleDateString()}`
+                  : ""}
+              </div>
             </div>
+
           </div>
         </div>
 
-        <section className="preguntas-section" ref={preguntasSectionRef}>
+        <section
+          className="preguntas-section"
+          ref={preguntasSectionRef}
+        >
           <h3>Preguntas asignadas</h3>
 
-          {!participante && <div className="vacio">No estás inscripto en este desafío — haz click en Inscribirme para participar.</div>}
-          {participante && preguntasAsignadas.length === 0 && <div className="vacio">Aún no se te asignaron preguntas.</div>}
+          {!participante && (
+            <div className="vacio">
+              No estás inscripto en este desafío — haz click en
+              Inscribirme para participar.
+            </div>
+          )}
+          {participante && preguntasAsignadas.length === 0 && (
+            <div className="vacio">
+              Aún no se te asignaron preguntas.
+            </div>
+          )}
           {participante && preguntasAsignadas.length > 0 && (
             <>
               <div className="preguntas-list">
                 {preguntasAsignadas.map((pp) => {
-                  const isActive = activePreguntaId === pp.id_participante_pregunta;
+                  const isActive =
+                    activePreguntaId ===
+                    pp.id_participante_pregunta;
                   return (
-                    <div key={pp.id_participante_pregunta} style={{ marginBottom: 6 }}>
+                    <div
+                      key={pp.id_participante_pregunta}
+                      style={{ marginBottom: 6 }}
+                    >
                       <div
-                        className={`assigned-card clickable ${pp.respondida ? 'answered' : ''}`}
+                        className={`assigned-card clickable ${pp.respondida ? "answered" : ""
+                          }`}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (pp.respondida) return;
-                          setActivePreguntaId((cur) => (cur === pp.id_participante_pregunta ? null : pp.id_participante_pregunta));
+                          setActivePreguntaId((cur) =>
+                            cur === pp.id_participante_pregunta
+                              ? null
+                              : pp.id_participante_pregunta
+                          );
                         }}
                         role="button"
                         tabIndex={0}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !pp.respondida) setActivePreguntaId((cur) => (cur === pp.id_participante_pregunta ? null : pp.id_participante_pregunta)); }}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Enter" &&
+                            !pp.respondida
+                          ) {
+                            setActivePreguntaId((cur) =>
+                              cur ===
+                                pp.id_participante_pregunta
+                                ? null
+                                : pp.id_participante_pregunta
+                            );
+                          }
+                        }}
                         aria-disabled={pp.respondida}
                       >
-                        <div className="assigned-text">{pp.pregunta?.texto}</div>
+                        <div className="assigned-text">
+                          {pp.pregunta?.texto}
+                        </div>
                         <div className="assigned-meta">
                           {pp.respondida ? (
-                            pp.correcta ? <span className="badge-correct">✅ Correcta</span> : <span className="badge-wrong">❌ Incorrecta</span>
+                            pp.correcta ? (
+                              <span className="badge-correct">
+                                ✅ Correcta
+                              </span>
+                            ) : (
+                              <span className="badge-wrong">
+                                ❌ Incorrecta
+                              </span>
+                            )
                           ) : (
-                            <span className="badge-pending">Sin responder</span>
+                            <span className="badge-pending">
+                              Sin responder
+                            </span>
                           )}
                         </div>
                       </div>
 
                       {isActive && (
                         <div
-                          style={{ marginTop: 8, marginLeft: 6, marginRight: 6, width: "100%" }}
+                          style={{
+                            marginTop: 8,
+                            marginLeft: 6,
+                            marginRight: 6,
+                            width: "100%",
+                          }}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <QuestionModal
                             open={true}
                             inline={true}
                             preguntas={[pp]}
-                            onClose={() => setActivePreguntaId(null)}
+                            onClose={() =>
+                              setActivePreguntaId(null)
+                            }
                             onAnswerSent={handleAfterAnswers}
                           />
                         </div>
@@ -260,8 +452,12 @@ export default function DesafioDetalle() {
               </div>
 
               {yaRespondioTodo && (
-                <div className="vacio" style={{ marginTop: 12 }}>
-                  Ya participaste del desafío — no podés responder más preguntas.
+                <div
+                  className="vacio"
+                  style={{ marginTop: 12 }}
+                >
+                  Ya participaste del desafío — no podés responder
+                  más preguntas.
                 </div>
               )}
             </>

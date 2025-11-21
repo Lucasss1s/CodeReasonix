@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "sonner";
 import Navbar from "../../components/Navbar";
 import "./desafios.css";
 
@@ -119,7 +120,6 @@ export default function MisDesafios() {
   const handleClaim = async (participante) => {
     if (!participante || !participante.id_participante) return;
     const idp = participante.id_participante;
-    if (!window.confirm("¿Querés reclamar la recompensa por este desafío?")) return;
 
     try {
       setLoadingClaim(idp);
@@ -127,17 +127,28 @@ export default function MisDesafios() {
         `http://localhost:5000/participante-desafio/${idp}/claim`
       );
       const data = res.data || {};
-      const xp = data.xp ?? data.xp_otorgado ?? null;
-      const monedas = data.moneda ?? data.moneda_otorgada ?? null;
-      const msgParts = [];
-      if (xp != null) msgParts.push(`${xp} XP`);
-      if (monedas != null) msgParts.push(`${monedas} monedas`);
-      const extra = msgParts.length ? ` (${msgParts.join(" • ")})` : "";
-      alert(
-        data.message
-          ? `${data.message}${extra}`
-          : `Recompensa reclamada correctamente${extra}`
-      );
+
+      const xp =
+        data.xp ??
+        data.xp_otorgado ??
+        participante.desafio?.recompensa_xp ??
+        null;
+      const monedas =
+        data.moneda ??
+        data.moneda_otorgada ??
+        participante.desafio?.recompensa_moneda ??
+        null;
+
+      const partes = [];
+      if (xp != null) partes.push(`⚡ ${xp} XP`);
+      if (monedas != null) partes.push(`🪙 ${monedas} monedas`);
+
+      const descripcion =
+        partes.length > 0 ? partes.join("  •  ") : "Recompensa aplicada a tu cuenta.";
+
+      toast.success(data.message || "¡Recompensa reclamada!", {
+        description: descripcion,
+      });
 
       await cargar();
     } catch (err) {
@@ -146,7 +157,9 @@ export default function MisDesafios() {
         err?.response?.data?.error ||
         err.message ||
         "No se pudo reclamar la recompensa";
-      alert(`Error: ${msg}`);
+      toast.error("Error al reclamar recompensa", {
+        description: msg,
+      });
     } finally {
       setLoadingClaim(null);
     }
@@ -219,8 +232,13 @@ export default function MisDesafios() {
             <div key={m.id_participante} className="mi-card" aria-live="polite">
               <h3>{m.desafio?.nombre}</h3>
 
+              <div className="mi-card-reward">
+                <span>⚡ <strong>{recompensaXp}</strong> XP</span>
+                <span>🪙 <strong>{recompensaMoneda}</strong> monedas</span>
+              </div>
+
               <div className="small-muted">
-                Inscripto: {formatFecha(m.fecha_inscripcion)}
+                📅 Inscripto el {formatFecha(m.fecha_inscripcion)}
               </div>
 
               <div className="mi-chips-row">
@@ -233,23 +251,18 @@ export default function MisDesafios() {
               </div>
 
               <div className="mi-stats-row">
-                <div className="small-muted">
-                  Daño: <strong>{m.dano_total}</strong>
+                <div className="mi-stat-pill">
+                  <span>💥 Daño</span>
+                  <strong>{m.dano_total}</strong>
                 </div>
-                <div className="small-muted">
-                  Aciertos: <strong>{m.aciertos}</strong>
+                <div className="mi-stat-pill">
+                  <span>✅ Aciertos</span>
+                  <strong>{m.aciertos}</strong>
                 </div>
-                <div className="small-muted mi-stats-estado">
-                  <span>Estado:</span>
+                <div className="mi-stats-estado">
+                  <span className="mi-estado-label">Estado:</span>
                   <span className={`mi-estado ${estadoClass}`}>{estado}</span>
                 </div>
-              </div>
-
-              <div className="mi-card-reward">
-                Recompensa:{" "}
-                <strong>
-                  {recompensaXp} XP • {recompensaMoneda} monedas
-                </strong>
               </div>
 
               <div className="mi-actions">{renderActionButton(m)}</div>
