@@ -6,8 +6,9 @@ const router = express.Router();
 router.get('/', async (req, res) => {
     try {
         const { data: ejerciciosData, error: errorEj } = await supabase
-        .from('ejercicio')
+        .from('ejercicio') 
         .select('id_ejercicio, titulo, descripcion, dificultad')
+        .eq('disabled', false) 
         .order('id_ejercicio', { ascending: true });
 
         if (errorEj) throw errorEj;
@@ -63,6 +64,7 @@ router.get('/:id', async (req, res) => {
         .from('ejercicio')
         .select('id_ejercicio, titulo, descripcion, dificultad, plantillas')
         .eq('id_ejercicio', id)
+        .eq('disabled', false) 
         .single();
 
         if (errorEjercicio) throw errorEjercicio;
