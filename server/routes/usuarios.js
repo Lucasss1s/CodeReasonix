@@ -63,8 +63,8 @@ router.post('/register', async (req, res) => {
         {
           id_cliente: clientData.id_cliente,
           biografia: "",
-          skills: "",            
-          reputacion: 0,        
+          skills: "",
+          reputacion: 0,
           redes_sociales: null,
           foto_perfil: null
         },
@@ -88,29 +88,59 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
+  if (!email || !password)
+    return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
 
   try {
-    const { data: users, error } = await supabase.from('usuario').select().eq('email', email);
+    const { data: users, error } = await supabase
+      .from('usuario')
+      .select()
+      .eq('email', email);
+
     if (error) throw error;
-    if (users.length === 0) return res.status(400).json({ error: 'Usuario no encontrado' });
+    if (!users || users.length === 0)
+      return res.status(400).json({ error: 'Usuario no encontrado' });
 
     const user = users[0];
 
     const valid = await bcrypt.compare(password, user.contraseña);
     if (!valid) return res.status(400).json({ error: 'Contraseña incorrecta' });
 
-    const { data: cliente, error: clienteError } = await supabase
+    const { data: clienteRows, error: clienteError } = await supabase
       .from('cliente')
       .select('id_cliente')
-      .eq('id_usuario', user.id_usuario)
-      .single();
+      .eq('id_usuario', user.id_usuario);
 
     if (clienteError) throw clienteError;
 
+    const id_cliente =
+      clienteRows && clienteRows.length > 0 ? clienteRows[0].id_cliente : null;
+
+    const { data: adminRows, error: adminError } = await supabase
+      .from('administrador')
+      .select('id_admin, rol')
+      .eq('id_usuario', user.id_usuario);
+
+    if (adminError) throw adminError;
+
+    const admin =
+      adminRows && adminRows.length > 0 ? adminRows[0] : null;
+    const es_admin = !!admin;
+
     res.json({
-      usuario: { id_usuario: user.id_usuario, nombre: user.nombre, email: user.email },
-      id_cliente: cliente?.id_cliente ?? null
+      usuario: {
+        id_usuario: user.id_usuario,
+        nombre: user.nombre,
+        email: user.email,
+      },
+      id_cliente,
+      es_admin,
+      admin: admin
+        ? {
+            id_admin: admin.id_admin,
+            rol: admin.rol,
+          }
+        : null,
     });
   } catch (err) {
     console.error('Error en login:', err);
@@ -144,30 +174,15 @@ router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { error } = await supabase.from('usuario').delete().eq('id_usuario', id);
+    const { error } = await supabase
+      .from('usuario')
+      .delete()
+      .eq('id_usuario', id);
     if (error) throw error;
     res.json({ message: 'Usuario eliminado correctamente' });
   } catch (err) {
     console.error('Error eliminando usuario:', err);
     res.status(500).json({ error: 'Error eliminando usuario' });
-  }
-});
-
-router.get('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { data, error } = await supabase
-      .from('usuario')
-      .select('id_usuario, nombre, email, estado, fecha_registro')
-      .eq('id_usuario', id)
-      .single();
-
-    if (error) throw error;
-    if (!data) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json(data);
-  } catch (err) {
-    console.error('Error obteniendo usuario:', err);
-    res.status(500).json({ error: 'Error obteniendo usuario' });
   }
 });
 
@@ -197,5 +212,22 @@ router.get('/by-cliente/:id_cliente', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from('usuario')
+      .select('id_usuario, nombre, email, estado, fecha_registro')
+      .eq('id_usuario', id)
+      .single();
+
+    if (error) throw error;
+    if (!data) return res.status(404).json({ error: 'Usuario no encontrado' });
+    res.json(data);
+  } catch (err) {
+    console.error('Error obteniendo usuario:', err);
+    res.status(500).json({ error: 'Error obteniendo usuario' });
+  }
+});
 
 export default router;
