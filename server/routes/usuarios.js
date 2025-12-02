@@ -103,6 +103,10 @@ router.post('/login', async (req, res) => {
 
     const user = users[0];
 
+    if (user.estado === false) {
+      return res.status(403).json({ error: 'Esta cuenta está suspendida / baneada.' });
+    }
+
     const valid = await bcrypt.compare(password, user.contraseña);
     if (!valid) return res.status(400).json({ error: 'Contraseña incorrecta' });
 
@@ -123,8 +127,7 @@ router.post('/login', async (req, res) => {
 
     if (adminError) throw adminError;
 
-    const admin =
-      adminRows && adminRows.length > 0 ? adminRows[0] : null;
+    const admin = adminRows && adminRows.length > 0 ? adminRows[0] : null;
     const es_admin = !!admin;
 
     res.json({
@@ -153,8 +156,18 @@ router.put('/:id', async (req, res) => {
   const { nombre, email, estado, password } = req.body;
 
   try {
-    let updateData = { nombre, email, estado };
-    if (password) updateData.contraseña = await bcrypt.hash(password, 10);
+    const updateData = {};
+
+    if (nombre !== undefined) updateData.nombre = nombre;
+    if (email !== undefined) updateData.email = email;
+    if (estado !== undefined) updateData.estado = estado;
+    if (password) {
+      updateData.contraseña = await bcrypt.hash(password, 10);
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No se enviaron campos para actualizar' });
+    }
 
     const { data, error } = await supabase
       .from('usuario')
@@ -163,6 +176,10 @@ router.put('/:id', async (req, res) => {
       .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
     res.json(data[0]);
   } catch (err) {
     console.error('Error actualizando usuario:', err);

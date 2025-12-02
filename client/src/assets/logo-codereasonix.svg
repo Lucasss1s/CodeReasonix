@@ -1,0 +1,72 @@
+<svg
+  width="64"
+  height="64"
+  viewBox="0 0 64 64"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <defs>
+    <linearGradient id="crGradient" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00BFA6"/>
+      <stop offset="1" stop-color="#7C5CFF"/>
+    </linearGradient>
+    <linearGradient id="crInner" x1="20" y1="18" x2="44" y2="46" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E0FDF8"/>
+      <stop offset="1" stop-color="#C7BFFF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Hexágono exterior -->
+  <path
+    d="M32 6L50.5 16.5V37.5L32 58L13.5 37.5V16.5L32 6Z"
+    fill="rgba(7, 12, 25, 0.95)"
+    stroke="url(#crGradient)"
+    stroke-width="2"
+  />
+
+  <!-- Borde interior suave -->
+  <path
+    d="M32 11L47 20V36L32 51L17 36V20L32 11Z"
+    fill="rgba(17, 24, 39, 0.95)"
+    stroke="rgba(0, 191, 166, 0.35)"
+    stroke-width="1.2"
+  />
+
+  <!-- Simbolo </> -->
+  <g transform="translate(0,1)">
+    <!-- < -->
+    <path
+      d="M26 24L22 32L26 40"
+      stroke="url(#crInner)"
+      stroke-width="2.3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <!-- > -->
+    <path
+      d="M38 24L42 32L38 40"
+      stroke="url(#crInner)"
+      stroke-width="2.3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <!-- barra / -->
+    <path
+      d="M30.5 22L33.5 42"
+      stroke="url(#crGradient)"
+      stroke-width="2.1"
+      stroke-linecap="round"
+    />
+  </g>
+
+  <!-- Estrellita / chispa (logros / XP) -->
+  <g transform="translate(40,18)">
+    <circle cx="0" cy="0" r="3" fill="#FFD166"/>
+    <path
+      d="M0 -5L0 5M-5 0L5 0M-3.5 -3.5L3.5 3.5M-3.5 3.5L3.5 -3.5"
+      stroke="rgba(255, 209, 102, 0.85)"
+      stroke-width="0.9"
+      stroke-linecap="round"
+    />
+  </g>
+</svg>

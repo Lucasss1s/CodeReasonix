@@ -16,7 +16,10 @@ export default function Login() {
     let rewardState = null;
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       if (error) throw error;
 
       const res = await fetch(`${API_BASE}/usuarios/login`, {
@@ -25,7 +28,32 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      if (!res.ok) throw new Error(`Error al traer cliente: ${res.status}`);
+      if (res.status === 403) {
+        let dataError = null;
+        try {
+          dataError = await res.json();
+        } catch (_) {
+        }
+
+        const msg =
+          dataError?.error ||
+          "Tu cuenta está baneada. Contactá con soporte.";
+
+        await supabase.auth.signOut();
+
+        localStorage.removeItem("usuario");
+        localStorage.removeItem("cliente");
+        localStorage.removeItem("es_admin");
+
+        setMensaje(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(`Error al traer cliente: ${res.status}`);
+      }
+
       const dataBackend = await res.json();
 
       const esAdmin = !!dataBackend.es_admin;
@@ -36,7 +64,10 @@ export default function Login() {
         return;
       }
 
-      localStorage.setItem("usuario", JSON.stringify(dataBackend.usuario || {}));
+      localStorage.setItem(
+        "usuario",
+        JSON.stringify(dataBackend.usuario || {})
+      );
 
       if (dataBackend.id_cliente) {
         localStorage.setItem("cliente", dataBackend.id_cliente);
@@ -52,7 +83,10 @@ export default function Login() {
           const xpData = await resXp.json();
 
           const today = new Date().toISOString().slice(0, 10);
-          localStorage.setItem(`login_xp_last:${dataBackend.id_cliente}`, today);
+          localStorage.setItem(
+            `login_xp_last:${dataBackend.id_cliente}`,
+            today
+          );
 
           if (resXp.ok) {
             if (xpData.otorgado) {
@@ -64,7 +98,10 @@ export default function Login() {
                 rewardState = { amount: total, icon: b > 0 ? "🔥" : "💎" };
               }
 
-              if (Array.isArray(xpData?.nuevosLogros) && xpData.nuevosLogros.length) {
+              if (
+                Array.isArray(xpData?.nuevosLogros) &&
+                xpData.nuevosLogros.length
+              ) {
                 xpData.nuevosLogros.forEach((l) => {
                   toast.success(
                     `¡Logro desbloqueado! ${l.icono} ${l.titulo} ${

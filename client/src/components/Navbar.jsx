@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import "./navbar.css";
 import RewardOnRoute from "./RewardOnRoute";
 import API_BASE from "../config/api";
+import logoCodeReasonix from "../assets/logo-codereasonix.svg";
 
 export default function Navbar() {
   const [usuario, setUsuario] = useState(null);
@@ -158,39 +159,35 @@ export default function Navbar() {
       <nav className="navbar">
         <div className="nav-left">
           <Link to="/" className="logo-link">
-            <h1 className="logo">CodeReasonix</h1>
+            <img
+              src={logoCodeReasonix}
+              alt="CodeReasonix"
+              className="logo-icon"
+            />
           </Link>
         </div>
 
         <div className="nav-center">
           <Link
-            className={`btn-nav ${
-              isActive("/comunidad") ? "active" : ""
-            }`}
+            className={`btn-nav ${isActive("/comunidad") ? "active" : ""}`}
             to="/comunidad"
           >
             Comunidad
           </Link>
           <Link
-            className={`btn-nav ${
-              isActive("/entrevistas") ? "active" : ""
-            }`}
+            className={`btn-nav ${isActive("/entrevistas") ? "active" : ""}`}
             to="/entrevistas"
           >
             Entrevistas
           </Link>
           <Link
-            className={`btn-nav ${
-              isActive("/desafios") ? "active" : ""
-            }`}
+            className={`btn-nav ${isActive("/desafios") ? "active" : ""}`}
             to="/desafios"
           >
             Desafíos
           </Link>
           <Link
-            className={`btn-nav ${
-              isActive("/ranking") ? "active" : ""
-            }`}
+            className={`btn-nav ${isActive("/ranking") ? "active" : ""}`}
             to="/ranking"
           >
             Ranking
@@ -217,18 +214,12 @@ export default function Navbar() {
                   >
                     Postulaciones
                   </Link>
-                  <Link
-                    to="/mis-desafios"
-                    className="dropdown-item"
-                  >
+                  <Link to="/mis-desafios" className="dropdown-item">
                     Mis Desafíos
                   </Link>
 
                   {esAdmin && (
-                    <Link
-                      to="/admin"
-                      className="dropdown-item"
-                    >
+                    <Link to="/adminusuarios" className="dropdown-item">
                       Panel ABM
                     </Link>
                   )}
