@@ -19,6 +19,7 @@ import MisDesafios from "./pages/desafios/miDesafio.jsx";
 import FormPreferencias from "./pages/preferencias/formPreferencias.jsx";
 import RankingPage from "./pages/ranking/ranking.jsx";
 import AdminUsuarios from "./pages/admin/AdminUsuarios.jsx";
+import AdminDesafios from "./pages/admin/AdminDesafios.jsx";
 
 import { Toaster } from "sonner";
 
@@ -49,6 +50,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/form-preferencias" element={<FormPreferencias/>}/>
         <Route path="/ranking" element={<RankingPage />} />
         <Route path="/adminusuarios" element={<AdminUsuarios />} />
+        <Route path="/admindesafios" element={<AdminDesafios />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

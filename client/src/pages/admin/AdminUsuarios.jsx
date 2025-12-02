@@ -47,7 +47,7 @@ export default function AdminUsuarios() {
       setGuardandoId(user.id_usuario);
 
       const res = await axios.put(`${API_BASE}/usuarios/${user.id_usuario}`, {
-        estado: nuevoEstado, 
+        estado: nuevoEstado,
       });
 
       const actualizado = res.data;
@@ -76,10 +76,30 @@ export default function AdminUsuarios() {
       <Navbar />
       <div className="admin-page">
         <header className="admin-header">
-          <h2 className="admin-title">Panel ABM — Usuarios</h2>
-          <p className="admin-subtitle">
-            Gestión de usuarios registrados y estado de la cuenta (activa / baneada).
-          </p>
+          <div>
+            <h2 className="admin-title">Panel ABM — Usuarios</h2>
+            <p className="admin-subtitle">
+              Gestión de usuarios registrados y estado de la cuenta (activa / baneada).
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/admindesafios")}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "none",
+              background: "#2563eb",
+              color: "#ffffff",
+              fontSize: "0.9rem",
+              fontWeight: 500,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Panel ABM — Desafíos
+          </button>
         </header>
 
         {error && <div className="admin-error">{error}</div>}
@@ -89,9 +109,7 @@ export default function AdminUsuarios() {
         ) : (
           <section className="admin-card">
             {usuarios.length === 0 ? (
-              <div className="admin-empty">
-                No hay usuarios registrados.
-              </div>
+              <div className="admin-empty">No hay usuarios registrados.</div>
             ) : (
               <table className="admin-table">
                 <thead>
@@ -119,9 +137,7 @@ export default function AdminUsuarios() {
                         <td>
                           <span
                             className={`estado-pill ${
-                              estaActiva
-                                ? "estado-activo"
-                                : "estado-baneado"
+                              estaActiva ? "estado-activo" : "estado-baneado"
                             }`}
                           >
                             {estaActiva ? "Activa" : "Baneada"}
@@ -133,9 +149,7 @@ export default function AdminUsuarios() {
                             <button
                               type="button"
                               className={`btn-estado ${
-                                estaActiva
-                                  ? "btn-bloquear"
-                                  : "btn-desbloquear"
+                                estaActiva ? "btn-bloquear" : "btn-desbloquear"
                               }`}
                               onClick={() => handleToggleEstado(u)}
                               disabled={guardandoId === u.id_usuario}
