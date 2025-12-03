@@ -21,6 +21,7 @@ import RankingPage from "./pages/ranking/ranking.jsx";
 import AdminUsuarios from "./pages/admin/AdminUsuarios.jsx";
 import AdminDesafios from "./pages/admin/AdminDesafios.jsx";
 import Admin from "./pages/admin/Admin.jsx";
+import AdminEntrevistas from "./pages/admin/AdminEntrevistas.jsx";
 
 import { Toaster } from "sonner";
 
@@ -53,6 +54,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/adminusuarios" element={<AdminUsuarios />} />
         <Route path="/admindesafios" element={<AdminDesafios />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/adminentrevistas" element={<AdminEntrevistas />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

@@ -586,7 +586,6 @@ export default function AdminDesafios() {
 
         {tab === "desafios" && (
           <div className="admin-desafios-cols">
-            {/* LISTA DE DESAFÍOS - IZQUIERDA */}
             <section className="admin-card admin-list-card">
               <h3 className="admin-section-title">Lista de desafíos</h3>
               {loadingDesafios ? (
@@ -653,7 +652,6 @@ export default function AdminDesafios() {
               )}
             </section>
 
-            {/* FORMULARIO DE DESAFÍO - DERECHA */}
             <section className="admin-card admin-form-card">
               <h3 className="admin-section-title">
                 {desafioForm.id_desafio
@@ -882,7 +880,6 @@ export default function AdminDesafios() {
 
         {tab === "preguntas" && (
           <div className="admin-preguntas-cols">
-            {/* LISTA DE PREGUNTAS - IZQUIERDA */}
             <section className="admin-card admin-list-card">
               <h3 className="admin-section-title">Lista de preguntas</h3>
 
@@ -971,7 +968,6 @@ export default function AdminDesafios() {
               )}
             </section>
 
-            {/* FORMULARIO PREGUNTAS - DERECHA */}
             <section className="admin-card admin-form-card">
               <h3 className="admin-section-title">
                 {preguntaForm.id_pregunta

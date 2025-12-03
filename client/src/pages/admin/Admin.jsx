@@ -47,6 +47,18 @@ export default function Admin() {
               Crear desafíos, preguntas y asignarlas por lenguaje/dificultad.
             </span>
           </button>
+
+          <button
+            type="button"
+            className="admin-menu-button"
+            onClick={() => navigate("/adminentrevistas")}
+          >
+            <span className="admin-menu-title">Ofertas laborales</span>
+            <span className="admin-menu-text">
+              Gestionar empresas, ofertas laborales y postulaciones de
+              candidatos.
+            </span>
+          </button>
         </section>
       </div>
     </>

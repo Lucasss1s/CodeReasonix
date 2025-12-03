@@ -89,12 +89,12 @@
   position: absolute;
   right: 0;
   margin-top: 8px;
-  background: #2c2c3c;
-  border: 1px solid #444;
+  background: #2c2c3c;   
+  border: none;          
   border-radius: 6px;
   z-index: 100;
   min-width: 140px;
-  box-shadow: 0px 2px 8px rgba(0,0,0,0.3);
+  box-shadow: none !important; 
 }
 
 .menu-dropdown .dropdown-item {
