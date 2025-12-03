@@ -49,8 +49,14 @@ export default function Register() {
       const id_cliente = res.data.cliente?.id_cliente;
       if (!id_cliente) throw new Error("No se obtuvo id_cliente al registrar.");
 
-      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: sessionData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
       if (loginError) throw loginError;
+
+      if (sessionData?.session) {
+        localStorage.setItem("access_token", sessionData.session.access_token);
+        localStorage.setItem("refresh_token", sessionData.session.refresh_token);
+        localStorage.setItem("expires_at", sessionData.session.expires_at);
+      }
 
       localStorage.setItem("usuario", JSON.stringify(usuario));
       localStorage.setItem("cliente", id_cliente);

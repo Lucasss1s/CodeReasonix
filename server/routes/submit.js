@@ -1,11 +1,15 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
 import { enviarCodigo } from '../utils/judge0.js';
+import { requireSesion } from '../middlewares/requireSesion.js';
+import { limitSubmit } from '../middlewares/limitSubmit.js';
+import { delayNoPremium } from '../middlewares/delayNoPremium.js';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-    const { id_cliente, id_ejercicio, codigo_fuente, lenguaje } = req.body;
+router.post('/', requireSesion, limitSubmit(), delayNoPremium(), async (req, res) => {
+    const id_cliente = req.cliente?.id_cliente;
+    const { id_ejercicio, codigo_fuente, lenguaje } = req.body;
 
     if (!id_cliente || !id_ejercicio || !codigo_fuente || !lenguaje) {
         return res.status(400).json({ error: 'Faltan datos obligatorios' });
@@ -54,7 +58,9 @@ router.post('/', async (req, res) => {
         res.json({
             mensaje: 'Submit procesado con Judge0',
             resultado: aceptado ? 'aceptado' : 'rechazado',
-            detalles: resultados
+            detalles: resultados,
+            remaining: req.enviosRestantes,
+            premium: req.isPremiumSubmit
         });
     } catch (err) {
         console.error('Error procesando submit:', err);

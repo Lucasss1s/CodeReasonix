@@ -28,6 +28,7 @@ import ejercicioBugRouter from "./routes/ejercicioBug.js";
 import preferenciasRouter from "./routes/preferencias.js";
 import recomendacionesRouter from "./routes/recomendaciones.js"
 import rankingRouter from "./routes/ranking.js";
+import suscripcionRouter from "./routes/suscripcion.js";
 
 const app = express(); // Instancia
 app.use(cors());
@@ -65,6 +66,7 @@ app.use("/ejercicio-bug", ejercicioBugRouter);
 app.use("/preferencias", preferenciasRouter);
 app.use("/recomendaciones", recomendacionesRouter);
 app.use("/ranking", rankingRouter);
+app.use("/suscripcion", suscripcionRouter);
 
 const PORT =  process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

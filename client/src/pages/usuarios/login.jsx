@@ -16,8 +16,14 @@ export default function Login() {
     let rewardState = null;
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: sessionData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+
+      if (sessionData?.session) {
+        localStorage.setItem("access_token", sessionData.session.access_token);
+        localStorage.setItem("refresh_token", sessionData.session.refresh_token);
+        localStorage.setItem("expires_at", sessionData.session.expires_at);
+      }
 
       const res = await fetch(`${API_BASE}/usuarios/login`, {
         method: "POST",
