@@ -4,7 +4,7 @@ import axios from "axios";
 import Navbar from "../../components/Navbar.jsx";
 import API_BASE from "../../config/api";
 import { toast } from "sonner";
-import "./admin.css";
+import "./adminUsuarios.css";
 
 export default function AdminUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -85,20 +85,10 @@ export default function AdminUsuarios() {
 
           <button
             type="button"
-            onClick={() => navigate("/admindesafios")}
-            style={{
-              padding: "8px 14px",
-              borderRadius: "8px",
-              border: "none",
-              background: "#2563eb",
-              color: "#ffffff",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
+            onClick={() => navigate("/admin")}
+            className="admin-back-button"
           >
-            Panel ABM — Desafíos
+            Volver a panel de administración
           </button>
         </header>
 

@@ -1,12 +1,12 @@
 .admin-header-desafios {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;   
+  align-items: flex-start;
   gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
 }
 
 .admin-back-button {
+  margin-top: 4px;
   padding: 8px 14px;
   border-radius: 8px;
   border: none;
@@ -16,6 +16,13 @@
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+  transition: background 0.12s ease, transform 0.12s ease, opacity 0.12s ease;
+}
+
+.admin-back-button:hover {
+  background: #6b7280;
+  transform: translateY(-1px);
+  opacity: 0.96;
 }
 
 .admin-tabs {
@@ -45,6 +52,14 @@
 
 .admin-tab-asignaciones-active {
   border-color: rgba(244, 114, 182, 0.7);
+}
+
+.admin-desafios-cols,
+.admin-preguntas-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.2fr); 
+  gap: 20px;
+  align-items: flex-start;
 }
 
 .admin-desafios-layout {
@@ -219,4 +234,21 @@
 
 .admin-puntos-input {
   max-width: 90px;
+}
+
+.admin-table-scroll {
+  max-height: 520px;
+  overflow: auto;
+}
+
+.admin-table-scroll-sm {
+  max-height: 460px;
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .admin-desafios-cols,
+  .admin-preguntas-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

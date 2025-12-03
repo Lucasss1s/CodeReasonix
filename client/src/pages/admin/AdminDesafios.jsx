@@ -542,47 +542,42 @@ export default function AdminDesafios() {
       <Navbar />
       <div className="admin-page">
         <header className="admin-header admin-header-desafios">
-          <div>
-            <h2 className="admin-title">Panel ABM — Desafíos</h2>
-            <p className="admin-subtitle">
-              Crear y gestionar desafíos, preguntas y su asignación por
-              lenguaje / dificultad.
-            </p>
-          </div>
+          <h2 className="admin-title">Panel ABM — Desafíos</h2>
+          <p className="admin-subtitle">
+            Crear y gestionar desafíos, preguntas y su asignación por
+            lenguaje / dificultad.
+          </p>
 
           <button
             type="button"
-            onClick={() => navigate("/adminusuarios")}
+            onClick={() => navigate("/admin")}
             className="admin-back-button"
           >
-            Volver a panel de usuarios
+            Volver a panel de administración
           </button>
         </header>
 
         <div className="admin-tabs">
           <button
             type="button"
-            className={`btn-estado admin-tab-button ${
-              tab === "desafios" ? "admin-tab-desafios-active" : ""
-            }`}
+            className={`btn-estado admin-tab-button ${tab === "desafios" ? "admin-tab-desafios-active" : ""
+              }`}
             onClick={() => setTab("desafios")}
           >
             Desafíos
           </button>
           <button
             type="button"
-            className={`btn-estado admin-tab-button ${
-              tab === "preguntas" ? "admin-tab-preguntas-active" : ""
-            }`}
+            className={`btn-estado admin-tab-button ${tab === "preguntas" ? "admin-tab-preguntas-active" : ""
+              }`}
             onClick={() => setTab("preguntas")}
           >
             Preguntas
           </button>
           <button
             type="button"
-            className={`btn-estado admin-tab-button ${
-              tab === "asignaciones" ? "admin-tab-asignaciones-active" : ""
-            }`}
+            className={`btn-estado admin-tab-button ${tab === "asignaciones" ? "admin-tab-asignaciones-active" : ""
+              }`}
             onClick={() => setTab("asignaciones")}
           >
             Asignar preguntas
@@ -590,517 +585,508 @@ export default function AdminDesafios() {
         </div>
 
         {tab === "desafios" && (
-          <section className="admin-card">
-            <div className="admin-desafios-layout">
-              <div>
-                <h3 className="admin-section-title">
-                  {desafioForm.id_desafio
-                    ? `Editar desafío #${desafioForm.id_desafio}`
-                    : "Crear nuevo desafío"}
-                </h3>
-                <form onSubmit={handleSubmitDesafio} className="admin-form">
-                  <div className="admin-field">
-                    <label className="admin-label">Nombre *</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={desafioForm.nombre}
-                      onChange={(e) =>
-                        handleChangeDesafio("nombre", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <label className="admin-label">Descripción</label>
-                    <textarea
-                      className="admin-input"
-                      rows={3}
-                      value={desafioForm.descripcion}
-                      onChange={(e) =>
-                        handleChangeDesafio("descripcion", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <label className="admin-label">Imagen del desafío</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      placeholder="URL de imagen (se completa automáticamente al subir)"
-                      value={desafioForm.imagen_url}
-                      onChange={(e) =>
-                        handleChangeDesafio("imagen_url", e.target.value)
-                      }
-                    />
-                    <small className="admin-help-text">
-                      Podés pegar una URL manualmente o subir un archivo desde tu
-                      dispositivo para guardarlo en Supabase Storage.
-                    </small>
-                    <div className="admin-upload-row">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImagenFileChange}
-                      />
-                      <button
-                        type="button"
-                        className="btn-estado"
-                        onClick={handleUploadImagen}
-                        disabled={!imagenFile || uploadingImagen}
-                      >
-                        {uploadingImagen ? "Subiendo..." : "Subir a Supabase"}
-                      </button>
-                    </div>
-                    {desafioForm.imagen_url && (
-                      <div className="admin-image-preview-wrapper">
-                        <span className="admin-preview-label">
-                          Vista previa:
-                        </span>
-                        <img
-                          src={desafioForm.imagen_url}
-                          alt="Imagen del desafío"
-                          className="admin-image-preview"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="admin-grid-2">
-                    <div>
-                      <label className="admin-label">Fecha inicio</label>
-                      <input
-                        type="datetime-local"
-                        className="admin-input"
-                        value={desafioForm.fecha_inicio}
-                        onChange={(e) =>
-                          handleChangeDesafio("fecha_inicio", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="admin-label">Fecha fin</label>
-                      <input
-                        type="datetime-local"
-                        className="admin-input"
-                        value={desafioForm.fecha_fin}
-                        onChange={(e) =>
-                          handleChangeDesafio("fecha_fin", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="admin-grid-3">
-                    <div>
-                      <label className="admin-label">HP total *</label>
-                      <input
-                        type="number"
-                        min={1}
-                        className="admin-input"
-                        value={desafioForm.hp_total}
-                        onChange={(e) =>
-                          handleChangeDesafio("hp_total", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="admin-label">HP restante</label>
-                      <input
-                        type="number"
-                        className="admin-input"
-                        value={desafioForm.hp_restante ?? ""}
-                        onChange={(e) =>
-                          handleChangeDesafio("hp_restante", e.target.value)
-                        }
-                        placeholder="(vacío = igual a total)"
-                      />
-                    </div>
-                    <div>
-                      <label className="admin-label">Estado</label>
-                      <select
-                        className="admin-input"
-                        value={desafioForm.estado}
-                        onChange={(e) =>
-                          handleChangeDesafio("estado", e.target.value)
-                        }
-                      >
-                        {ESTADO_OPTS.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="admin-grid-2">
-                    <div>
-                      <label className="admin-label">Recompensa XP</label>
-                      <input
-                        type="number"
-                        className="admin-input"
-                        value={desafioForm.recompensa_xp}
-                        onChange={(e) =>
-                          handleChangeDesafio(
-                            "recompensa_xp",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="admin-label">Recompensa monedas</label>
-                      <input
-                        type="number"
-                        className="admin-input"
-                        value={desafioForm.recompensa_moneda}
-                        onChange={(e) =>
-                          handleChangeDesafio(
-                            "recompensa_moneda",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="admin-grid-2-lgmargin">
-                    <div>
-                      <label className="admin-label">Dificultad</label>
-                      <select
-                        className="admin-input"
-                        value={desafioForm.dificultad}
-                        onChange={(e) =>
-                          handleChangeDesafio("dificultad", e.target.value)
-                        }
-                      >
-                        {DIF_OPTS.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="admin-label">Lenguaje</label>
-                      <select
-                        className="admin-input"
-                        value={desafioForm.lenguaje}
-                        onChange={(e) =>
-                          handleChangeDesafio("lenguaje", e.target.value)
-                        }
-                      >
-                        {LENG_OPTS.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="admin-actions-row">
-                    <button
-                      type="button"
-                      className="btn-estado"
-                      onClick={handleResetDesafioForm}
-                    >
-                      Limpiar
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn-guardar"
-                      disabled={savingDesafio}
-                    >
-                      {savingDesafio
-                        ? "Guardando..."
-                        : desafioForm.id_desafio
-                        ? "Guardar cambios"
-                        : "Crear desafío"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              <div>
-                <h3 className="admin-section-title">Lista de desafíos</h3>
-                {loadingDesafios ? (
-                  <div className="admin-loading">Cargando desafíos...</div>
-                ) : desafios.length === 0 ? (
-                  <div className="admin-empty">
-                    No hay desafíos creados todavía.
-                  </div>
-                ) : (
-                  <div className="admin-table-scroll">
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Nombre</th>
-                          <th>Dificultad</th>
-                          <th>Lenguaje</th>
-                          <th>Estado</th>
-                          <th>HP</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {desafios.map((d) => (
-                          <tr key={d.id_desafio}>
-                            <td>{d.id_desafio}</td>
-                            <td>{d.nombre}</td>
-                            <td>{d.dificultad || "-"}</td>
-                            <td>{d.lenguaje || "-"}</td>
-                            <td>
-                              <span
-                                className={`estado-pill ${
-                                  d.estado === "activo"
-                                    ? "estado-activo"
-                                    : "estado-baneado"
+          <div className="admin-desafios-cols">
+            {/* LISTA DE DESAFÍOS - IZQUIERDA */}
+            <section className="admin-card admin-list-card">
+              <h3 className="admin-section-title">Lista de desafíos</h3>
+              {loadingDesafios ? (
+                <div className="admin-loading">Cargando desafíos...</div>
+              ) : desafios.length === 0 ? (
+                <div className="admin-empty">No hay desafíos creados todavía.</div>
+              ) : (
+                <div className="admin-table-scroll">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Dificultad</th>
+                        <th>Lenguaje</th>
+                        <th>Estado</th>
+                        <th>HP</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {desafios.map((d) => (
+                        <tr key={d.id_desafio}>
+                          <td>{d.id_desafio}</td>
+                          <td>{d.nombre}</td>
+                          <td>{d.dificultad || "-"}</td>
+                          <td>{d.lenguaje || "-"}</td>
+                          <td>
+                            <span
+                              className={`estado-pill ${d.estado === "activo"
+                                ? "estado-activo"
+                                : "estado-baneado"
                                 }`}
+                            >
+                              {d.estado}
+                            </span>
+                          </td>
+                          <td>
+                            {d.hp_restante ?? d.hp_total}/{d.hp_total}
+                          </td>
+                          <td>
+                            <div className="admin-actions">
+                              <button
+                                type="button"
+                                className="btn-estado"
+                                onClick={() => handleEditDesafio(d)}
                               >
-                                {d.estado}
-                              </span>
-                            </td>
-                            <td>
-                              {d.hp_restante ?? d.hp_total}/{d.hp_total}
-                            </td>
-                            <td>
-                              <div className="admin-actions">
-                                <button
-                                  type="button"
-                                  className="btn-estado"
-                                  onClick={() => handleEditDesafio(d)}
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-estado btn-bloquear"
-                                  onClick={() => handleDeleteDesafio(d)}
-                                >
-                                  Eliminar
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {tab === "preguntas" && (
-          <section className="admin-card">
-            <div className="admin-preguntas-layout">
-              <div>
-                <h3 className="admin-section-title">
-                  {preguntaForm.id_pregunta
-                    ? `Editar pregunta #${preguntaForm.id_pregunta}`
-                    : "Crear nueva pregunta"}
-                </h3>
-                <form onSubmit={handleSubmitPregunta}>
-                  <div className="admin-field">
-                    <label className="admin-label">Texto de la pregunta *</label>
-                    <textarea
-                      className="admin-input"
-                      rows={4}
-                      value={preguntaForm.texto}
-                      onChange={(e) =>
-                        handleChangePregunta("texto", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <label className="admin-label">
-                      Opciones (se guardan como JSON)
-                    </label>
-                    <div className="admin-options-grid">
-                      {["A", "B", "C", "D"].map((key) => (
-                        <div key={key} className="admin-option-row">
-                          <span className="admin-option-key">{key})</span>
-                          <input
-                            type="text"
-                            className="admin-input"
-                            value={preguntaForm[key]}
-                            onChange={(e) =>
-                              handleChangePregunta(key, e.target.value)
-                            }
-                          />
-                        </div>
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-estado btn-bloquear"
+                                onClick={() => handleDeleteDesafio(d)}
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
                       ))}
-                    </div>
-                  </div>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
 
-                  <div className="admin-grid-3-lg">
-                    <div>
-                      <label className="admin-label">Respuesta correcta</label>
-                      <select
-                        className="admin-input"
-                        value={preguntaForm.correcta}
-                        onChange={(e) =>
-                          handleChangePregunta("correcta", e.target.value)
-                        }
-                      >
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="admin-label">Dificultad</label>
-                      <select
-                        className="admin-input"
-                        value={preguntaForm.dificultad}
-                        onChange={(e) =>
-                          handleChangePregunta("dificultad", e.target.value)
-                        }
-                      >
-                        {DIF_OPTS.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="admin-label">Lenguaje</label>
-                      <select
-                        className="admin-input"
-                        value={preguntaForm.lenguaje}
-                        onChange={(e) =>
-                          handleChangePregunta("lenguaje", e.target.value)
-                        }
-                      >
-                        {LENG_OPTS.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+            {/* FORMULARIO DE DESAFÍO - DERECHA */}
+            <section className="admin-card admin-form-card">
+              <h3 className="admin-section-title">
+                {desafioForm.id_desafio
+                  ? `Editar desafío #${desafioForm.id_desafio}`
+                  : "Crear nuevo desafío"}
+              </h3>
+              <form onSubmit={handleSubmitDesafio} className="admin-form">
+                <div className="admin-field">
+                  <label className="admin-label">Nombre *</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={desafioForm.nombre}
+                    onChange={(e) =>
+                      handleChangeDesafio("nombre", e.target.value)
+                    }
+                  />
+                </div>
 
-                  <div className="admin-actions-row">
+                <div className="admin-field">
+                  <label className="admin-label">Descripción</label>
+                  <textarea
+                    className="admin-input"
+                    rows={3}
+                    value={desafioForm.descripcion}
+                    onChange={(e) =>
+                      handleChangeDesafio("descripcion", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="admin-field">
+                  <label className="admin-label">Imagen del desafío</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    placeholder="URL de imagen (se completa automáticamente al subir)"
+                    value={desafioForm.imagen_url}
+                    onChange={(e) =>
+                      handleChangeDesafio("imagen_url", e.target.value)
+                    }
+                  />
+                  <small className="admin-help-text">
+                    Podés pegar una URL manualmente o subir un archivo desde tu
+                    dispositivo para guardarlo en Supabase Storage.
+                  </small>
+                  <div className="admin-upload-row">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImagenFileChange}
+                    />
                     <button
                       type="button"
                       className="btn-estado"
-                      onClick={handleResetPreguntaForm}
+                      onClick={handleUploadImagen}
+                      disabled={!imagenFile || uploadingImagen}
                     >
-                      Limpiar
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn-guardar"
-                      disabled={savingPregunta}
-                    >
-                      {savingPregunta
-                        ? "Guardando..."
-                        : preguntaForm.id_pregunta
-                        ? "Guardar cambios"
-                        : "Crear pregunta"}
+                      {uploadingImagen ? "Subiendo..." : "Subir a Supabase"}
                     </button>
                   </div>
-                </form>
-              </div>
+                  {desafioForm.imagen_url && (
+                    <div className="admin-image-preview-wrapper">
+                      <span className="admin-preview-label">Vista previa:</span>
+                      <img
+                        src={desafioForm.imagen_url}
+                        alt="Imagen del desafío"
+                        className="admin-image-preview"
+                      />
+                    </div>
+                  )}
+                </div>
 
-              <div>
-                <h3 className="admin-section-title">Lista de preguntas</h3>
+                <div className="admin-grid-2">
+                  <div>
+                    <label className="admin-label">Fecha inicio</label>
+                    <input
+                      type="datetime-local"
+                      className="admin-input"
+                      value={desafioForm.fecha_inicio}
+                      onChange={(e) =>
+                        handleChangeDesafio("fecha_inicio", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="admin-label">Fecha fin</label>
+                    <input
+                      type="datetime-local"
+                      className="admin-input"
+                      value={desafioForm.fecha_fin}
+                      onChange={(e) =>
+                        handleChangeDesafio("fecha_fin", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
 
-                <div className="admin-filter-row">
-                  <select
-                    className="admin-input admin-filter-select"
-                    value={filtroDifPregunta}
-                    onChange={(e) => setFiltroDifPregunta(e.target.value)}
-                  >
-                    {DIF_OPTS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        Dificultad: {o.label}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    className="admin-input admin-filter-select"
-                    value={filtroLengPregunta}
-                    onChange={(e) => setFiltroLengPregunta(e.target.value)}
-                  >
-                    {LENG_OPTS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        Lenguaje: {o.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="admin-grid-3">
+                  <div>
+                    <label className="admin-label">HP total *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      className="admin-input"
+                      value={desafioForm.hp_total}
+                      onChange={(e) =>
+                        handleChangeDesafio("hp_total", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="admin-label">HP restante</label>
+                    <input
+                      type="number"
+                      className="admin-input"
+                      value={desafioForm.hp_restante ?? ""}
+                      onChange={(e) =>
+                        handleChangeDesafio("hp_restante", e.target.value)
+                      }
+                      placeholder="(vacío = igual a total)"
+                    />
+                  </div>
+                  <div>
+                    <label className="admin-label">Estado</label>
+                    <select
+                      className="admin-input"
+                      value={desafioForm.estado}
+                      onChange={(e) =>
+                        handleChangeDesafio("estado", e.target.value)
+                      }
+                    >
+                      {ESTADO_OPTS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="admin-grid-2">
+                  <div>
+                    <label className="admin-label">Recompensa XP</label>
+                    <input
+                      type="number"
+                      className="admin-input"
+                      value={desafioForm.recompensa_xp}
+                      onChange={(e) =>
+                        handleChangeDesafio("recompensa_xp", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="admin-label">Recompensa monedas</label>
+                    <input
+                      type="number"
+                      className="admin-input"
+                      value={desafioForm.recompensa_moneda}
+                      onChange={(e) =>
+                        handleChangeDesafio("recompensa_moneda", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-grid-2-lgmargin">
+                  <div>
+                    <label className="admin-label">Dificultad</label>
+                    <select
+                      className="admin-input"
+                      value={desafioForm.dificultad}
+                      onChange={(e) =>
+                        handleChangeDesafio("dificultad", e.target.value)
+                      }
+                    >
+                      {DIF_OPTS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="admin-label">Lenguaje</label>
+                    <select
+                      className="admin-input"
+                      value={desafioForm.lenguaje}
+                      onChange={(e) =>
+                        handleChangeDesafio("lenguaje", e.target.value)
+                      }
+                    >
+                      {LENG_OPTS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="admin-actions-row">
                   <button
                     type="button"
                     className="btn-estado"
-                    onClick={loadPreguntas}
+                    onClick={handleResetDesafioForm}
                   >
-                    Refrescar
+                    Limpiar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-guardar"
+                    disabled={savingDesafio}
+                  >
+                    {savingDesafio
+                      ? "Guardando..."
+                      : desafioForm.id_desafio
+                        ? "Guardar cambios"
+                        : "Crear desafío"}
                   </button>
                 </div>
+              </form>
+            </section>
+          </div>
+        )}
 
-                {loadingPreguntas ? (
-                  <div className="admin-loading">Cargando preguntas...</div>
-                ) : preguntas.length === 0 ? (
-                  <div className="admin-empty">
-                    No hay preguntas para los filtros seleccionados.
-                  </div>
-                ) : (
-                  <div className="admin-table-scroll">
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Texto</th>
-                          <th>Dif.</th>
-                          <th>Leng.</th>
-                          <th>Correcta</th>
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {preguntas.map((p) => (
-                          <tr key={p.id_pregunta}>
-                            <td>{p.id_pregunta}</td>
-                            <td>{p.texto}</td>
-                            <td>{p.dificultad || "-"}</td>
-                            <td>{p.lenguaje || "-"}</td>
-                            <td>{p.correcta}</td>
-                            <td>
-                              <div className="admin-actions">
-                                <button
-                                  type="button"
-                                  className="btn-estado"
-                                  onClick={() => handleEditPregunta(p)}
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-estado btn-bloquear"
-                                  onClick={() => handleDeletePregunta(p)}
-                                >
-                                  Eliminar
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+        {tab === "preguntas" && (
+          <div className="admin-preguntas-cols">
+            {/* LISTA DE PREGUNTAS - IZQUIERDA */}
+            <section className="admin-card admin-list-card">
+              <h3 className="admin-section-title">Lista de preguntas</h3>
+
+              <div className="admin-filter-row">
+                <select
+                  className="admin-input admin-filter-select"
+                  value={filtroDifPregunta}
+                  onChange={(e) => setFiltroDifPregunta(e.target.value)}
+                >
+                  {DIF_OPTS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      Dificultad: {o.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="admin-input admin-filter-select"
+                  value={filtroLengPregunta}
+                  onChange={(e) => setFiltroLengPregunta(e.target.value)}
+                >
+                  {LENG_OPTS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      Lenguaje: {o.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn-estado"
+                  onClick={loadPreguntas}
+                >
+                  Refrescar
+                </button>
               </div>
-            </div>
-          </section>
+
+              {loadingPreguntas ? (
+                <div className="admin-loading">Cargando preguntas...</div>
+              ) : preguntas.length === 0 ? (
+                <div className="admin-empty">
+                  No hay preguntas para los filtros seleccionados.
+                </div>
+              ) : (
+                <div className="admin-table-scroll">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Texto</th>
+                        <th>Dif.</th>
+                        <th>Leng.</th>
+                        <th>Correcta</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {preguntas.map((p) => (
+                        <tr key={p.id_pregunta}>
+                          <td>{p.id_pregunta}</td>
+                          <td>{p.texto}</td>
+                          <td>{p.dificultad || "-"}</td>
+                          <td>{p.lenguaje || "-"}</td>
+                          <td>{p.correcta}</td>
+                          <td>
+                            <div className="admin-actions">
+                              <button
+                                type="button"
+                                className="btn-estado"
+                                onClick={() => handleEditPregunta(p)}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-estado btn-bloquear"
+                                onClick={() => handleDeletePregunta(p)}
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {/* FORMULARIO PREGUNTAS - DERECHA */}
+            <section className="admin-card admin-form-card">
+              <h3 className="admin-section-title">
+                {preguntaForm.id_pregunta
+                  ? `Editar pregunta #${preguntaForm.id_pregunta}`
+                  : "Crear nueva pregunta"}
+              </h3>
+              <form onSubmit={handleSubmitPregunta}>
+                <div className="admin-field">
+                  <label className="admin-label">
+                    Texto de la pregunta *
+                  </label>
+                  <textarea
+                    className="admin-input"
+                    rows={4}
+                    value={preguntaForm.texto}
+                    onChange={(e) =>
+                      handleChangePregunta("texto", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="admin-field">
+                  <label className="admin-label">
+                    Opciones (se guardan como JSON)
+                  </label>
+                  <div className="admin-options-grid">
+                    {["A", "B", "C", "D"].map((key) => (
+                      <div key={key} className="admin-option-row">
+                        <span className="admin-option-key">{key})</span>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          value={preguntaForm[key]}
+                          onChange={(e) =>
+                            handleChangePregunta(key, e.target.value)
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="admin-grid-3-lg">
+                  <div>
+                    <label className="admin-label">Respuesta correcta</label>
+                    <select
+                      className="admin-input"
+                      value={preguntaForm.correcta}
+                      onChange={(e) =>
+                        handleChangePregunta("correcta", e.target.value)
+                      }
+                    >
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                      <option value="D">D</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="admin-label">Dificultad</label>
+                    <select
+                      className="admin-input"
+                      value={preguntaForm.dificultad}
+                      onChange={(e) =>
+                        handleChangePregunta("dificultad", e.target.value)
+                      }
+                    >
+                      {DIF_OPTS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="admin-label">Lenguaje</label>
+                    <select
+                      className="admin-input"
+                      value={preguntaForm.lenguaje}
+                      onChange={(e) =>
+                        handleChangePregunta("lenguaje", e.target.value)
+                      }
+                    >
+                      {LENG_OPTS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="admin-actions-row">
+                  <button
+                    type="button"
+                    className="btn-estado"
+                    onClick={handleResetPreguntaForm}
+                  >
+                    Limpiar
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-guardar"
+                    disabled={savingPregunta}
+                  >
+                    {savingPregunta
+                      ? "Guardando..."
+                      : preguntaForm.id_pregunta
+                        ? "Guardar cambios"
+                        : "Crear pregunta"}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
         )}
 
         {tab === "asignaciones" && (

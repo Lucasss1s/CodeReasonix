@@ -219,7 +219,7 @@ export default function Navbar() {
                   </Link>
 
                   {esAdmin && (
-                    <Link to="/adminusuarios" className="dropdown-item">
+                    <Link to="/admin" className="dropdown-item">
                       Panel ABM
                     </Link>
                   )}
