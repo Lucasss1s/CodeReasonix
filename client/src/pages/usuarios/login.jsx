@@ -35,8 +35,8 @@ export default function Login() {
         let dataError = null;
         try {
           dataError = await res.json();
-        } catch (_) {
-        }
+        // eslint-disable-next-line 
+        } catch (_) {}
 
         const msg =
           dataError?.error ||

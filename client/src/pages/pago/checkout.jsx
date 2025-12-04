@@ -148,6 +148,7 @@ export default function Checkout() {
   // helpers UI
   const ahora = new Date();
   const vence = sus?.periodo_fin ? new Date(sus.periodo_fin) : null;
+  // eslint-disable-next-line 
   const estaActivaHoy = vence && vence > ahora;
   const puedeRenovar = !sus || sus.estado === "inactivo" || (sus.periodo_fin && new Date(sus.periodo_fin) <= ahora);
 

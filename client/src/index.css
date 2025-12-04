@@ -4,14 +4,9 @@
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-  padding-top: 60px; 
-}
-
 .index-container {
   min-height: calc(100vh - 64px);
-  padding: 2rem 1.5rem 3rem;
+  padding: 60px 1.5rem 3rem;
   max-width: 1150px;
   margin: 0 auto;
   color: #e5e7eb;
