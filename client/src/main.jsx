@@ -22,7 +22,7 @@ import AdminUsuarios from "./pages/admin/AdminUsuarios.jsx";
 import AdminDesafios from "./pages/admin/AdminDesafios.jsx";
 import Admin from "./pages/admin/Admin.jsx";
 import AdminEntrevistas from "./pages/admin/AdminEntrevistas.jsx";
-import SimularCheckout from "./pages/pago/checkout.jsx";
+import PagoCheckout from "./pages/pago/checkout.jsx";
 
 import { Toaster } from "sonner";
 
@@ -56,7 +56,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/admindesafios" element={<AdminDesafios />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/adminentrevistas" element={<AdminEntrevistas />} />
-        <Route path="/pago-checkout" element={<SimularCheckout />} />
+        <Route path="/pago-checkout" element={<PagoCheckout />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
