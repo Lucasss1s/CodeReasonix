@@ -4,50 +4,53 @@ import { enviarCodigo } from '../utils/judge0.js';
 import { otorgarXP, registrarActividadDiaria, otorgarXPUnaVezPorDia } from '../services/gamificacion.js';
 import { obtenerDificultadEjercicio, xpPorDificultad } from '../services/ejercicio.js';
 import { checkAndGrantLogros } from "../services/logros.js";
+import { requireSesion } from '../middlewares/requireSesion.js';
+import { limitSubmit } from '../middlewares/limitSubmit.js';
+import { delayNoPremium } from '../middlewares/delayNoPremium.js';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-    //debug + validacion 
+router.post('/', requireSesion, limitSubmit(), delayNoPremium(), async (req, res) => {
     console.log("[submit-final] body recibido:", JSON.stringify(req.body));
 
-    let { id_cliente, id_ejercicio, codigo_fuente, lenguaje } = req.body;
+    const id_cliente_from_body = req.body?.id_cliente;
+    const idClienteNum = Number(req.cliente?.id_cliente ?? id_cliente_from_body);
 
-    //normalizar id_cliente 
-    const idClienteNum = Number(id_cliente);
-
-    //validaciones prev
-    if (!Number.isInteger(idClienteNum) || !id_ejercicio || !codigo_fuente || !lenguaje) {
-        console.warn("[submit-final] faltan/invalidos:", { id_cliente, id_ejercicio, lenguaje });
+    if (!Number.isInteger(idClienteNum) || !req.body?.id_ejercicio || !req.body?.codigo_fuente || !req.body?.lenguaje) {
+        console.warn("[submit-final] faltan/invalidos:", { id_cliente: req.body?.id_cliente, id_ejercicio: req.body?.id_ejercicio, lenguaje: req.body?.lenguaje });
         return res.status(400).json({ error: 'Faltan datos obligatorios o id_cliente inválido' });
     }
 
-    //validar que el cliente exista 
-    const { data: clienteRow, error: clienteErr } = await supabase
-        .from('cliente')
-        .select('id_cliente, id_usuario')
-        .eq('id_cliente', idClienteNum)
-        .maybeSingle();
-
-    if (clienteErr) {
-        console.error('[submit-final] error verificando cliente:', clienteErr);
-        return res.status(500).json({ error: 'Error verificando cliente' });
-    }
-    if (!clienteRow) {
-        console.warn('[submit-final] intento con id_cliente inexistente (tabla cliente):', idClienteNum);
-        return res.status(400).json({
-        error: 'id_cliente inválido o cliente no encontrado. Volvé a iniciar sesión.',
-        code: 'CLIENT_NOT_FOUND',
-        id_cliente_received: idClienteNum
-        });
-    }
-
+    //validar cliente  
+    let clienteRow = req.cliente || null;
     try {
+        if (!clienteRow) {
+        const { data: clienteData, error: clienteErr } = await supabase
+            .from('cliente')
+            .select('id_cliente, id_usuario')
+            .eq('id_cliente', idClienteNum)
+            .maybeSingle();
+
+        if (clienteErr) {
+            console.error('[submit-final] error verificando cliente:', clienteErr);
+            return res.status(500).json({ error: 'Error verificando cliente' });
+        }
+        if (!clienteData) {
+            console.warn('[submit-final] intento con id_cliente inexistente (tabla cliente):', idClienteNum);
+            return res.status(400).json({
+            error: 'id_cliente inválido o cliente no encontrado. Volvé a iniciar sesión.',
+            code: 'CLIENT_NOT_FOUND',
+            id_cliente_received: idClienteNum
+            });
+        }
+        clienteRow = clienteData;
+        }
+        
         // cargar casos de prueba
         const { data: casos, error: errorCasos } = await supabase
         .from('caso_prueba')
         .select('id_caso, entrada_procesada, salida_esperada')
-        .eq('id_ejercicio', id_ejercicio);
+        .eq('id_ejercicio', req.body.id_ejercicio);
 
         if (errorCasos) throw errorCasos;
 
@@ -56,9 +59,9 @@ router.post('/', async (req, res) => {
         let memoriaMax = 0;
 
         for (const caso of casos) {
-        const entradaProcesada = caso.entrada_procesada?.[lenguaje];
-        const plantilla = codigo_fuente.replace('{entrada}', entradaProcesada);
-        const resultado = await enviarCodigo(plantilla, lenguaje);
+        const entradaProcesada = caso.entrada_procesada?.[req.body.lenguaje];
+        const plantilla = req.body.codigo_fuente.replace('{entrada}', entradaProcesada);
+        const resultado = await enviarCodigo(plantilla, req.body.lenguaje);
 
         const tiempoCaso = parseFloat(resultado.time || 0);
         tiempoMax = Math.max(tiempoMax, tiempoCaso);
@@ -80,14 +83,14 @@ router.post('/', async (req, res) => {
 
         const aceptado = resultados.every(r => r.resultado === 'aceptado');
 
-        //insertar submit_final  
+        //insertar submit_final
         const { data: inserted, error: errorInsert } = await supabase
         .from('submit_final')
         .insert([{
             id_cliente: idClienteNum,
-            id_ejercicio,
-            codigo_fuente,
-            lenguaje,
+            id_ejercicio: req.body.id_ejercicio,
+            codigo_fuente: req.body.codigo_fuente,
+            lenguaje: req.body.lenguaje,
             resultado: aceptado,
             tiempo_ejecucion: tiempoMax,
             memoria_usada: memoriaMax,
@@ -102,25 +105,25 @@ router.post('/', async (req, res) => {
         let recompensa_bonus = null;
 
         if (aceptado) {
-        const lang = (lenguaje || "").trim().toLowerCase();
+        const lang = (req.body.lenguaje || "").trim().toLowerCase();
 
         const { data: row, error: selErr } = await supabase
             .from('usuario_ejercicio_resuelto')
             .select('lenguajes_resueltos')
             .eq('id_cliente', idClienteNum)
-            .eq('id_ejercicio', id_ejercicio)
+            .eq('id_ejercicio', req.body.id_ejercicio)
             .maybeSingle();
 
         if (selErr) throw selErr;
 
         if (!row) {
-            const difNum = await obtenerDificultadEjercicio(id_ejercicio);
+            const difNum = await obtenerDificultadEjercicio(req.body.id_ejercicio);
             const cantidad = xpPorDificultad(difNum);
 
             recompensa = await otorgarXP({
             id_cliente: idClienteNum,
             cantidad,
-            motivo: { tipo: 'submit', detalle: { id_ejercicio, dificultad: difNum, lenguaje: lang } }
+            motivo: { tipo: 'submit', detalle: { id_ejercicio: req.body.id_ejercicio, dificultad: difNum, lenguaje: lang } }
             });
 
             await registrarActividadDiaria({
@@ -134,7 +137,7 @@ router.post('/', async (req, res) => {
             .from('usuario_ejercicio_resuelto')
             .insert({
                 id_cliente: idClienteNum,
-                id_ejercicio,
+                id_ejercicio: req.body.id_ejercicio,
                 id_submit_final: inserted.id_submit_final,
                 lenguajes_resueltos: [lang]
             });
@@ -151,7 +154,7 @@ router.post('/', async (req, res) => {
                 .from('usuario_ejercicio_resuelto')
                 .update({ lenguajes_resueltos: nuevo })
                 .eq('id_cliente', idClienteNum)
-                .eq('id_ejercicio', id_ejercicio);
+                .eq('id_ejercicio', req.body.id_ejercicio);
 
             if (upErr) throw upErr;
             }
@@ -174,14 +177,14 @@ router.post('/', async (req, res) => {
         }
         }
 
-        // recompensa para el front
+        // reward para front
         const xpBase = Number((recompensa?.xp_otorgado ?? recompensa?.xp ?? recompensa?.cantidad ?? 0));
         const xpBonus = Number((recompensa_bonus?.otorgado ? (recompensa_bonus?.xp ?? recompensa_bonus?.xp_otorgado ?? 0) : 0));
         const reward = (aceptado && (xpBase + xpBonus) > 0)
         ? { amount: xpBase + xpBonus, icon: "💎" }
         : null;
 
-        // Verificar y otorgar logros
+        // logros
         let nuevosLogros = [];
         try {
         nuevosLogros = await checkAndGrantLogros(idClienteNum);
@@ -190,7 +193,8 @@ router.post('/', async (req, res) => {
         nuevosLogros = [];
         }
 
-        res.json({
+        // responder incluyendo info de rate-limit / premium si fue colocada por middlewares
+        return res.json({
         mensaje: 'Submit Final procesado con Judge0',
         resultado: aceptado ? 'aceptado' : 'rechazado',
         tiempo_max: tiempoMax,
@@ -200,7 +204,9 @@ router.post('/', async (req, res) => {
         recompensa,
         recompensa_bonus,
         reward,
-        nuevosLogros
+        nuevosLogros,
+        remaining: req.enviosRestantes ?? null,
+        premium: req.isPremiumSubmit ?? false
         });
 
     } catch (err) {
@@ -233,14 +239,14 @@ router.get('/:id', async (req, res) => {
 
 router.get('/comparacion/:id_ejercicio', async (req, res) => {
     const { id_ejercicio } = req.params;
-    const lenguaje = (req.query.lenguaje || "").toLowerCase(); 
+    const lenguaje = (req.query.lenguaje || "").toLowerCase();
 
     try {
         let query = supabase
         .from('submit_final')
         .select('detalles, memoria_usada, lenguaje, resultado')
         .eq('id_ejercicio', id_ejercicio)
-        .eq('resultado', true); 
+        .eq('resultado', true);
 
         if (lenguaje) {
         query = query.eq('lenguaje', lenguaje); 

@@ -468,7 +468,7 @@ function Ejercicio() {
             }
 
             if (!esPremium) {
-                toast("Tu envío no tiene prioridad (Suscripción gratuita). Submits gratuitos: 5/día", { timeout: 5000 });
+                toast("Tu envío no tiene prioridad (Suscripción gratuita). Submits gratuitos: 5/día", { timeout: 4000 });
             } 
 
             //submit con authFetch 
@@ -529,49 +529,103 @@ function Ejercicio() {
     const handleFinalSubmit = async () => {
         setLoadingFinal(true);
         try {
+            const accessToken = await getValidAccessToken();
+            if (!accessToken) {
+            toast.error("Sesión vencida. Por favor volvé a iniciar sesión.");
+            navigate("/logout");
+            setLoadingFinal(false);
+            return;
+            }
+
             const fullSource = reconstructionCode(
             codigo,
             ejercicio.plantillas?.[lenguaje] || "",
             lenguaje
             );
 
-            const res = await fetch(`${API_BASE}/submit-final`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    id_cliente: clienteId,
-                    id_ejercicio: ejercicio.id_ejercicio,
-                    codigo_fuente: fullSource,
-                    lenguaje,
-                }),
+            let esPremium = false;
+            try {
+            const susRes = await authFetch(`${API_BASE}/suscripcion/mi`, { method: "GET" });
+            if (susRes.ok) {
+                const susBody = await susRes.json().catch(() => ({}));
+                const s = susBody.suscripcion;
+                esPremium = !!(s && s.estado === "activo" && s.periodo_fin && new Date(s.periodo_fin) > new Date());
+            } else if (susRes.status === 401 || susRes.status === 403) {
+                toast.error("No autorizado. Volvé a iniciar sesión.");
+                navigate("/logout");
+                setLoadingFinal(false);
+                return;
+            }
+            } catch (e) {
+            console.warn("No se pudo verificar suscripción (final):", e);
+            }
+
+            if (!esPremium) {
+            toast("Tu envío no tiene prioridad (Suscripción gratuita). Submits gratuitos: 5/día", { timeout: 4000 });
+            } 
+
+            const res = await authFetch(`${API_BASE}/submit-final`, {
+            method: "POST",
+            body: JSON.stringify({
+                id_cliente: clienteId,
+                id_ejercicio: ejercicio.id_ejercicio,
+                codigo_fuente: fullSource,
+                lenguaje,
+            }),
             });
+
+            const remainingHeader = res.headers.get("X-RateLimit-Remaining");
+            if (remainingHeader !== null) {
+            const left = isFinite(Number(remainingHeader)) ? Number(remainingHeader) : null;
+            if (left !== null) toast(`Envíos restantes hoy: ${left}`, { timeout: 3000 });
+            }
+
+            if (!res.ok) {
+            if (res.status === 429) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || "Límite de envíos alcanzado");
+            }
+            if (res.status === 401) {
+                toast.error("Sesión inválida. Volvé a iniciar sesión.");
+                navigate("/logout");
+                return;
+            }
+            throw new Error(`HTTP ${res.status}`);
+            }
 
             const data = await res.json();
 
-            const idSubmit = data.insert?.id_submit_final ??data.id_submit_final ?? "";
+            const idSubmit = data.insert?.id_submit_final ?? data.id_submit_final ?? "";
+
+            if (Array.isArray(data?.nuevosLogros) && data.nuevosLogros.length) {
+            data.nuevosLogros.forEach(l => {
+                toast.success(`¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`);
+            });
+            }
+
+            if (data.reward?.amount) {
+            toast.success(`+${data.reward.amount} XP ${data.reward.icon || ""}`, { timeout: 3000 });
+            }
 
             if (data.resultado === "aceptado" && data.reward?.amount) {
-                const qs = new URLSearchParams({
-                    reward: String(data.reward.amount),
-                    icon: data.reward.icon || "⭐",
-                }).toString();
+            const qs = new URLSearchParams({
+                reward: String(data.reward.amount),
+                icon: data.reward.icon || "⭐",
+            }).toString();
 
-                if (Array.isArray(data?.nuevosLogros) && data.nuevosLogros.length) {
-                    data.nuevosLogros.forEach(l => {
-                        toast.success(`¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`);
-                    });
-                }
-
-                navigate(`/resultado/${idSubmit}?${qs}`, {
-                    replace: false,
-                    state: { reward: data.reward, codigoEditor: codigo },
-                });
-                } else {
-                navigate(`/resultado/${idSubmit}`);
+            navigate(`/resultado/${idSubmit}?${qs}`, {
+                replace: false,
+                state: { reward: data.reward, codigoEditor: codigo },
+            });
+            } else {
+            navigate(`/resultado/${idSubmit}`);
             }
+
         } catch (err) {
             console.error("Error en submit final:", err);
-            setError(err.message || "Error al enviar el código final.");
+            const msg = err?.message || "Error al enviar el código final.";
+            setError(msg);
+            toast.error(msg);
         } finally {
             setLoadingFinal(false);
         }

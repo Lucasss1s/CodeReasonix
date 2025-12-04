@@ -314,6 +314,11 @@
   padding:6px 8px;
   font-size:12px;
 }
+.p-btn--premium {
+  background: linear-gradient(90deg, #ffb26f, #ff7a00);
+  color: #111;
+  font-weight: 800;
+}
 
 /* ===== Alert ===== */
 .p-alert{

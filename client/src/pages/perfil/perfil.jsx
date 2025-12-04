@@ -10,6 +10,7 @@ import AchievementGrid from "../../components/AchievementGrid";
 import AccountSettingsModal from "../../components/AccountSettingsModal";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "../../components/achievement.css";
+import SubscriptionButton from "../../components/btnSuscripcion";
 import "./perfil.css";
 
 const FRAME_TIERS = [
@@ -115,6 +116,8 @@ export default function Perfil() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [usuario, setUsuario] = useState({ id_usuario: null, nombre: "", email: "" });
+// eslint-disable-next-line 
+  const [suscripcion, setSuscripcion] = useState(null);
 
   const { id_cliente: id_cliente_param } = useParams();
 
@@ -158,6 +161,26 @@ export default function Perfil() {
   };
 
   useEffect(() => { cargarPerfil(); }, [id_cliente]);
+
+  useEffect(() => {
+    // cargar suscripcion si es el propio perfil
+    const load = async () => {
+      if (!isOwnProfile) return;
+      try {
+        // eslint-disable-next-line 
+        const res = await authFetch(`${API_BASE}/suscripcion/mi`, { method: "GET" });
+        if (res.ok) {
+          const body = await res.json().catch(() => ({}));
+          setSuscripcion(body.suscripcion ?? null);
+        } else {
+          setSuscripcion(null);
+        }
+      } catch (e) {
+        console.warn("No se pudo cargar suscripcion:", e);
+      }
+    };
+    load();
+  }, [isOwnProfile]);
 
   const handleSave = async () => {
     if (!isOwnProfile) return;
@@ -432,6 +455,7 @@ export default function Perfil() {
                 <div className="p-header__right">
                   {!editMode ? (
                     <div className="p-actions">
+                      <SubscriptionButton className="p-btn p-btn--premium"/>
                       <button className="p-iconbtn p-iconbtn--round" title="Ajustes de cuenta" onClick={() => setSettingsOpen(true)}>
                         <i className="fa-solid fa-gear" />
                       </button>
