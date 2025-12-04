@@ -31,59 +31,109 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      if (!res.ok) throw new Error(`Error al traer cliente: ${res.status}`);
+      if (res.status === 403) {
+        let dataError = null;
+        try {
+          dataError = await res.json();
+        } catch (_) {
+        }
+
+        const msg =
+          dataError?.error ||
+          "Tu cuenta está baneada. Contactá con soporte.";
+
+        await supabase.auth.signOut();
+
+        localStorage.removeItem("usuario");
+        localStorage.removeItem("cliente");
+        localStorage.removeItem("es_admin");
+
+        setMensaje(msg);
+        toast.error(msg);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(`Error al traer cliente: ${res.status}`);
+      }
+
       const dataBackend = await res.json();
 
-      if (!dataBackend.id_cliente) {
+      const esAdmin = !!dataBackend.es_admin;
+      localStorage.setItem("es_admin", esAdmin ? "true" : "false");
+
+      if (!dataBackend.id_cliente && !esAdmin) {
         setMensaje("Error: no se encontró cliente asociado a este usuario.");
         return;
       }
 
-      localStorage.setItem("usuario", JSON.stringify(dataBackend.usuario));
-      localStorage.setItem("cliente", dataBackend.id_cliente);
+      localStorage.setItem(
+        "usuario",
+        JSON.stringify(dataBackend.usuario || {})
+      );
 
-      try {
-        const resXp = await fetch(`${API_BASE}/gamificacion/login-xp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id_cliente: dataBackend.id_cliente }),
-        });
-        const xpData = await resXp.json();
+      if (dataBackend.id_cliente) {
+        localStorage.setItem("cliente", dataBackend.id_cliente);
+      }
 
-        const today = new Date().toISOString().slice(0, 10);
-        localStorage.setItem(`login_xp_last:${dataBackend.id_cliente}`, today);
+      if (dataBackend.id_cliente) {
+        try {
+          const resXp = await fetch(`${API_BASE}/gamificacion/login-xp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_cliente: dataBackend.id_cliente }),
+          });
+          const xpData = await resXp.json();
 
-        if (resXp.ok) {
-          if (xpData.otorgado) {
-            const a = xpData?.reward_login?.amount || 0;
-            const b = xpData?.reward_streak?.amount || 0;
-            const total = a + b;
+          const today = new Date().toISOString().slice(0, 10);
+          localStorage.setItem(
+            `login_xp_last:${dataBackend.id_cliente}`,
+            today
+          );
 
-            if (total > 0) {
-              rewardState = { amount: total, icon: b > 0 ? "🔥" : "💎" };
-            }
+          if (resXp.ok) {
+            if (xpData.otorgado) {
+              const a = xpData?.reward_login?.amount || 0;
+              const b = xpData?.reward_streak?.amount || 0;
+              const total = a + b;
 
-            if (Array.isArray(xpData?.nuevosLogros) && xpData.nuevosLogros.length) {
-              xpData.nuevosLogros.forEach(l => {
-                toast.success(`¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`);
-              });
+              if (total > 0) {
+                rewardState = { amount: total, icon: b > 0 ? "🔥" : "💎" };
+              }
+
+              if (
+                Array.isArray(xpData?.nuevosLogros) &&
+                xpData.nuevosLogros.length
+              ) {
+                xpData.nuevosLogros.forEach((l) => {
+                  toast.success(
+                    `¡Logro desbloqueado! ${l.icono} ${l.titulo} ${
+                      l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""
+                    }`
+                  );
+                });
+              }
+            } else {
+              console.log("Ya tenía XP de login hoy, no se otorga.");
             }
           } else {
-            console.log("ya tenia xp de login hoy, no se otorga");
+            console.warn("No se pudo otorgar XP de login:", xpData?.error);
           }
-        } else {
-          console.warn("no se pudo otorgar xp de login:", xpData?.error);
+        } catch (e) {
+          console.warn("Error llamando /gamificacion/login-xp", e);
         }
-      } catch (e) {
-        console.warn("Error llamando /gamificacion/login-xp", e);
       }
 
       setMensaje("Login exitoso ✅");
-      navigate("/", { replace: true, state: rewardState ? { reward: rewardState } : {} });
+      navigate("/", {
+        replace: true,
+        state: rewardState ? { reward: rewardState } : {},
+      });
     } catch (err) {
       console.error(err);
       setMensaje(err.message || "Error al iniciar sesión ❌");
       toast.error("Error al iniciar sesión");
+      localStorage.removeItem("es_admin");
     }
   };
 
@@ -109,7 +159,9 @@ export default function Login() {
             required
             className="auth-input"
           />
-          <button type="submit" className="auth-button">Iniciar Sesión</button>
+          <button type="submit" className="auth-button">
+            Iniciar Sesión
+          </button>
         </form>
 
         {mensaje && <p className="auth-message">{mensaje}</p>}

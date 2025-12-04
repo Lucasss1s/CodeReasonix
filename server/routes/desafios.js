@@ -6,17 +6,27 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const nowIso = new Date().toISOString();
-    const { dificultad, lenguaje } = req.query;
+    const { dificultad, lenguaje, incluir_todos } = req.query;
 
     let q = supabase
       .from('desafio')
-      .select('*')
-      .eq('estado', 'activo')
-      .or(`fecha_fin.is.null,fecha_fin.gt.${nowIso}`)
-      .order('fecha_inicio', { ascending: false });
+      .select('*');
+
+    const incluirTodos =
+      incluir_todos === '1' ||
+      incluir_todos === 'true' ||
+      incluir_todos === 'yes';
+
+    if (!incluirTodos) {
+      q = q
+        .eq('estado', 'activo')
+        .or(`fecha_fin.is.null,fecha_fin.gt.${nowIso}`);
+    }
 
     if (dificultad) q = q.eq('dificultad', dificultad);
-    if (lenguaje) q = q.eq('lenguaje', lenguaje);
+    if (lenguaje)   q = q.eq('lenguaje', lenguaje);
+
+    q = q.order('fecha_inicio', { ascending: false });
 
     const { data, error } = await q;
     if (error) throw error;

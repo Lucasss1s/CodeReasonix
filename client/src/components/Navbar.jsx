@@ -6,11 +6,13 @@ import { toast } from "sonner";
 import "./navbar.css";
 import RewardOnRoute from "./RewardOnRoute";
 import API_BASE from "../config/api";
+import logoCodeReasonix from "../assets/logo-codereasonix.svg";
 
 export default function Navbar() {
   const [usuario, setUsuario] = useState(null);
   const [fotoPerfil, setFotoPerfil] = useState(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [esAdmin, setEsAdmin] = useState(false);
   const menuRef = useRef(null);
 
   const id_cliente = localStorage.getItem("cliente");
@@ -21,6 +23,12 @@ export default function Navbar() {
       return location.pathname === "/";
     }
     return location.pathname.startsWith(prefix);
+  };
+
+  const syncAdminFromStorage = () => {
+    const raw = localStorage.getItem("es_admin");
+    const flag = raw === "true" || raw === "1";
+    setEsAdmin(flag);
   };
 
   useEffect(() => {
@@ -50,9 +58,12 @@ export default function Navbar() {
             setFotoPerfil("/default-avatar.png");
           }
         }
+
+        syncAdminFromStorage();
       } else {
         setUsuario(null);
         setFotoPerfil(null);
+        setEsAdmin(false);
       }
     };
 
@@ -63,6 +74,9 @@ export default function Navbar() {
         if (!session?.user) {
           setUsuario(null);
           setFotoPerfil(null);
+          setEsAdmin(false);
+        } else {
+          syncAdminFromStorage();
         }
       }
     );
@@ -144,21 +158,39 @@ export default function Navbar() {
     <>
       <nav className="navbar">
         <div className="nav-left">
-          <h1 className="logo">CodeReasonix</h1>
+          <Link to="/" className="logo-link">
+            <img
+              src={logoCodeReasonix}
+              alt="CodeReasonix"
+              className="logo-icon"
+            />
+          </Link>
         </div>
 
         <div className="nav-center">
-          <Link className={`btn-nav ${isActive("/comunidad") ? "active" : ""}`} to="/comunidad">
+          <Link
+            className={`btn-nav ${isActive("/comunidad") ? "active" : ""}`}
+            to="/comunidad"
+          >
             Comunidad
           </Link>
-          <Link className={`btn-nav ${isActive("/entrevistas") ? "active" : ""}`} to="/entrevistas">
+          <Link
+            className={`btn-nav ${isActive("/entrevistas") ? "active" : ""}`}
+            to="/entrevistas"
+          >
             Entrevistas
           </Link>
-          <Link className={`btn-nav ${isActive("/desafios") ? "active" : ""}`} to="/desafios">
+          <Link
+            className={`btn-nav ${isActive("/desafios") ? "active" : ""}`}
+            to="/desafios"
+          >
             Desafíos
           </Link>
-          <Link className={`btn-nav ${isActive("/") ? "active" : ""}`} to="/">
-            Inicio
+          <Link
+            className={`btn-nav ${isActive("/ranking") ? "active" : ""}`}
+            to="/ranking"
+          >
+            Ranking
           </Link>
         </div>
 
@@ -173,16 +205,36 @@ export default function Navbar() {
               />
               {menuAbierto && (
                 <div className="menu-dropdown">
-                  <Link to="/perfil" className="dropdown-item">Ver Perfil</Link>
-                  <Link to="/entrevistas/mis-postulaciones" className="dropdown-item">Postulaciones</Link>
-                  <Link to="/mis-desafios" className="dropdown-item">Mis Desafíos</Link>
-                  <Link to="/logout" className="dropdown-item">Cerrar Sesión</Link>
+                  <Link to="/perfil" className="dropdown-item">
+                    Ver Perfil
+                  </Link>
+                  <Link
+                    to="/entrevistas/mis-postulaciones"
+                    className="dropdown-item"
+                  >
+                    Postulaciones
+                  </Link>
+                  <Link to="/mis-desafios" className="dropdown-item">
+                    Mis Desafíos
+                  </Link>
+
+                  {esAdmin && (
+                    <Link to="/admin" className="dropdown-item">
+                      Panel ABM
+                    </Link>
+                  )}
+
+                  <Link to="/logout" className="dropdown-item">
+                    Cerrar Sesión
+                  </Link>
                 </div>
               )}
             </div>
           ) : (
             <>
-              <Link to="/login" className="btn-nav auth">Iniciar Sesión</Link>
+              <Link to="/login" className="btn-nav auth">
+                Iniciar Sesión
+              </Link>
             </>
           )}
         </div>
