@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import API_BASE from '../../config/api';
 import Navbar from '../../components/Navbar.jsx';
@@ -6,6 +7,8 @@ import { toast } from 'sonner';
 import './adminEjercicios.css';
 
 export default function AdminEjercicios() {
+    const navigate = useNavigate();
+
     const [ejercicios, setEjercicios] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [qTitulo, setQTitulo] = useState('');
@@ -180,6 +183,14 @@ export default function AdminEjercicios() {
             <div>
                 <h2 className="admin-title">Panel ABM — Ejercicios</h2>
                 <p className="admin-subtitle">Crear, editar, ver casos y pistas, revisar reportes.</p>
+            </div>
+            <div>
+                <button
+                    type="button"
+                    onClick={() => navigate("/admin")}
+                    className="admin-back-button">
+                    Volver a panel de administración
+                </button>
             </div>
 
             <div className="filters-row">
@@ -383,42 +394,42 @@ function EjercicioForm({ ejercicio, onClose }) {
     };
 
     return (
-        <div className="modal-overlay">
-        <div className="modal-card form-card">
-            <h3 className="modal-title">{esEdicion ? 'Editar ejercicio' : 'Crear ejercicio'}</h3>
+        <div className="modal-overlay admin-page">
+            <div className="modal-card form-card">
+                <h3 className="modal-title">{esEdicion ? 'Editar ejercicio' : 'Crear ejercicio'}</h3>
 
-            <div className="form-grid">
-            <div>
-                <label className="field-label">Título</label>
-                <input className="admin-input" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+                <div className="form-grid">
+                <div>
+                    <label className="field-label">Título</label>
+                    <input className="admin-input" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
 
-                <label className="field-label">Descripción</label>
-                <textarea className="admin-input" rows={4} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+                    <label className="field-label">Descripción</label>
+                    <textarea className="admin-input" rows={4} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
 
-                <label className="field-label">Etiquetas (coma-separadas)</label>
-                <input className="admin-input" value={tagsCSV} onChange={(e) => setTagsCSV(e.target.value)} />
+                    <label className="field-label">Etiquetas (coma-separadas)</label>
+                    <input className="admin-input" value={tagsCSV} onChange={(e) => setTagsCSV(e.target.value)} />
 
-                <label className="field-label">Dificultad</label>
-                <input type="number" min={1} max={5} className="admin-input" value={dificultad} onChange={(e) => setDificultad(e.target.value)} />
+                    <label className="field-label">Dificultad</label>
+                    <input type="number" min={1} max={5} className="admin-input" value={dificultad} onChange={(e) => setDificultad(e.target.value)} />
 
-                <label className="field-label">
-                <input type="checkbox" checked={disabled} onChange={(e) => setDisabled(e.target.checked)} /> Deshabilitado
-                </label>
-            </div>
+                    <label className="field-label">
+                    <input type="checkbox" checked={disabled} onChange={(e) => setDisabled(e.target.checked)} /> Deshabilitado
+                    </label>
+                </div>
 
-            <div>
-                <label className="field-label">Plantillas (JSON por lenguaje)</label>
-                <textarea className="admin-input monospace" rows={18} value={plantillasRaw} onChange={(e) => setPlantillasRaw(e.target.value)} />
+                <div>
+                    <label className="field-label">Plantillas (JSON por lenguaje)</label>
+                    <textarea className="admin-input monospace" rows={18} value={plantillasRaw} onChange={(e) => setPlantillasRaw(e.target.value)} />
 
-                <div className="form-buttons">
-                <button className="admin-back-button" onClick={onClose}>Cancelar</button>
-                <button className="btn-guardar" onClick={handleGuardar} disabled={guardando}>
-                    {guardando ? 'Guardando...' : 'Guardar'}
-                </button>
+                    <div className="form-buttons">
+                    <button className="admin-back-button" onClick={onClose}>Cancelar</button>
+                    <button className="btn-guardar" onClick={handleGuardar} disabled={guardando}>
+                        {guardando ? 'Guardando...' : 'Guardar'}
+                    </button>
+                    </div>
+                </div>
                 </div>
             </div>
-            </div>
-        </div>
         </div>
     );
 }
