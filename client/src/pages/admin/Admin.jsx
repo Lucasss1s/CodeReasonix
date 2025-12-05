@@ -59,6 +59,17 @@ export default function Admin() {
               candidatos.
             </span>
           </button>
+
+          <button
+            type="button"
+            className="admin-menu-button"
+            onClick={() => navigate("/admin-ejercicios")}
+          >
+            <span className="admin-menu-title">Ejercicios</span>
+            <span className="admin-menu-text">
+              Crear ejercicios, casos de prueba, pistas, ver reportes y filtrar
+            </span>
+          </button>
         </section>
       </div>
     </>

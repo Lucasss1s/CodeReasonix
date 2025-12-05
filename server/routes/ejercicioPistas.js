@@ -169,5 +169,50 @@ router.get("/:id_ejercicio/progress", async (req, res) => {
     }
 });
 
+router.post("/:id_ejercicio/pistas", async (req, res) => {
+    const { id_ejercicio } = req.params;
+    const { titulo, contenido, orden } = req.body || {};
+
+    if (!titulo || !String(titulo).trim()) return res.status(400).json({ error: "titulo es obligatorio" });
+    if (!contenido || !String(contenido).trim()) return res.status(400).json({ error: "contenido es obligatorio" });
+
+    try {
+        let finalOrden = orden !== undefined ? Number(orden) : null;
+
+        if (finalOrden === null) {
+        // ultimo orden
+        const { data: existing, error: e } = await supabase
+            .from("ejercicio_pista")
+            .select("orden")
+            .eq("id_ejercicio", id_ejercicio)
+            .order("orden", { ascending: false })
+            .limit(1);
+
+        if (e) throw e;
+        const last = (existing && existing[0] && Number(existing[0].orden)) || 0;
+        finalOrden = last + 1;
+        }
+
+        const payload = {
+        id_ejercicio: Number(id_ejercicio),
+        titulo: titulo.trim(),
+        contenido: contenido.trim(),
+        orden: finalOrden,
+        };
+
+        const { data, error } = await supabase
+        .from("ejercicio_pista")
+        .insert([payload])
+        .select()
+        .single();
+
+        if (error) throw error;
+        return res.json({ ok: true, pista: data });
+    } catch (err) {
+        console.error("[PISTAS] create fail:", err);
+        return res.status(500).json({ error: "Error creando pista", details: err?.message });
+    }
+});
+
 
 export default router;
