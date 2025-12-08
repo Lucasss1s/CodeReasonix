@@ -11,6 +11,8 @@ import AccountSettingsModal from "../../components/AccountSettingsModal";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "../../components/achievement.css";
 import SubscriptionButton from "../../components/btnSuscripcion";
+import { authFetch } from "../../utils/authToken";
+
 import "./perfil.css";
 
 const FRAME_TIERS = [
@@ -167,7 +169,6 @@ export default function Perfil() {
     const load = async () => {
       if (!isOwnProfile) return;
       try {
-        // eslint-disable-next-line 
         const res = await authFetch(`${API_BASE}/suscripcion/mi`, { method: "GET" });
         if (res.ok) {
           const body = await res.json().catch(() => ({}));

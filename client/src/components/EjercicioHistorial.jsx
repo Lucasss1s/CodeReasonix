@@ -89,13 +89,13 @@ export default function EjercicioHistorial({
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
 
       const item = data.item;
-      if (!item?.codigo_fuente) {
+      if (!item?.codigo_editor) {
         toast.info("El envío no tiene código guardado.");
         return;
       }
       onLoadFromHistory?.({
         lenguaje: item.lenguaje,
-        codigo: item.codigo_fuente,
+        codigo: item.codigo_editor,
       });
       toast.success("Código cargado en el editor");
     } catch (err) {

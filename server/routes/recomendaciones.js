@@ -52,9 +52,10 @@ router.get("/home/:id_cliente", async (req, res) => {
         //Ejercicios candidatos
         let query = supabase
         .from("ejercicio")
-        .select("id_ejercicio, titulo, descripcion, dificultad")
+        .select("id_ejercicio, titulo, descripcion, dificultad, disabled")
         .gte("dificultad", dificultadMin)
         .lte("dificultad", dificultadMax);
+        query = query.eq('disabled', false);
 
         if (resueltosIds.length > 0) {
         query = query.not("id_ejercicio", "in", `(${resueltosIds.join(",")})`);

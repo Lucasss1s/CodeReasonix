@@ -31,7 +31,15 @@ function ResultadoFinal() {
     const [error, setError] = useState(null);
     const [showAllCases, setShowAllCases] = useState(false);
     const [chartMode, setChartMode] = useState("tiempo");
-    const codigoEditable = location.state?.codigoEditor;
+    const codigoEditable = location.state?.codigoEditor || resultado?.codigo_editor || resultado?.codigo_fuente;
+
+    const handleCopy = () => {
+        const text = (codigoEditable || resultado.codigo_fuente) || "";
+        navigator.clipboard.writeText(
+            text.replace(/\\n/g, "\n").replace(/\\t/g, "    ")
+        );
+    };
+
 
     useEffect(() => {
         const fetchResultado = async () => {
@@ -167,8 +175,13 @@ function ResultadoFinal() {
             {/* Codigo */}
             <div className="codigo-container">
                 <h3>Tu código</h3>
-                <pre>{codigoEditable || resultado.codigo_fuente}</pre>
-                <button className="btn-copy">📋 Copiar</button>
+                    <pre className="codigo-text">
+                        {(codigoEditable || resultado.codigo_fuente)
+                            ?.replace(/\\n/g, "\n")
+                            ?.replace(/\\t/g, "    ")
+                        }
+                    </pre>
+                <button className="btn-copy" onClick={handleCopy}>📋 Copiar</button>
             </div>
 
             {/* Casos */}

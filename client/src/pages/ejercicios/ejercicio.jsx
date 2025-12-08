@@ -7,6 +7,7 @@ import API_BASE from "../../config/api";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import "./ejercicio.css";
+import Navbar from "../../components/Navbar";
 import EjercicioPistas from "../../components/EjercicioPistas.jsx";
 import EjercicioHistorial from "../../components/EjercicioHistorial.jsx";
 import EjercicioBugReport from "../../components/EjercicioBugReport.jsx";
@@ -570,6 +571,7 @@ function Ejercicio() {
                 id_cliente: clienteId,
                 id_ejercicio: ejercicio.id_ejercicio,
                 codigo_fuente: fullSource,
+                codigo_editor: codigo, 
                 lenguaje,
             }),
             });
@@ -603,9 +605,9 @@ function Ejercicio() {
             });
             }
 
-            if (data.reward?.amount) {
-            toast.success(`+${data.reward.amount} XP ${data.reward.icon || ""}`, { timeout: 3000 });
-            }
+        /*  if (data.reward?.amount) {
+                toast.success(`+${data.reward.amount} XP ${data.reward.icon || ""}`, { timeout: 3000 });
+            } */
 
             if (data.resultado === "aceptado" && data.reward?.amount) {
             const qs = new URLSearchParams({
@@ -634,6 +636,8 @@ function Ejercicio() {
     if (!ejercicio) return <div className="loading">Cargando...</div>;
 
     return (
+        <>
+        <Navbar />
         <div className="ejercicio-page" ref={containerRef}>
             {/* PANEL IZQUIERDO */}
             <div className="left-panel" style={{ width: `${leftWidth}%` }}>
@@ -641,7 +645,7 @@ function Ejercicio() {
                     <h2>{ejercicio.titulo}</h2>
                     <p className="descripcion">{ejercicio.descripcion}</p>
                     <p className="dificultad">
-                        Dificultad: {["Fácil", "Medio", "Difícil", "Experto"][ejercicio.dificultad - 1]}
+                        Dificultad: {["Fácil", "Intermedio", "Difícil", "Experto"][ejercicio.dificultad - 1]}
                     </p>
                 </div>
                 <div className="casos-container">
@@ -812,7 +816,6 @@ function Ejercicio() {
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>#</th>
                                         <th>Entrada</th>
                                         <th>Esperado</th>
                                         <th>Obtenido</th>
@@ -822,7 +825,6 @@ function Ejercicio() {
                                 <tbody>
                                     {resultados.map((r) => (
                                         <tr key={r.id_caso} className={r.resultado === "aceptado" ? "resultado-ok" : "resultado-error"}>
-                                            <td>{r.id_caso}</td>
                                             <td><pre>{r.entrada?.[lenguaje] ?? JSON.stringify(r.entrada)}</pre></td>
                                             <td>{r.salida_esperada}</td>
                                             <td>{r.salida_obtenida}</td>
@@ -849,6 +851,7 @@ function Ejercicio() {
                 )}
             </div>
         </div>
+        </>
     );
 }
 

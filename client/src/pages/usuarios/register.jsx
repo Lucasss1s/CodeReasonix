@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { supabase } from "../../config/supabase.js";
 import API_BASE from "../../config/api";
@@ -15,13 +15,35 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const translateError = (raw) => {
+    if (!raw) return "Error al registrar. Intentá nuevamente.";
+    const s = String(raw).toLowerCase();
+
+    if (s.includes("password") && s.includes("strength")) {
+      return "La contraseña es muy débil. Usá al menos 6 caracteres";
+    }
+    if (s.includes("user already registered") || s.includes("email already exists") || s.includes("duplicat")) {
+      return "Ya existe una cuenta con ese correo";
+    }
+    if (s.includes("invalid email") || s.includes("email format")) {
+      return "El correo no tiene un formato válido";
+    }
+    if (s.includes("invalid") && s.includes("password")) {
+      return "Contraseña inválida";
+    }
+    if (s.includes("too many requests")) {
+      return "Demasiados intentos. Probá más tarde";
+    }
+    if (String(raw).length < 150) return String(raw);
+    return "Error al registrar. Intentá nuevamente más tarde";
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setMensaje("");
 
-    if (!password || !confirmPassword) {
-      setMensaje("Completá ambos campos de contraseña.");
-      toast.error("Completá ambos campos de contraseña.");
+    if (password.length < 6) {
+      toast.error("La contraseña debe tener al menos 6 caracteres.");
       return;
     }
     if (password !== confirmPassword) {
@@ -49,7 +71,10 @@ export default function Register() {
       const id_cliente = res.data.cliente?.id_cliente;
       if (!id_cliente) throw new Error("No se obtuvo id_cliente al registrar.");
 
-      const { data: sessionData, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: sessionData, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       if (loginError) throw loginError;
 
       if (sessionData?.session) {
@@ -74,30 +99,19 @@ export default function Register() {
         localStorage.setItem(`login_xp_last:${id_cliente}`, today);
 
         if (resXp.ok && xpData.otorgado) {
-          const a = xpData?.reward_login?.amount || 0;
-          const b = xpData?.reward_streak?.amount || 0;
-          const total = a + b;
-          if (total > 0) {
-            rewardState = { amount: total, icon: b > 0 ? "🔥" : "💎" };
-          }
-          if (Array.isArray(xpData?.nuevosLogros) && xpData.nuevosLogros.length) {
-            xpData.nuevosLogros.forEach((l) => {
-              toast.success(
-                `¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`
-              );
-            });
-          }
+          const total = (xpData?.reward_login?.amount || 0) + (xpData?.reward_streak?.amount || 0);
+          if (total > 0) rewardState = { amount: total, icon: "💎" };
         }
       } catch (e) {
-        console.warn("Error llamando /gamificacion/login-xp desde register:", e);
+        console.warn("Error XP register:", e);
       }
 
-      setMensaje("Usuario registrado y logeado correctamente ✅");
+      setMensaje("Cuenta creada y sesión iniciada ✅");
       navigate("/", { replace: true, state: rewardState ? { reward: rewardState } : {} });
     } catch (err) {
       console.error(err);
-      setMensaje(err.response?.data?.error || err.message || "Error al registrar usuario ❌");
-      toast.error("Error al registrar usuario");
+      const raw = err?.response?.data?.error || err.message || String(err);
+      toast.error(translateError(raw));
     } finally {
       setLoading(false);
     }
@@ -121,7 +135,7 @@ export default function Register() {
             type="email"
             placeholder="Correo"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value.toLowerCase())}   
             required
             className="auth-input"
           />
@@ -148,6 +162,10 @@ export default function Register() {
         </form>
 
         {mensaje && <p className="auth-message">{mensaje}</p>}
+
+        <div className="auth-secondary">
+          ¿Tenés cuenta? <Link to="/login">Iniciar sesión</Link>
+        </div>
       </div>
     </div>
   );

@@ -90,6 +90,7 @@ router.post('/', requireSesion, limitSubmit(), delayNoPremium(), async (req, res
             id_cliente: idClienteNum,
             id_ejercicio: req.body.id_ejercicio,
             codigo_fuente: req.body.codigo_fuente,
+            codigo_editor: req.body.codigo_editor ?? null,
             lenguaje: req.body.lenguaje,
             resultado: aceptado,
             tiempo_ejecucion: tiempoMax,

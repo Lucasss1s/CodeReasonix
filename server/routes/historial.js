@@ -77,7 +77,7 @@ router.get("/submit/:id_submit_final", async (req, res) => {
     const { data, error } = await supabase
       .from("submit_final")
       .select(
-        "id_submit_final, id_cliente, id_ejercicio, lenguaje, codigo_fuente, fecha, resultado, puntaje, intentos, tiempo_ejecucion, memoria_usada"
+        "id_submit_final, id_cliente, id_ejercicio, lenguaje, codigo_fuente, fecha, resultado, puntaje, intentos, tiempo_ejecucion, memoria_usada, codigo_editor"
       )
       .eq("id_submit_final", id_submit_final)
       .maybeSingle();

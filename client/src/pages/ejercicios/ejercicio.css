@@ -328,6 +328,7 @@ p {
     background: #121212;
     color: #f5f5f5;
     font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+    padding-top: 60px;
 }
 
 .left-panel {

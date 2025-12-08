@@ -89,10 +89,10 @@ export default function OnboardingPreferencias() {
               value={nivel}
               onChange={(e) => setNivel(Number(e.target.value))}
             >
-              <option value={1}>Principiante total (Dificultad 1)</option>
-              <option value={2}>Intermedio (Dificultad 2)</option>
-              <option value={3}>Avanzado (Dificultad 3)</option>
-              <option value={4}>Experto / Entrevistas fuertes (Dificultad 4)</option>
+              <option value={1}>Principiante total</option>
+              <option value={2}>Intermedio</option>
+              <option value={3}>Avanzado</option>
+              <option value={4}>Experto / Entrevistas fuertes</option>
             </select>
           </div>
 
