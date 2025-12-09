@@ -16,6 +16,7 @@ import {
 import useRequirePreferencias from "../../hooks/useRequirePreferencias";
 import "./resultadoFinal.css";
 import RewardOnRoute from "../../components/RewardOnRoute";
+import { toast } from "sonner";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -38,6 +39,7 @@ function ResultadoFinal() {
         navigator.clipboard.writeText(
             text.replace(/\\n/g, "\n").replace(/\\t/g, "    ")
         );
+        toast.success("Código copiado!");
     };
 
 
@@ -197,7 +199,9 @@ function ResultadoFinal() {
                 ) : (
                     <motion.div className="panel-exito" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                         <h4>✅ Todos los casos pasaron</h4>
-                        <button className="btn-ghost" onClick={() => setShowAllCases(true)}>Ver detalles</button>
+                        <button className="btn-ghost" onClick={() => setShowAllCases(v => !v)}>
+                            {showAllCases ? "Cerrar" : "Ver detalles"}
+                        </button>
                     </motion.div>
                 )}
 

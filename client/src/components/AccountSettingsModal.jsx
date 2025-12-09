@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import API_BASE from "../config/api";
@@ -48,13 +48,12 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
 
   // formularios
   const [tmpNombre, setTmpNombre] = useState("");
-  const [tmpEmail, setTmpEmail] = useState("");
 
   const [currPass, setCurrPass] = useState("");
   const [newPass, setNewPass] = useState("");
   const [newPass2, setNewPass2] = useState("");
   const passScore = scorePassword(newPass);
-  const canChangePass = newPass.length >= 8 && newPass === newPass2 && newPass !== currPass;
+  const canChangePass = newPass.length >= 6 && newPass === newPass2 && newPass !== currPass;
 
   const panelRef = useRef(null);
 
@@ -72,7 +71,6 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
           email: user.email || "",
         });
         setTmpNombre(user.nombre || "");
-        setTmpEmail(user.email || "");
 
         //perfil
         const p = await axios.get(`${API_BASE}/perfil/${id_cliente}`);
@@ -97,14 +95,6 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-
-  const maskedEmail = useMemo(() => {
-    const em = usuario.email || "";
-    const [u, d] = em.split("@");
-    if (!u || !d) return em;
-    const shown = u.slice(0, Math.min(3, u.length));
-    return `${shown}${"*".repeat(Math.max(0, u.length - shown.length))}@${d}`;
-  }, [usuario.email]);
 
 //Guardar identidad perfil (display_name y username)
 const saveProfileIdentity = async () => {
@@ -151,36 +141,14 @@ const saveProfileIdentity = async () => {
     }
   };
 
-  //Cambiar email (tabla usuario)
-  const submitEmailChange = async () => {
-    if (!usuario.id_usuario) return;
-    const target = (tmpEmail || "").trim();
-    if (!target) return toast.info("Ingresá el nuevo email");
-    if (target.toLowerCase() === (usuario.email || "").toLowerCase()) {
-      return toast.info("El nuevo email es igual al actual.");
-    }
-    try {
-      setLoading(true);
-      await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}`, { email: target });
-      setUsuario((u) => ({ ...u, email: target }));
-      toast.success("Email actualizado");
-      onIdentityUpdated?.({ email: target }); 
-    } catch (e) {
-      console.error(e);
-      const apiMsg = e?.response?.data?.error || "No se pudo actualizar el email";
-      toast.error(apiMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   //Cambiar contraseña (tabla usuario) 
   const submitPasswordChange = async () => {
     if (!usuario.id_usuario) return;
-    if (!currPass) return toast.info("Ingresá tu contraseña actual (solo validación local)");
+    if (!currPass) return toast.info("Ingresá tu contraseña actual");
     if (!newPass) return toast.info("Ingresá la nueva contraseña");
     if (newPass !== newPass2) return toast.error("Las contraseñas nuevas no coinciden");
     if (newPass === currPass) return toast.error("La nueva debe ser distinta a la actual");
+    if (newPass.length < 6) return toast.error("La contraseña debe tener al menos 6 caracteres");
     try {
       setLoading(true);
       await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}`, { password: newPass });
@@ -227,7 +195,7 @@ const saveProfileIdentity = async () => {
                     className="as-input"
                     value={perfil.display_name || ""}
                     onChange={(e) => setPerfil((p) => ({ ...p, display_name: e.target.value }))}
-                    placeholder="Ej.: Lucas Frangolini"
+                    placeholder="Ej.: Jr Juan"
                   />
                   <div className="as-hint">Se muestra en el perfil.</div>
                 </div>
@@ -237,7 +205,7 @@ const saveProfileIdentity = async () => {
                     className="as-input"
                     value={perfil.username || ""}
                     onChange={(e) => setPerfil((p) => ({ ...p, username: e.target.value.replace(/\s+/g, "") }))}
-                    placeholder="Ej.: lucas.f"
+                    placeholder="Ej.: juan.js"
                   />
                 </div>
               </div>
@@ -266,26 +234,6 @@ const saveProfileIdentity = async () => {
                     </button>
                   </div>
                 </div>
-
-                <div>
-                  <label className="as-label">Email</label>
-                  <input
-                    className="as-input"
-                    type="email"
-                    value={tmpEmail}
-                    onChange={(e) => setTmpEmail(e.target.value)}
-                    placeholder="nuevo@email.com"
-                  />
-                  <div className="as-kv">
-                    <span className="as-kv__label">Actual:</span>
-                    <span className="as-kv__value">{usuario.email ? maskedEmail : "—"}</span>
-                  </div>
-                  <div className="as-actions">
-                    <button className="as-btn as-btn--ghost" onClick={submitEmailChange} disabled={loading || !tmpEmail}>
-                      <i className="fa-solid fa-envelope" /> Actualizar email
-                    </button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -297,7 +245,7 @@ const saveProfileIdentity = async () => {
               <div className="as-block__title">Cambiar contraseña</div>
               <div className="as-grid">
                 <div>
-                  <label className="as-label">Contraseña actual</label>
+                  <label className="as-label" required>Contraseña actual</label>
                   <input
                     className="as-input"
                     type="password"
@@ -307,7 +255,7 @@ const saveProfileIdentity = async () => {
                   />
                 </div>
                 <div>
-                  <label className="as-label">Nueva contraseña</label>
+                  <label className="as-label" required>Nueva contraseña</label>
                   <input
                     className="as-input"
                     type="password"
@@ -318,7 +266,7 @@ const saveProfileIdentity = async () => {
                   <Strength value={passScore} />
                 </div>
                 <div>
-                  <label className="as-label">Confirmar nueva contraseña</label>
+                  <label className="as-label" required>Confirmar nueva contraseña</label>
                   <input
                     className="as-input"
                     type="password"

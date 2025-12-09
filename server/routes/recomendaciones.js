@@ -80,7 +80,8 @@ router.get("/home/:id_cliente", async (req, res) => {
         if (recomendados.length === 0) {
         let fallbackQuery = supabase
             .from("ejercicio")
-            .select("id_ejercicio, titulo, descripcion, dificultad");
+            .select("id_ejercicio, titulo, descripcion, dificultad")
+            .eq("disabled", false);
 
         if (resueltosIds.length > 0) {
             fallbackQuery = fallbackQuery.not(

@@ -543,10 +543,10 @@ export default function Perfil() {
 
               {/* Skills */}
               <div className="p-block">
-                <div className="p-block__head"><h3>Skills</h3></div>
+                <div className="p-block__head"><h3>Habilidades</h3></div>
                 {!editMode || !isOwnProfile ? (
                   <div className="p-tags">
-                    {skillsArr.length > 0 ? skillsArr.map((s, i) => <span className="p-tag" key={i}>{s}</span>) : <span className="p-muted">Sin skills cargadas.</span>}
+                    {skillsArr.length > 0 ? skillsArr.map((s, i) => <span className="p-tag" key={i}>{s}</span>) : <span className="p-muted">Sin habilidades cargadas</span>}
                   </div>
                 ) : (
                   <input
