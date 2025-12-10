@@ -52,7 +52,9 @@ export default function DesafioDetalle() {
       );
       setParticipante(part || null);
       if (part) {
-        const { data } = await axios.get(`${API_BASE}/participante-pregunta/por-participante/${part.id_participante}`);
+        const { data } = await axios.get(
+          `${API_BASE}/participante-pregunta/por-participante/${part.id_participante}`
+        );
         setPreguntasAsignadas(data || []);
       } else {
         setPreguntasAsignadas([]);
@@ -101,7 +103,9 @@ export default function DesafioDetalle() {
         (p) => Number(p.id_desafio) === Number(id)
       );
       if (!part2) return;
-      const { data } = await axios.get(`${API_BASE}/participante-pregunta/por-participante/${part2.id_participante}`);
+      const { data } = await axios.get(
+        `${API_BASE}/participante-pregunta/por-participante/${part2.id_participante}`
+      );
       const first = data?.[0] ?? null;
       if (first) setActivePreguntaId(first.id_participante_pregunta);
     } catch (err) {
@@ -276,19 +280,20 @@ export default function DesafioDetalle() {
                 <div
                   className="hp-fill"
                   style={{
-                    width: `${desafio.hp_total > 0
+                    width: `${
+                      desafio.hp_total > 0
                         ? Math.max(
-                          0,
-                          Math.min(
-                            100,
-                            Math.round(
-                              (desafio.hp_restante / desafio.hp_total) *
-                              100
+                            0,
+                            Math.min(
+                              100,
+                              Math.round(
+                                (desafio.hp_restante / desafio.hp_total) *
+                                  100
+                              )
                             )
                           )
-                        )
                         : 0
-                      }%`,
+                    }%`,
                   }}
                 />
               </div>
@@ -329,12 +334,11 @@ export default function DesafioDetalle() {
                   : "-"}{" "}
                 {desafio.fecha_fin
                   ? ` • Hasta: ${new Date(
-                    desafio.fecha_fin
-                  ).toLocaleDateString()}`
+                      desafio.fecha_fin
+                    ).toLocaleDateString()}`
                   : ""}
               </div>
             </div>
-
           </div>
         </div>
 
@@ -362,17 +366,25 @@ export default function DesafioDetalle() {
                   const isActive =
                     activePreguntaId ===
                     pp.id_participante_pregunta;
+
+                  const respondidaCorrecta =
+                    pp.respondida && pp.correcta === true;
+                  const respondidaIncorrecta =
+                    pp.respondida && pp.correcta === false;
+
                   return (
                     <div
                       key={pp.id_participante_pregunta}
                       style={{ marginBottom: 6 }}
                     >
                       <div
-                        className={`assigned-card clickable ${pp.respondida ? "answered" : ""
-                          }`}
+                        className={`assigned-card clickable ${
+                          pp.respondida ? "answered" : ""
+                        }`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (pp.respondida) return;
+                          if (respondidaCorrecta) return;
+
                           setActivePreguntaId((cur) =>
                             cur === pp.id_participante_pregunta
                               ? null
@@ -382,19 +394,17 @@ export default function DesafioDetalle() {
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
-                          if (
-                            e.key === "Enter" &&
-                            !pp.respondida
-                          ) {
+                          if (e.key === "Enter") {
+                            if (respondidaCorrecta) return;
                             setActivePreguntaId((cur) =>
                               cur ===
-                                pp.id_participante_pregunta
+                              pp.id_participante_pregunta
                                 ? null
                                 : pp.id_participante_pregunta
                             );
                           }
                         }}
-                        aria-disabled={pp.respondida}
+                        aria-disabled={respondidaCorrecta}
                       >
                         <div className="assigned-text">
                           {pp.pregunta?.texto}

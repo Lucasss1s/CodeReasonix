@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
+import { toast } from "sonner";
 import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
 export default function OfertaDetalle() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [oferta, setOferta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -28,7 +28,9 @@ export default function OfertaDetalle() {
   const cargarSiPostule = async () => {
     if (!id_cliente) return setYaPostulado(false);
     try {
-      const res = await axios.get(`${API_BASE}/postulaciones/mias/${id_cliente}`);
+      const res = await axios.get(
+        `${API_BASE}/postulaciones/mias/${id_cliente}`
+      );
       const lista = res.data || [];
       const found = lista.some((p) => Number(p.id_oferta) === Number(id));
       setYaPostulado(found);
@@ -44,11 +46,11 @@ export default function OfertaDetalle() {
 
   const handlePostularme = async () => {
     if (!id_cliente) {
-      alert("Tenés que iniciar sesión para postularte.");
+      toast.error("Tenés que iniciar sesión para postularte.");
       return;
     }
     if (yaPostulado) {
-      alert("Ya te postulaste a esta oferta.");
+      toast.info("Ya te postulaste a esta oferta.");
       return;
     }
 
@@ -60,11 +62,11 @@ export default function OfertaDetalle() {
         estado: "pendiente",
       });
       setYaPostulado(true);
-      alert("¡Postulación enviada!");
-      navigate("/entrevistas/mis-postulaciones");
+      toast.success("¡Postulación enviada! 🎉");
+      await cargarSiPostule();
     } catch (err) {
       console.error("Error postulando:", err);
-      alert("No pudimos enviar tu postulación (¿ya postulaste?).");
+      toast.error("No pudimos enviar tu postulación (¿ya postulaste?).");
     } finally {
       setPosting(false);
     }
@@ -99,7 +101,9 @@ export default function OfertaDetalle() {
 
             <section className="oferta-detalle-section">
               <h3>Descripción</h3>
-              <p className="whitespace-pre-wrap">{oferta.descripcion || "—"}</p>
+              <p className="whitespace-pre-wrap">
+                {oferta.descripcion || "—"}
+              </p>
             </section>
 
             {oferta.requisitos && (
@@ -115,7 +119,11 @@ export default function OfertaDetalle() {
                 onClick={handlePostularme}
                 disabled={posting || yaPostulado}
               >
-                {yaPostulado ? "Ya te postulaste" : posting ? "Enviando..." : "Postularme"}
+                {yaPostulado
+                  ? "Ya te postulaste"
+                  : posting
+                  ? "Enviando..."
+                  : "Postularme"}
               </button>
             </div>
           </div>

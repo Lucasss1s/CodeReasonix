@@ -146,7 +146,7 @@
 .q-option:hover {
   background: rgba(0, 191, 166, 0.06);
   transform: translateY(-2px);
-  box-shadow: none; 
+  box-shadow: none;
   outline: none;
 }
 
@@ -241,6 +241,10 @@
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.02);
   color: #c9d6de;
+}
+
+.correct-answer-feedback {
+  margin-top: 8px;
 }
 
 @keyframes fadeIn {

@@ -7,6 +7,7 @@ import "./entrevistas.css";
 
 export default function Oferta() {
   const [ofertas, setOfertas] = useState([]);
+  const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const navigate = useNavigate();
 
   const cargarOfertas = async () => {
@@ -36,6 +37,15 @@ export default function Oferta() {
         })
       : "";
 
+  const filtroNorm = filtroEmpresa.trim().toLowerCase();
+
+  const ofertasFiltradas = filtroNorm
+    ? ofertas.filter((of) => {
+        const nombreEmpresa = of.empresa?.nombre || "";
+        return nombreEmpresa.toLowerCase().includes(filtroNorm);
+      })
+    : ofertas;
+
   return (
     <>
       <Navbar />
@@ -43,12 +53,37 @@ export default function Oferta() {
         <div className="entrevistas-container">
           <h1 className="ofertas-title">Ofertas laborales</h1>
 
+          <div className="ofertas-toolbar">
+            <input
+              className="ofertas-filter"
+              type="text"
+              placeholder="Filtrar por empresa"
+              value={filtroEmpresa}
+              onChange={(e) => setFiltroEmpresa(e.target.value)}
+            />
+            {filtroEmpresa && (
+              <button
+                type="button"
+                className="ofertas-filter-clear"
+                onClick={() => setFiltroEmpresa("")}
+              >
+                Limpiar
+              </button>
+            )}
+          </div>
+
           {ofertas.length === 0 && (
             <div className="vacio">No hay ofertas disponibles.</div>
           )}
 
+          {ofertas.length > 0 && ofertasFiltradas.length === 0 && (
+            <div className="vacio">
+              No hay ofertas que coincidan con esa empresa.
+            </div>
+          )}
+
           <div className="grid-ofertas">
-            {ofertas.map((of) => (
+            {ofertasFiltradas.map((of) => (
               <article
                 key={of.id_oferta}
                 className="oferta-card-clickable oferta-card-dark"
@@ -56,7 +91,8 @@ export default function Oferta() {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") navigate(`/entrevistas/oferta/${of.id_oferta}`);
+                  if (e.key === "Enter")
+                    navigate(`/entrevistas/oferta/${of.id_oferta}`);
                 }}
               >
                 <div className="oferta-card-main">
@@ -72,8 +108,12 @@ export default function Oferta() {
                   </div>
 
                   <div className="oferta-right-dark">
-                    {of.ubicacion && <div className="meta-line">{of.ubicacion}</div>}
-                    <div className="meta-line">{formatFecha(of.fecha_publicacion)}</div>
+                    {of.ubicacion && (
+                      <div className="meta-line">{of.ubicacion}</div>
+                    )}
+                    <div className="meta-line">
+                      {formatFecha(of.fecha_publicacion)}
+                    </div>
                   </div>
                 </div>
               </article>

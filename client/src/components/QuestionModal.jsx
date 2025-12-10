@@ -26,6 +26,10 @@ export default function QuestionModal({
   const allRespondidas =
     preguntas.length > 0 && preguntas.every((p) => p.respondida === true);
 
+  const anyIncorrectRespondida =
+    preguntas.length > 0 &&
+    preguntas.some((p) => p.respondida && p.correcta === false);
+
   const handleSubmit = async () => {
     setSending(true);
     try {
@@ -66,8 +70,28 @@ export default function QuestionModal({
     }
   };
 
+  const renderCorrectFeedback = (p) => {
+    const correctKey = p?.pregunta?.correcta;
+    const correctText =
+      correctKey && p?.pregunta?.opciones
+        ? p.pregunta.opciones[correctKey]
+        : null;
+
+    if (!p.respondida || p.correcta || !correctKey || !correctText) return null;
+
+    return (
+      <div className="correct-answer-feedback">
+        <span className="badge-correct">
+          Respuesta correcta: {correctKey}. {correctText}
+        </span>
+      </div>
+    );
+  };
+
   if (inline) {
-    if (allRespondidas) return null;
+    const soloLectura = allRespondidas;
+
+    if (allRespondidas && !anyIncorrectRespondida) return null;
 
     return (
       <div
@@ -75,7 +99,11 @@ export default function QuestionModal({
         aria-live="polite"
       >
         <header className="modal-header modal-header-inline">
-          <h4 className="modal-inline-title">Marca la respuesta correcta</h4>
+          <h4 className="modal-inline-title">
+            {soloLectura
+              ? "Respuesta de la pregunta"
+              : "Marca la respuesta correcta"}
+          </h4>
           <button className="close-btn" onClick={onClose} aria-label="Cerrar">
             ✕
           </button>
@@ -96,7 +124,7 @@ export default function QuestionModal({
                         p.respondida ? "disabled-option" : ""
                       }`}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && !p.respondida)
+                        if (e.key === "Enter" && !p.respondida && !soloLectura)
                           handleChange(p.id_participante_pregunta, key);
                       }}
                     >
@@ -106,9 +134,11 @@ export default function QuestionModal({
                         value={key}
                         checked={answers[p.id_participante_pregunta] === key}
                         onChange={() =>
+                          !soloLectura &&
+                          !p.respondida &&
                           handleChange(p.id_participante_pregunta, key)
                         }
-                        disabled={p.respondida || sending}
+                        disabled={p.respondida || sending || soloLectura}
                         aria-label={`Opción ${key}`}
                       />
                       <span className="opt-label">
@@ -126,6 +156,8 @@ export default function QuestionModal({
                     </label>
                   ))}
               </div>
+
+              {renderCorrectFeedback(p)}
             </div>
           ))}
         </div>
@@ -143,7 +175,11 @@ export default function QuestionModal({
             onClick={handleSubmit}
             disabled={sending || allRespondidas}
           >
-            {sending ? "Enviando..." : "Enviar respuesta"}
+            {sending
+              ? "Enviando..."
+              : allRespondidas
+              ? "Ya respondida"
+              : "Enviar respuesta"}
           </button>
         </footer>
       </div>
@@ -205,6 +241,8 @@ export default function QuestionModal({
                     </label>
                   ))}
               </div>
+
+              {renderCorrectFeedback(p)}
             </div>
           ))}
 
@@ -228,7 +266,11 @@ export default function QuestionModal({
             onClick={handleSubmit}
             disabled={sending || allRespondidas}
           >
-            {sending ? "Enviando..." : "Enviar respuesta"}
+            {sending
+              ? "Enviando..."
+              : allRespondidas
+              ? "Ya respondida"
+              : "Enviar respuesta"}
           </button>
         </footer>
       </div>

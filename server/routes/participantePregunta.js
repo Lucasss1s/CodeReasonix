@@ -93,7 +93,9 @@ router.post('/:id/respond', async (req, res) => {
       .single();
     if (desafioErr) throw desafioErr;
 
-    const currentHp = (desafioRow.hp_restante === null || desafioRow.hp_restante === undefined) ? Number(desafioRow.hp_total) : Number(desafioRow.hp_restante);
+    const currentHp = (desafioRow.hp_restante === null || desafioRow.hp_restante === undefined)
+      ? Number(desafioRow.hp_total)
+      : Number(desafioRow.hp_restante);
     let newHp = currentHp - puntosObtenidos;
     if (newHp < 0) newHp = 0;
 
@@ -133,7 +135,8 @@ router.post('/:id/respond', async (req, res) => {
       hp_restante: newHp,
       repartoIniciado,
       finalizado,
-      ganadorId_cliente: ganadorId_cliente
+      ganadorId_cliente: ganadorId_cliente,
+      respuesta_correcta: correcta
     });
   } catch (err) {
     console.error('Error procesando respuesta:', err);
@@ -149,10 +152,19 @@ router.get('/por-participante/:id_participante', async (req, res) => {
       .select('*, desafio_pregunta(id_desafio_pregunta, puntos, id_pregunta), participante_desafio(id_participante, id_cliente)')
       .eq('id_participante', id);
     if (error) throw error;
-    const enriched = await Promise.all(data.map(async (row) => {
-      const { data: preg } = await supabase.from('pregunta').select('texto, opciones').eq('id_pregunta', row.desafio_pregunta.id_pregunta).single();
-      return { ...row, pregunta: preg };
-    }));
+
+    const enriched = await Promise.all(
+      data.map(async (row) => {
+        const { data: preg } = await supabase
+          .from('pregunta')
+          .select('texto, opciones, correcta')   
+          .eq('id_pregunta', row.desafio_pregunta.id_pregunta)
+          .single();
+
+        return { ...row, pregunta: preg };
+      })
+    );
+
     res.json(enriched);
   } catch (err) {
     console.error('Error obteniendo preguntas por participante:', err);
