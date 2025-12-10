@@ -33,7 +33,7 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
   const [tab, setTab] = useState("cuenta");
   const [loading, setLoading] = useState(false);
 
-  // usuario (tabla usuario)
+  // usuario 
   const [usuario, setUsuario] = useState({
     id_usuario: null,
     nombre: "",
@@ -53,7 +53,6 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
   const [newPass, setNewPass] = useState("");
   const [newPass2, setNewPass2] = useState("");
   const passScore = scorePassword(newPass);
-  const canChangePass = newPass.length >= 6 && newPass === newPass2 && newPass !== currPass;
 
   const panelRef = useRef(null);
 
@@ -121,7 +120,7 @@ const saveProfileIdentity = async () => {
 };
 
 
-  //Guardar nombre (tabla usuario)
+  //Guardar nombre 
   const saveLegalName = async () => {
     if (!usuario.id_usuario) return;
     const name = (tmpNombre || "").trim();
@@ -131,7 +130,7 @@ const saveProfileIdentity = async () => {
       await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}`, { nombre: name });
       setUsuario((u) => ({ ...u, nombre: name }));
       toast.success("Nombre actualizado");
-      onIdentityUpdated?.({ nombre: name }); // ✅ refresca header
+      onIdentityUpdated?.({ nombre: name }); 
     } catch (e) {
       console.error(e);
       const apiMsg = e?.response?.data?.error || "No se pudo actualizar el nombre";
@@ -141,17 +140,17 @@ const saveProfileIdentity = async () => {
     }
   };
 
-  //Cambiar contraseña (tabla usuario) 
+  //Cambiar contraseña  
   const submitPasswordChange = async () => {
     if (!usuario.id_usuario) return;
     if (!currPass) return toast.info("Ingresá tu contraseña actual");
     if (!newPass) return toast.info("Ingresá la nueva contraseña");
     if (newPass !== newPass2) return toast.error("Las contraseñas nuevas no coinciden");
-    if (newPass === currPass) return toast.error("La nueva debe ser distinta a la actual");
     if (newPass.length < 6) return toast.error("La contraseña debe tener al menos 6 caracteres");
+    if (newPass === currPass) return toast.error("La nueva debe ser distinta a la actual");
     try {
       setLoading(true);
-      await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}`, { password: newPass });
+      await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}/password`, {currPass, newPass});
       setCurrPass(""); setNewPass(""); setNewPass2("");
       toast.success("Contraseña actualizada ✅");
     } catch (e) {
@@ -216,7 +215,7 @@ const saveProfileIdentity = async () => {
               </div>
             </div>
 
-            {/* Datos (tabla usuario) */}
+            {/* Datos */}
             <div className="as-block">
               <div className="as-block__title">Datos legales (Cuenta)</div>
               <div className="as-grid">
@@ -277,7 +276,7 @@ const saveProfileIdentity = async () => {
                 </div>
               </div>
               <div className="as-actions">
-                <button className="as-btn" onClick={submitPasswordChange} disabled={loading || !canChangePass}>
+                <button className="as-btn" onClick={submitPasswordChange} disabled={loading}>
                   <i className="fa-solid fa-key" /> Actualizar contraseña
                 </button>
               </div>

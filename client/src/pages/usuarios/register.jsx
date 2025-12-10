@@ -57,14 +57,18 @@ export default function Register() {
     try {
       setLoading(true);
 
-      const { error: authError } = await supabase.auth.signUp({ email, password });
-      if (authError) throw authError;
+    const { data: signupData, error: authError } = await supabase.auth.signUp({email,password});
+    if (authError) throw authError;
+
+    const sesion_id = signupData?.user?.id;
+    if (!sesion_id) throw new Error("No se pudo obtener UUID de Supabase");
 
       const res = await axios.post(`${API_BASE}/usuarios/register`, {
         nombre,
         email,
         password,
         estado: true,
+        sesion_id 
       });
 
       const usuario = res.data.usuario;

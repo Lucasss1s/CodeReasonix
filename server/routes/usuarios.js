@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-  const { nombre, email, password } = req.body;
+  const { nombre, email, password, sesion_id } = req.body;
 
   if (!nombre || !email || !password) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
@@ -35,7 +35,8 @@ router.post('/register', async (req, res) => {
           email,
           contraseña: hashedPassword,
           estado: true,
-          fecha_registro: new Date()
+          fecha_registro: new Date(),
+          sesion_id
         },
       ])
       .select()
@@ -244,6 +245,56 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     console.error('Error obteniendo usuario:', err);
     res.status(500).json({ error: 'Error obteniendo usuario' });
+  }
+});
+
+router.put('/:id/password', async (req, res) => {
+  const { id } = req.params;
+  const { currPass, newPass } = req.body;
+
+  if (!currPass || !newPass) {
+    return res.status(400).json({ error: 'Faltan campos' });
+  }
+
+  try {
+    const { data: user, error } = await supabase
+      .from('usuario')
+      .select('contraseña, sesion_id')
+      .eq('id_usuario', id)
+      .single();
+
+    if (error) throw error;
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    //validar pass
+    const valid = await bcrypt.compare(currPass, user.contraseña);
+    if (!valid) return res.status(400).json({ error: 'Contraseña actual incorrecta' });
+
+    //hash
+    const hashed = await bcrypt.hash(newPass, 10);
+
+    const { error: updErr } = await supabase
+      .from('usuario')
+      .update({ contraseña: hashed })
+      .eq('id_usuario', id);
+
+    if (updErr) throw updErr;
+
+    //actualizar auth
+    const { error: supErr } = await supabase.auth.admin.updateUserById(user.sesion_id, {
+      password: newPass
+    });
+
+    if (supErr) {
+      console.error("Error actualizando auth:", supErr);
+      return res.status(400).json({ error: 'Error actualizando contraseña en auth' });
+    }
+
+    res.json({ message: 'Contraseña actualizada correctamente' });
+
+  } catch (err) {
+    console.error('Error actualizando contraseña:', err);
+    res.status(500).json({ error: 'Error actualizando contraseña' });
   }
 });
 
