@@ -79,15 +79,17 @@ export default function AdminEjercicios() {
         }
     };
 
-    const handleDeshabilitar = async (id) => {
-        if (!confirm('Confirmás deshabilitar este ejercicio?')) return;
+    const toggleHabilitar = async (ej) => {
+        const nuevoEstado = !ej.disabled;
         try {
-            await axios.put(`${API_BASE}/ejercicios/${id}`, { disabled: true });
-            toast.success('Ejercicio deshabilitado');
+            await axios.put(`${API_BASE}/ejercicios/${ej.id_ejercicio}`, { disabled: !ej.disabled });
+            toast.success(
+                nuevoEstado? "Ejercicio deshabilitado": "Ejercicio habilitado"
+            );
             cargarLista();
         } catch (err) {
-            console.error('Error deshabilitando ejercicio:', err);
-            toast.error('No se pudo deshabilitar ejercicio');
+            console.error("Error:", err);
+            toast.error("No se pudo actualizar el estado");
         }
     };
 
@@ -279,8 +281,8 @@ export default function AdminEjercicios() {
                                 <button className="btn-sm" onClick={() => handleEditar(ej.id_ejercicio)}>
                                 Editar
                                 </button>
-                                <button className="btn-sm danger" onClick={() => handleDeshabilitar(ej.id_ejercicio)}>
-                                Deshabilitar
+                                <button className={ej.disabled ? "btn-sm success" : "btn-sm danger"} onClick={() => toggleHabilitar(ej)} >
+                                    {ej.disabled ? "Habilitar" : "Deshabilitar"}
                                 </button>
                                 <button className="btn-sm" onClick={() => verCasos(ej.id_ejercicio)}>
                                 Casos
