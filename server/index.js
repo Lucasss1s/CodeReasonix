@@ -21,15 +21,16 @@ import desafioPreguntaRouter from './routes/desafioPregunta.js';
 import preguntasRouter from './routes/preguntas.js';
 import participanteDesafioRouter from './routes/participanteDesafio.js';
 import participantePreguntaRouter from './routes/participantePregunta.js';
-import ejercicioComentariosRouter from "./routes/ejercicioComentarios.js"
-import ejercicioPistasRouter from "./routes/ejercicioPistas.js"
+import ejercicioComentariosRouter from "./routes/ejercicioComentarios.js";
+import ejercicioPistasRouter from "./routes/ejercicioPistas.js";
 import historialRouter from "./routes/historial.js";
 import ejercicioBugRouter from "./routes/ejercicioBug.js";
 import preferenciasRouter from "./routes/preferencias.js";
-import recomendacionesRouter from "./routes/recomendaciones.js"
+import recomendacionesRouter from "./routes/recomendaciones.js";
 import rankingRouter from "./routes/ranking.js";
 import suscripcionRouter from "./routes/suscripcion.js";
-import casosPruebaRoutes from "./routes/casosPrueba.js"
+import casosPruebaRouter from "./routes/casosPrueba.js";
+import authRouter from "./routes/auth.js";
 
 const app = express(); // Instancia
 app.use(cors());
@@ -68,7 +69,8 @@ app.use("/preferencias", preferenciasRouter);
 app.use("/recomendaciones", recomendacionesRouter);
 app.use("/ranking", rankingRouter);
 app.use("/suscripcion", suscripcionRouter);
-app.use("/casos-prueba", casosPruebaRoutes); 
+app.use("/casos-prueba", casosPruebaRouter); 
+app.use("/auth", authRouter);
 
 const PORT =  process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

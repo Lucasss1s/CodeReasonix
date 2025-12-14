@@ -23,7 +23,8 @@ import AdminDesafios from "./pages/admin/AdminDesafios.jsx";
 import Admin from "./pages/admin/Admin.jsx";
 import AdminEntrevistas from "./pages/admin/AdminEntrevistas.jsx";
 import PagoCheckout from "./pages/pago/checkout.jsx";
-import AdminEjercicios from "./pages/admin/AdminEjercicios.jsx"
+import AdminEjercicios from "./pages/admin/AdminEjercicios.jsx";
+import OAuthCallback from "./pages/auth/OAuthCallback.jsx";
 
 import { Toaster } from "sonner";
 
@@ -59,6 +60,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/adminentrevistas" element={<AdminEntrevistas />} />
         <Route path="/pago-checkout" element={<PagoCheckout />} />
         <Route path="/admin-ejercicios" element={<AdminEjercicios />} />
+        <Route path="/oauth/callback" element={<OAuthCallback/>}/>
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
