@@ -16,10 +16,10 @@ import { authFetch } from "../../utils/authToken";
 import "./perfil.css";
 
 const FRAME_TIERS = [
-  { id: "basic",   minLevel: 1,  label: "Clásico" },
-  { id: "bronze",  minLevel: 5,  label: "Bronce" },
-  { id: "silver",  minLevel: 10, label: "Plata" },
-  { id: "gold",    minLevel: 20, label: "Oro" },
+  { id: "basic", minLevel: 1, label: "Clásico" },
+  { id: "bronze", minLevel: 5, label: "Bronce" },
+  { id: "silver", minLevel: 10, label: "Plata" },
+  { id: "gold", minLevel: 20, label: "Oro" },
   { id: "diamond", minLevel: 50, label: "Diamante" },
 ];
 
@@ -41,7 +41,7 @@ const parseSocials = (raw) => {
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     if (Array.isArray(parsed)) return parsed.filter(Boolean);
     // eslint-disable-next-line 
-  } catch (_) {}
+  } catch (_) { }
   return String(raw)
     .split(/[,\n]/)
     .map((s) => s.trim())
@@ -118,7 +118,7 @@ export default function Perfil() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [usuario, setUsuario] = useState({ id_usuario: null, nombre: "", email: "" });
-// eslint-disable-next-line 
+  // eslint-disable-next-line 
   const [suscripcion, setSuscripcion] = useState(null);
 
   const { id_cliente: id_cliente_param } = useParams();
@@ -137,6 +137,29 @@ export default function Perfil() {
   const avatarDropRef = useRef(null);
   const fileInputRef = useRef(null);
   const bannerInputRef = useRef(null);
+
+  //monedas
+  const [monedas, setMonedas] = useState(0);
+  const [monedasLoading, setMonedasLoading] = useState(false);
+
+  useEffect(() => {
+    if (!id_cliente) return;
+
+    const cargarMonedas = async () => {
+      try {
+        setMonedasLoading(true);
+        const res = await axios.get(`${API_BASE}/gamificacion/monedas/${id_cliente}`);
+        setMonedas(res.data?.monedas ?? 0);
+      } catch (e) {
+        console.error("Error cargando monedas:", e);
+        setMonedas(0);
+      } finally {
+        setMonedasLoading(false);
+      }
+    };
+
+    cargarMonedas();
+  }, [id_cliente]);
 
   const cargarPerfil = async () => {
     if (!id_cliente) return;
@@ -456,7 +479,7 @@ export default function Perfil() {
                 <div className="p-header__right">
                   {!editMode ? (
                     <div className="p-actions">
-                      <SubscriptionButton className="p-btn p-btn--premium"/>
+                      <SubscriptionButton className="p-btn p-btn--premium" />
                       <button className="p-iconbtn p-iconbtn--round" title="Ajustes de cuenta" onClick={() => setSettingsOpen(true)}>
                         <i className="fa-solid fa-gear" />
                       </button>
@@ -637,6 +660,7 @@ export default function Perfil() {
                   <div className="p-kpi"><div className="p-kpi__label">Nivel</div><div className="p-kpi__value">{gLoading ? "…" : (gami?.nivel ?? 1)}</div></div>
                   <div className="p-kpi"><div className="p-kpi__label">XP total</div><div className="p-kpi__value">{gLoading ? "…" : (gami?.xp_total ?? 0)}</div></div>
                   <div className="p-kpi"><div className="p-kpi__label">Racha</div><div className="p-kpi__value">🔥 {streak}</div></div>
+                  <div className="p-kpi"><div className="p-kpi__label">Monedas</div><div className="p-kpi__value">{monedasLoading ? "…" : <>💰 {monedas}</>}</div></div>
                 </div>
 
                 <ProgressBar current={progreso.xpEnNivel} total={progreso.xpParaSubir} />
