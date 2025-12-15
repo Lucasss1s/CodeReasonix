@@ -1,18 +1,18 @@
 import express from "express";
 import { supabase } from "../config/db.js";
-import { otorgarXPUnaVezPorDia, desglosarXP   } from "../services/gamificacion.js";
+import { otorgarXPUnaVezPorDia, desglosarXP } from "../services/gamificacion.js";
 import { actualizarStreak } from "../services/streak.js";
 import { checkAndGrantLogros } from "../services/logros.js";
+import { obtenerMonedas } from "../services/monedas.js"; 
 
 const router = express.Router();
-
 
 router.post("/login-xp", async (req, res) => {
   const { id_cliente } = req.body;
   if (!id_cliente) return res.status(400).json({ error: "Falta id_cliente" });
 
   try {
-    //login diario
+    // XP login diario
     const loginXP = await otorgarXPUnaVezPorDia({
       id_cliente,
       tipoActividad: "login_diario",
@@ -20,7 +20,7 @@ router.post("/login-xp", async (req, res) => {
       motivo: { tipo: "login_diario" }
     });
 
-    //racha 
+    // Racha
     let streakRes;
     try {
       streakRes = await actualizarStreak(id_cliente);
@@ -29,7 +29,7 @@ router.post("/login-xp", async (req, res) => {
       streakRes = { otorga: false, streak: 0, streak_max: 0, xp: 0 };
     }
 
-    //Logros
+    // Logros
     let nuevosLogros = [];
     try {
       nuevosLogros = await checkAndGrantLogros(id_cliente);
@@ -38,7 +38,6 @@ router.post("/login-xp", async (req, res) => {
       nuevosLogros = [];
     }
 
-    //rewards
     const reward_login = loginXP?.otorgado
       ? { amount: loginXP?.xp_otorgado ?? 0, icon: "💎" }
       : null;
@@ -47,7 +46,6 @@ router.post("/login-xp", async (req, res) => {
       ? { amount: streakRes.xp, icon: "🔥" }
       : null;
 
-
     return res.json({
       otorgado: !!loginXP?.otorgado,
       xp_otorgado: loginXP?.xp ?? loginXP?.xp_otorgado ?? 0,
@@ -55,14 +53,13 @@ router.post("/login-xp", async (req, res) => {
       reward_streak,
       streak: streakRes.streak,
       streak_max: streakRes.streak_max,
-      nuevosLogros 
+      nuevosLogros
     });
   } catch (e) {
     console.error("[login-xp] error:", e);
     return res.status(500).json({ error: "No se pudo otorgar XP de login" });
   }
 });
-
 
 router.get("/me/:id_cliente", async (req, res) => {
   const id_cliente = parseInt(req.params.id_cliente, 10);
@@ -75,25 +72,30 @@ router.get("/me/:id_cliente", async (req, res) => {
       .eq("id_cliente", id_cliente)
       .single();
 
-    //progreso nivel
     const xp_total = ux?.xp_total ?? 0;
     const nivel = ux?.nivel ?? 1;
+
     const xpNecesario = (lvl) => 100 + Math.max(lvl - 1, 0) * 20;
     let tmpXP = xp_total, lvl = 1;
-    while (tmpXP >= xpNecesario(lvl)) { tmpXP -= xpNecesario(lvl); lvl++; }
+    while (tmpXP >= xpNecesario(lvl)) {
+      tmpXP -= xpNecesario(lvl);
+      lvl++;
+    }
+
     const progreso = {
       xpEnNivel: tmpXP,
       xpParaSubir: xpNecesario(lvl),
       nextLevelRemaining: xpNecesario(lvl) - tmpXP
     };
 
-    //actividad  hoy 
+    // Actividad hoy
     const hoy = new Date().toISOString().slice(0, 10);
     const tiposMap = {
       login: "login_diario",
       resolver_ejercicio: "resolver_ejercicio",
       primer_resuelto_dia: "primer_resuelto_dia",
     };
+
     const hoyObj = {};
     for (const [alias, real] of Object.entries(tiposMap)) {
       const { data } = await supabase
@@ -102,7 +104,8 @@ router.get("/me/:id_cliente", async (req, res) => {
         .eq("id_cliente", id_cliente)
         .eq("fecha", hoy)
         .eq("tipo", real)
-        .maybeSingle(); // evita PGRST116
+        .maybeSingle();
+
       hoyObj[alias] = {
         done: !!data,
         xp: data?.xp ?? 0,
@@ -110,7 +113,7 @@ router.get("/me/:id_cliente", async (req, res) => {
       };
     }
 
-    //racha
+    // Racha
     const { data: srow } = await supabase
       .from("usuario_streak")
       .select("streak_actual, streak_max")
@@ -120,7 +123,7 @@ router.get("/me/:id_cliente", async (req, res) => {
     const streak = srow?.streak_actual ?? 0;
     const streak_max = srow?.streak_max ?? 0;
 
-    //ultims 10 cambios
+    // Últimos cambios
     const { data: feed } = await supabase
       .from("puntuacion")
       .select("puntos, motivo, fecha")
@@ -144,5 +147,19 @@ router.get("/me/:id_cliente", async (req, res) => {
   }
 });
 
+router.get("/monedas/:id_cliente", async (req, res) => {
+  const id_cliente = parseInt(req.params.id_cliente, 10);
+  if (!id_cliente) {
+    return res.status(400).json({ error: "id_cliente inválido" });
+  }
+
+  try {
+    const monedas = await obtenerMonedas(id_cliente);
+    res.json({ monedas });
+  } catch (e) {
+    console.error("[monedas] error:", e);
+    res.status(500).json({ error: "No se pudo obtener monedas" });
+  }
+});
 
 export default router;
