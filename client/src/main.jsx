@@ -25,6 +25,8 @@ import AdminEntrevistas from "./pages/admin/AdminEntrevistas.jsx";
 import PagoCheckout from "./pages/pago/checkout.jsx";
 import AdminEjercicios from "./pages/admin/AdminEjercicios.jsx";
 import OAuthCallback from "./pages/auth/OAuthCallback.jsx";
+import EmailPendiente from "./pages/auth/EmailPendiente.jsx";
+import AuthCallback from "./pages/auth/AuthCallback.jsx";
 
 import { Toaster } from "sonner";
 
@@ -61,6 +63,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/pago-checkout" element={<PagoCheckout />} />
         <Route path="/admin-ejercicios" element={<AdminEjercicios />} />
         <Route path="/oauth/callback" element={<OAuthCallback/>}/>
+        <Route path="/email-pendiente" element={<EmailPendiente />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

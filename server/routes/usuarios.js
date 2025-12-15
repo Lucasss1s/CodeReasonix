@@ -21,24 +21,35 @@ router.get('/', async (req, res) => {
 router.post('/register', async (req, res) => {
   const { nombre, email, password, sesion_id } = req.body;
 
-  if (!nombre || !email || !password) {
+  if (!nombre || !email || !password || !sesion_id) {
     return res.status(400).json({ error: 'Todos los campos son obligatorios' });
   }
 
   try {
+    const { data: existingUser, error: existErr } = await supabase
+      .from('usuario')
+      .select('id_usuario')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existErr) throw existErr;
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Ya existe una cuenta con ese correo' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const { data: userData, error: userError } = await supabase
       .from('usuario')
-      .insert([
-        {
-          nombre,
-          email,
-          contraseña: hashedPassword,
-          estado: true,
-          fecha_registro: new Date(),
-          sesion_id
-        },
-      ])
+      .insert([{
+        nombre,
+        email,
+        contraseña: hashedPassword,
+        estado: true,
+        fecha_registro: new Date(),
+        sesion_id, // UUID de Supabase Auth
+      }])
       .select()
       .single();
 
@@ -46,44 +57,38 @@ router.post('/register', async (req, res) => {
 
     const { data: clientData, error: clientError } = await supabase
       .from('cliente')
-      .insert([
-        {
-          id_usuario: userData.id_usuario,
-          tarjeta: null,
-          subscripcion: null,
-        },
-      ])
+      .insert([{
+        id_usuario: userData.id_usuario,
+        tarjeta: null,
+        subscripcion: null,
+        estado: 'email_pendiente',
+      }])
       .select()
       .single();
 
     if (clientError) throw clientError;
 
-    const { data: perfilData, error: perfilError } = await supabase
+    const { error: perfilError } = await supabase
       .from('perfil')
-      .insert([
-        {
-          id_cliente: clientData.id_cliente,
-          biografia: "",
-          skills: "",
-          reputacion: 0,
-          redes_sociales: null,
-          foto_perfil: null
-        },
-      ])
-      .select()
-      .single();
+      .insert([{
+        id_cliente: clientData.id_cliente,
+        biografia: '',
+        skills: '',
+        reputacion: 0,
+        redes_sociales: null,
+        foto_perfil: null,
+      }]);
 
     if (perfilError) throw perfilError;
 
-    res.json({
-      usuario: userData,
-      cliente: clientData,
-      perfil: perfilData,
-      message: 'Usuario, cliente y perfil creados correctamente',
+    return res.status(201).json({
+      ok: true,
+      message: 'Usuario registrado. Confirmá tu correo para iniciar sesión.',
     });
+
   } catch (err) {
-    console.error('Error registrando usuario y cliente:', err);
-    res.status(500).json({ error: 'Error registrando usuario y cliente' });
+    console.error('Error registrando usuario:', err);
+    return res.status(500).json({ error: 'Error registrando usuario' });
   }
 });
 
@@ -113,10 +118,20 @@ router.post('/login', async (req, res) => {
 
     const { data: clienteRows, error: clienteError } = await supabase
       .from('cliente')
-      .select('id_cliente')
+      .select('id_cliente, estado')
       .eq('id_usuario', user.id_usuario);
 
     if (clienteError) throw clienteError;
+
+    const cliente = clienteRows?.[0];
+
+  if (cliente && cliente.estado === 'email_pendiente') {
+    return res.status(403).json({
+      error: 'Debés confirmar tu correo antes de iniciar sesión'
+    });
+  }
+
+
 
     const id_cliente =
       clienteRows && clienteRows.length > 0 ? clienteRows[0].id_cliente : null;
@@ -297,5 +312,29 @@ router.put('/:id/password', async (req, res) => {
     res.status(500).json({ error: 'Error actualizando contraseña' });
   }
 });
+
+router.post('/confirm-email', async (req, res) => {
+  const { sesion_id } = req.body;
+
+  try {
+    const { data: user, error: userErr } = await supabase
+      .from('usuario')
+      .select('id_usuario')
+      .eq('sesion_id', sesion_id)
+      .single();
+
+    const { data, error: updErr } = await supabase
+      .from('cliente')
+      .update({ estado: 'activo' })
+      .eq('id_usuario', user.id_usuario)
+      .select();
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error confirmando email' });
+  }
+});
+
+
 
 export default router;

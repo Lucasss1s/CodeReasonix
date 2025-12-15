@@ -88,16 +88,26 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setMensaje("");
 
     try {
-      setMensaje("");
-
       const { data: sessionData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
+        const msg = error.message?.toLowerCase() || "";
+
+        if (msg.includes("email not confirmed") || msg.includes("confirmation")) {
+          localStorage.setItem("pending_email", email);
+
+          toast.info("Tenes que confirmar tu correo antes de iniciar sesión");
+          navigate("/email-pendiente", { replace: true });
+          return;
+        }
+
         const friendly = translateError(error.message || error.error || String(error));
         toast.error(friendly);
         return;
       }
+
 
       if (sessionData?.session) {
         localStorage.setItem("access_token", sessionData.session.access_token);
@@ -112,13 +122,24 @@ export default function Login() {
       });
 
       if (res.status === 403) {
-        let dataError = null;
-        try {
-          dataError = await res.json();
-        // eslint-disable-next-line
-        } catch (_) {}
+        const dataError = await res.json();
+
+        if (dataError?.error === "email_pendiente") {
+          await supabase.auth.signOut();
+
+          localStorage.setItem("pending_email", email);
+
+          toast.info("Tenés que confirmar tu correo antes de iniciar sesión");
+          navigate("/email-pendiente", { replace: true });
+
+          return; 
+        }
+
         const rawMsg = dataError?.error || dataError?.message || null;
-        const msg = rawMsg ? translateError(rawMsg) : "Tu cuenta está baneada. Contactá con soporte.";
+        const msg = rawMsg
+          ? translateError(rawMsg)
+          : "Tu cuenta está baneada. Contactá con soporte.";
+
         await supabase.auth.signOut();
 
         localStorage.removeItem("usuario");

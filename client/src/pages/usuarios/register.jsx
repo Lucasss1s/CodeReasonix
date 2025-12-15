@@ -11,7 +11,6 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState(""); 
-  const [mensaje, setMensaje] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -40,81 +39,47 @@ export default function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setMensaje("");
 
     if (password.length < 6) {
-      toast.error("La contraseña debe tener al menos 6 caracteres.");
+      toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
     if (password !== confirmPassword) {
-      setMensaje("Las contraseñas no coinciden.");
-      toast.error("Las contraseñas no coinciden.");
+      toast.error("Las contraseñas no coinciden");
       return;
     }
-
-    let rewardState = null;
 
     try {
       setLoading(true);
 
-    const { data: signupData, error: authError } = await supabase.auth.signUp({email,password});
-    if (authError) throw authError;
+      const { data: signupData, error: authError } =
+        await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`
+          }
+        });
 
-    const sesion_id = signupData?.user?.id;
-    if (!sesion_id) throw new Error("No se pudo obtener UUID de Supabase");
+      if (authError) throw authError;
 
-      const res = await axios.post(`${API_BASE}/usuarios/register`, {
+      const sesion_id = signupData?.user?.id;
+      if (!sesion_id) throw new Error("No se pudo obtener el UUID de Supabase");
+
+      await axios.post(`${API_BASE}/usuarios/register`, {
         nombre,
         email,
         password,
-        estado: true,
-        sesion_id 
+        sesion_id
       });
 
-      const usuario = res.data.usuario;
-      const id_cliente = res.data.cliente?.id_cliente;
-      if (!id_cliente) throw new Error("No se obtuvo id_cliente al registrar.");
+      localStorage.setItem("pending_email", email);
+      navigate("/email-pendiente", { replace: true });
 
-      const { data: sessionData, error: loginError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (loginError) throw loginError;
-
-      if (sessionData?.session) {
-        localStorage.setItem("access_token", sessionData.session.access_token);
-        localStorage.setItem("refresh_token", sessionData.session.refresh_token);
-        localStorage.setItem("expires_at", sessionData.session.expires_at);
-      }
-
-      localStorage.setItem("usuario", JSON.stringify(usuario));
-      localStorage.setItem("cliente", id_cliente);
-
-      // XP de login diario
-      try {
-        const resXp = await fetch(`${API_BASE}/gamificacion/login-xp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id_cliente }),
-        });
-        const xpData = await resXp.json();
-
-        const today = new Date().toISOString().slice(0, 10);
-        localStorage.setItem(`login_xp_last:${id_cliente}`, today);
-
-        if (resXp.ok && xpData.otorgado) {
-          const total = (xpData?.reward_login?.amount || 0) + (xpData?.reward_streak?.amount || 0);
-          if (total > 0) rewardState = { amount: total, icon: "💎" };
-        }
-      } catch (e) {
-        console.warn("Error XP register:", e);
-      }
-
-      setMensaje("Cuenta creada y sesión iniciada ✅");
-      navigate("/", { replace: true, state: rewardState ? { reward: rewardState } : {} });
     } catch (err) {
       console.error(err);
-      const raw = err?.response?.data?.error || err.message || String(err);
+        
+      const raw = err?.response?.data?.error || err.message;
       toast.error(translateError(raw));
     } finally {
       setLoading(false);
@@ -165,10 +130,8 @@ export default function Register() {
           </button>
         </form>
 
-        {mensaje && <p className="auth-message">{mensaje}</p>}
-
         <div className="auth-secondary">
-          ¿Tenés cuenta? <Link to="/login">Iniciar sesión</Link>
+          ¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
         </div>
       </div>
     </div>
