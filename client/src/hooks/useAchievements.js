@@ -33,11 +33,11 @@ async function readSafeJson(res) {
         const obtenidos = Array.isArray(data.obtenidos) ? data.obtenidos : [];
         const allDefs   = Array.isArray(data.defs) ? data.defs : [];
 
-        const unlockedIds = new Set(obtenidos.map(o => o.id_logro));
-        const lockedDefs  = allDefs.filter(d => !unlockedIds.has(d.id_logro));
+        const unlockedDefs = allDefs.filter(d => obtenidos.some(o => o.id_logro === d.id_logro));
+        const lockedDefs  = allDefs.filter(d => !unlockedDefs.some(u => u.id_logro === d.id_logro));
 
         setDefs(allDefs);
-        setUnlocked(obtenidos);
+        setUnlocked(unlockedDefs);
         setLocked(lockedDefs);
         } catch (e) {
         setError(e.message || "No se pudieron cargar los logros.");

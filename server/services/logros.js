@@ -256,6 +256,7 @@ export async function getLogrosWithProgress(id_cliente) {
       .from("usuario_logro")
       .select("id_logro, fecha_otorgado, logro( id_logro, titulo, descripcion, icono, xp_otorgado, activo )")
       .eq("id_cliente", id_cliente)
+      .eq("logro.activo", true)
       .order("fecha_otorgado", { ascending: false }),
     supabase
       .from("logro")

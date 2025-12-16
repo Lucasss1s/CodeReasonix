@@ -70,6 +70,18 @@ export default function Admin() {
               Crear ejercicios, casos de prueba, pistas, ver reportes y filtrar
             </span>
           </button>
+
+          <button
+            type="button"
+            className="admin-menu-button"
+            onClick={() => navigate("/admin-logros")}
+          >
+            <span className="admin-menu-title">Logros</span>
+            <span className="admin-menu-text">
+              Ver, crear y editar logros, asignarles xp
+            </span>
+          </button>
+
         </section>
       </div>
     </>
