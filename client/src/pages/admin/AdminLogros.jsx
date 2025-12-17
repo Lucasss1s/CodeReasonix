@@ -175,6 +175,7 @@ export default function AdminLogros() {
                     <tr>
                     <th>ID</th>
                     <th>Título</th>
+                    <th>Descripción</th>
                     <th>Condición</th>
                     <th>XP</th>
                     <th>Estado</th>
@@ -190,6 +191,7 @@ export default function AdminLogros() {
                         <tr key={l.id_logro}>
                         <td>{l.id_logro}</td>
                         <td>{l.titulo}</td>
+                        <td>{l.descripcion || "-"}</td>
                         <td>
                             {def ? (
                             `${def.label} ≥ ${l.condicion[param]}`
