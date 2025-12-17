@@ -30,6 +30,44 @@ const formatDateTime = (v) => {
   }
 };
 
+// Luhn algorithm
+function isValidCardNumber(number) {
+  const digits = number.replace(/\s+/g, "");
+  if (!/^\d{13,19}$/.test(digits)) return false;
+
+  let sum = 0;
+  let shouldDouble = false;
+
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let digit = parseInt(digits[i], 10);
+    if (shouldDouble) {
+      digit *= 2;
+      if (digit > 9) digit -= 9;
+    }
+    sum += digit;
+    shouldDouble = !shouldDouble;
+  }
+
+  return sum % 10 === 0;
+}
+
+function isValidExpiry(exp) {
+  if (!/^\d{2}\/\d{2}$/.test(exp)) return false;
+
+  const [mm, yy] = exp.split("/").map(Number);
+  if (mm < 1 || mm > 12) return false;
+  const year = 2000 + yy;
+
+  const expiryDate = new Date(year, mm, 0, 23, 59, 59);
+  const now = new Date();
+
+  return expiryDate >= now;
+}
+
+function isValidCvv(cvv) {
+  return typeof cvv === "string" && /^\d{3}$/.test(cvv);
+}
+
 export default function Checkout() {
   const [search] = useSearchParams();
   const navigate = useNavigate();
@@ -42,6 +80,13 @@ export default function Checkout() {
   // eslint-disable-next-line 
   const idFromQuery = search.get("id") || null; 
   const price = "5000";
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [card, setCard] = useState({
+    number: "",
+    exp: "",
+    cvv: ""
+  });
 
   const fetchSus = async () => {
     try {
@@ -73,24 +118,84 @@ export default function Checkout() {
 
   //flujo pago
   const handleConfirmPayment = async () => {
+    if (!card.number) {
+      toast.error("Ingresa el numero de la tarjeta");
+      return;
+    }
+
+    if (!isValidCardNumber(card.number)) {
+      toast.error("El numero de tarjeta no es valido");
+      return;
+    }
+
+    if (!card.exp) {
+      toast.error("Ingresa la fecha de vencimiento");
+      return;
+    }
+
+    if (!isValidExpiry(card.exp)) {
+      toast.error("La fecha de vencimiento es invalida o esta vencida");
+      return;
+    }
+
+    if (!card.cvv) {
+      toast.error("Ingresa el CVV");
+      return;
+    }
+
+    if (!isValidCvv(card.cvv)) {
+      toast.error("El CVV debe tener 3 digitos");
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const res = await authFetch(`${API_BASE}/suscripcion`, { method: "POST", body: JSON.stringify({ estado: "activo" }) });
-      if (!res.ok) {
-        const body = await res.json().catch(()=>({}));
-        toast.error(body.error || "No se pudo completar el pago.");
-        await fetchSus();
-        setLoading(false);
-        return;
+      //Crear pago
+      const resCreate = await authFetch(`${API_BASE}/pagos/create`, {
+        method: "POST",
+        body: JSON.stringify({ monto: Number(price), moneda: "ARS" })
+      });
+
+      if (!resCreate.ok) {
+        const b = await resCreate.json().catch(() => ({}));
+        throw new Error(b.error || "No se pudo iniciar el pago");
       }
-      const body = await res.json().catch(()=>({}));
+
+      const { pago } = await resCreate.json();
+      if (!pago?.id_pago) {
+        throw new Error("Pago inválido");
+      }
+
+      //Confirmar pago 
+      const resConfirm = await authFetch(
+        `${API_BASE}/pagos/${pago.id_pago}/confirm`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            card_number: card.number,
+            exp: card.exp,
+            cvv: card.cvv
+          })
+        }
+      );
+
+      if (!resConfirm.ok) {
+        const b = await resConfirm.json().catch(() => ({}));
+        throw new Error(b.error || "Pago rechazado");
+      }
+
+      const body = await resConfirm.json();
       setSus(body.suscripcion ?? null);
-      toast.success("Pago confirmado. Tu suscripción está activa.");
+
+      toast.success("Pago aprobado. Suscripción activada.");
       await fetchSus();
-      navigate("/perfil");
+      setShowPaymentModal(false);
+      setCard({ number: "", exp: "", cvv: "" });
+
     } catch (e) {
-      console.error("confirm payment error:", e);
-      toast.error("Ocurrió un error. Intentá más tarde.");
+      console.error("checkout payment error:", e);
+      toast.error(e.message || "Error procesando el pago");
     } finally {
       setLoading(false);
     }
@@ -215,9 +320,10 @@ export default function Checkout() {
             <div className="plan-actions">
               {puedeRenovar ? (
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button className="p-btn" onClick={handleConfirmPayment} disabled={loading} title="Pagar y activar plan">
-                    {loading ? "Procesando..." : `Pagar ${price} ARS`}
-                  </button>
+                <button className="p-btn" onClick={() => setShowPaymentModal(true)} disabled={loading}>
+                  {`Pagar ${price} ARS`}
+                </button>
+
                   <button className="p-btn p-btn--ghost" onClick={handleKeepFree} disabled={loading}>Volver</button>
                 </div>
               ) : (
@@ -311,6 +417,59 @@ export default function Checkout() {
           </button>
         </div>
       </Modal>
+
+      <Modal open={showPaymentModal} title="Datos de la tarjeta"
+        onClose={() => !loading && setShowPaymentModal(false)}
+      >
+        <div className="payment-form">
+          <div className="form-row">
+            <label>Número de tarjeta</label>
+            <input type="text" placeholder="4242 4242 4242 4242" maxLength={19} value={card.number}
+              onChange={(e) => {
+                const v = e.target.value
+                  .replace(/[^\d]/g, "")
+                  .replace(/(.{4})/g, "$1 ")
+                  .trim();
+                setCard({ ...card, number: v });
+              }}
+            />
+          </div>
+
+          <div className="form-row">
+            <label>Vencimiento</label>
+            <input type="text" placeholder="MM/AA" maxLength={5} value={card.exp} 
+            onChange={(e) => {
+                let v = e.target.value.replace(/[^\d]/g, "");
+                if (v.length >= 3) {
+                  v = v.slice(0, 2) + "/" + v.slice(2, 4);
+                }
+                setCard({ ...card, exp: v });
+              }}
+            />
+          </div>
+
+          <div className="form-row">
+            <label>CVV</label>
+            <input type="text" placeholder="123" maxLength={3} value={card.cvv}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^\d]/g, "");
+                setCard({ ...card, cvv: v });
+              }}
+            />
+          </div>
+
+          <div className="payment-actions">
+            <button className="p-btn p-btn--ghost" onClick={() => setShowPaymentModal(false)} disabled={loading}>
+              Cancelar
+            </button>
+
+          <button className="p-btn" disabled={loading} onClick={handleConfirmPayment}>
+            {loading ? "Procesando..." : "Confirmar pago"}
+          </button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 }

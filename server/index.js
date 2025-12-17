@@ -31,6 +31,7 @@ import rankingRouter from "./routes/ranking.js";
 import suscripcionRouter from "./routes/suscripcion.js";
 import casosPruebaRouter from "./routes/casosPrueba.js";
 import authRouter from "./routes/auth.js";
+import pagoRouter from "./routes/pago.js";
 
 const app = express(); // Instancia
 app.use(cors());
@@ -71,6 +72,7 @@ app.use("/ranking", rankingRouter);
 app.use("/suscripcion", suscripcionRouter);
 app.use("/casos-prueba", casosPruebaRouter); 
 app.use("/auth", authRouter);
+app.use("/pagos", pagoRouter);
 
 const PORT =  process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

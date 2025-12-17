@@ -43,6 +43,11 @@
 
 .plan-free { opacity:0.95; }
 
+.payment-form { display: flex; flex-direction: column; gap: 12px; }
+.payment-form .form-row { display: flex; flex-direction: column; gap: 4px; }
+.payment-form input { padding: 8px 10px; border-radius: 6px; border: 1px solid #333; background: #0f0f0f; color: #fff;}
+.payment-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;}
+
 @media (max-width: 520px) {
     .plan-actions { flex-direction: column; align-items: stretch; }
     .plan-actions .p-btn { width:100%; }
