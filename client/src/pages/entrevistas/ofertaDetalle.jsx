@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
@@ -12,6 +12,9 @@ export default function OfertaDetalle() {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [yaPostulado, setYaPostulado] = useState(false);
+  const [cvFile, setCvFile] = useState(null);
+
+  const fileInputRef = useRef(null);
   const id_cliente = localStorage.getItem("cliente");
 
   const cargarOferta = async () => {
@@ -28,12 +31,9 @@ export default function OfertaDetalle() {
   const cargarSiPostule = async () => {
     if (!id_cliente) return setYaPostulado(false);
     try {
-      const res = await axios.get(
-        `${API_BASE}/postulaciones/mias/${id_cliente}`
-      );
+      const res = await axios.get(`${API_BASE}/postulaciones/mias/${id_cliente}`);
       const lista = res.data || [];
-      const found = lista.some((p) => Number(p.id_oferta) === Number(id));
-      setYaPostulado(found);
+      setYaPostulado(lista.some(p => Number(p.id_oferta) === Number(id)));
     } catch (err) {
       console.error("Error verificando postulaciones:", err);
     }
@@ -44,13 +44,15 @@ export default function OfertaDetalle() {
     cargarSiPostule();
   }, [id]);
 
-  const handlePostularme = async () => {
+  const handleMainButtonClick = async () => {
     if (!id_cliente) {
       toast.error("Tenés que iniciar sesión para postularte.");
       return;
     }
-    if (yaPostulado) {
-      toast.info("Ya te postulaste a esta oferta.");
+    if (yaPostulado) return;
+
+    if (!cvFile) {
+      fileInputRef.current?.click();
       return;
     }
 
@@ -62,11 +64,11 @@ export default function OfertaDetalle() {
         estado: "pendiente",
       });
       setYaPostulado(true);
-      toast.success("¡Postulación enviada! 🎉");
+      toast.success("¡Postulación enviada!");
       await cargarSiPostule();
     } catch (err) {
       console.error("Error postulando:", err);
-      toast.error("No pudimos enviar tu postulación (¿ya postulaste?).");
+      toast.error("No se pudo enviar la postulación.");
     } finally {
       setPosting(false);
     }
@@ -74,6 +76,14 @@ export default function OfertaDetalle() {
 
   if (loading) return <div className="p-4">Cargando oferta…</div>;
   if (!oferta) return <div className="p-4 text-red-600">Oferta no encontrada</div>;
+
+  const buttonText = yaPostulado
+    ? "Ya te postulaste"
+    : posting
+    ? "Enviando..."
+    : cvFile
+    ? "Enviar postulación"
+    : "Cargar CV";
 
   return (
     <>
@@ -89,21 +99,11 @@ export default function OfertaDetalle() {
                   {oferta.empresa?.sector ? ` • ${oferta.empresa.sector}` : ""}
                 </p>
               </div>
-              <div className="oferta-detalle-meta">
-                {oferta.ubicacion && <div>{oferta.ubicacion}</div>}
-                {oferta.fecha_publicacion && (
-                  <div className="oferta-small-muted">
-                    {new Date(oferta.fecha_publicacion).toLocaleDateString("es-ES")}
-                  </div>
-                )}
-              </div>
             </header>
 
             <section className="oferta-detalle-section">
               <h3>Descripción</h3>
-              <p className="whitespace-pre-wrap">
-                {oferta.descripcion || "—"}
-              </p>
+              <p className="whitespace-pre-wrap">{oferta.descripcion || "—"}</p>
             </section>
 
             {oferta.requisitos && (
@@ -113,18 +113,36 @@ export default function OfertaDetalle() {
               </section>
             )}
 
-            <div className="oferta-detalle-actions">
-              <button
-                className="oferta-btn-primary"
-                onClick={handlePostularme}
-                disabled={posting || yaPostulado}
-              >
-                {yaPostulado
-                  ? "Ya te postulaste"
-                  : posting
-                  ? "Enviando..."
-                  : "Postularme"}
+            <div className="oferta-detalle-actions oferta-actions-column">
+              <button className="oferta-btn-primary" onClick={handleMainButtonClick} disabled={posting || yaPostulado}>
+                {buttonText}
               </button>
+
+              {cvFile && !yaPostulado && (
+                <div className="cv-row-inline">
+                  <a href={URL.createObjectURL(cvFile)} target="_blank" rel="noreferrer" className="cv-name-link" title="Ver CV">
+                    {cvFile.name}
+                  </a>
+
+                  <button type="button" className="cv-remove-btn" title="Quitar CV"
+                    onClick={() => {
+                      setCvFile(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" hidden
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) setCvFile(file);
+                }}
+              />
             </div>
           </div>
         </div>

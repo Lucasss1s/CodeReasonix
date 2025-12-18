@@ -459,6 +459,81 @@
   color: #020617;
 }
 
+.cv-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  max-width: 100%;
+}
+
+.cv-name {
+  flex: 1;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cv-link {
+  font-size: 0.85rem;
+  color: var(--primary-color);
+  text-decoration: underline;
+  flex-shrink: 0;
+}
+
+.oferta-actions-column {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.cv-filename {
+  max-width: 260px;
+  font-size: 0.85rem;
+  color: #9aa4b2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cv-row-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 260px;
+}
+
+.cv-name-link {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #9aa4b2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cv-name-link:hover {
+  color: #4ff3e4;
+}
+
+.cv-remove-btn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.cv-remove-btn:hover {
+  color: #f87171;
+}
+
+
 @media (max-width: 740px) {
   .oferta-page .oferta-detalle-header {
     flex-direction: column;
