@@ -125,27 +125,37 @@ export default function MisDesafios() {
       const res = await axios.post(`${API_BASE}/participante-desafio/${idp}/claim`);
       const data = res.data || {};
 
-      const xp =
-        data.xp ??
-        data.xp_otorgado ??
-        participante.desafio?.recompensa_xp ??
-        null;
-      const monedas =
-        data.moneda ??
-        data.moneda_otorgada ??
-        participante.desafio?.recompensa_moneda ??
-        null;
+      const xp = Number(data.xp ?? 0);
+      const monedas = Number(data.monedas ?? 0);
+
+      if (xp === 0 && monedas === 0) {
+        toast.info("No recibiste recompensa", {
+          description: "El desafío finalizó pero no participaste en las preguntas.",
+        });
+        await cargar();
+        return;
+      }
+
+      const recompensaXpTotal = participante.desafio?.recompensa_xp ?? 0;
+      const recompensaMonedaTotal = participante.desafio?.recompensa_moneda ?? 0;
 
       const partes = [];
-      if (xp != null) partes.push(`⚡ ${xp} XP`);
-      if (monedas != null) partes.push(`🪙 ${monedas} monedas`);
+      if (xp > 0) partes.push(`⚡ ${xp} XP`);
+      if (monedas > 0) partes.push(`🪙 ${monedas} monedas`);
 
-      const descripcion =
-        partes.length > 0 ? partes.join("  •  ") : "Recompensa aplicada a tu cuenta.";
+      const esParcial =
+        xp < recompensaXpTotal || monedas < recompensaMonedaTotal;
 
-      toast.success(data.message || "¡Recompensa reclamada!", {
-        description: descripcion,
-      });
+      if (esParcial) {
+        toast.success("Recompensa parcial obtenida", {
+          description: `${partes.join("  •  ")}\nRespondiste solo parte del desafío.`,
+        });
+      }
+      else {
+        toast.success("¡Recompensa reclamada!", {
+          description: partes.join("  •  "),
+        });
+      }
 
       await cargar();
     } catch (err) {

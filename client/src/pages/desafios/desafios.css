@@ -550,6 +550,8 @@
   font-size: 0.86rem;
   color: #bdfcf1;
   display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
@@ -557,6 +559,7 @@
   background: rgba(0,191,166,0.08);
   border: 1px solid rgba(0,191,166,0.30);
 }
+
 .mi-card-reward::before {
   content: "🎁";
   font-size: 0.9rem;

@@ -178,13 +178,18 @@ router.post('/:id_participante/claim', async (req, res) => {
       return res.status(400).json({ error: 'id_participante inválido' });
     }
 
-    const { data: partRow } = await supabase
+    const { data: partRow, error: partErr } = await supabase
       .from('participante_desafio')
-      .select('*, desafio(id_desafio, estado, recompensa_xp, recompensa_moneda)')
+      .select(`
+        *,
+        desafio(id_desafio, estado, recompensa_xp, recompensa_moneda)
+      `)
       .eq('id_participante', id_part)
       .single();
 
-    if (!partRow) return res.status(404).json({ error: 'Participante no encontrado' });
+    if (partErr || !partRow) {
+      return res.status(404).json({ error: 'Participante no encontrado' });
+    }
 
     if (!['finalizado', 'finalizando'].includes(String(partRow.desafio.estado))) {
       return res.status(400).json({ error: 'El desafío aún no está finalizado' });
@@ -194,9 +199,31 @@ router.post('/:id_participante/claim', async (req, res) => {
       return res.status(400).json({ error: 'Recompensa ya reclamada' });
     }
 
+    const respondidas = Number(partRow.respondidas || 0);
+    const aciertos = Number(partRow.aciertos || 0);
+
+    if (respondidas === 0) {
+      await supabase
+        .from('participante_desafio')
+        .update({ recibio_recompensa: true })
+        .eq('id_participante', id_part);
+
+      return res.json({
+        message: 'No recibiste recompensa porque no participaste del desafío',
+        xp: 0,
+        monedas: 0
+      });
+    }
+
+    const factor = aciertos / QUESTIONS_PER_PARTICIPANT;
+
+    const xpBase = Number(partRow.desafio.recompensa_xp || 0);
+    const monedaBase = Number(partRow.desafio.recompensa_moneda || 0);
+
+    const xpToGive = Math.floor(xpBase * factor);
+    const monedaToGive = Math.floor(monedaBase * factor);
+
     const id_cliente = partRow.id_cliente;
-    const xpToGive = Number(partRow.desafio.recompensa_xp || 0);
-    const monedaToGive = Number(partRow.desafio.recompensa_moneda || 0);
 
     let xpResult = { xp_otorgado: 0, xp_total: null, nivel: null };
 
@@ -217,7 +244,11 @@ router.post('/:id_participante/claim', async (req, res) => {
         ultima_actualizacion: new Date()
       }, { onConflict: 'id_cliente' });
 
-      xpResult = { xp_otorgado: xpToGive, xp_total: nuevoTotal, nivel: nuevoNivel };
+      xpResult = {
+        xp_otorgado: xpToGive,
+        xp_total: nuevoTotal,
+        nivel: nuevoNivel
+      };
     }
 
     const monedasResult = monedaToGive > 0
@@ -235,6 +266,9 @@ router.post('/:id_participante/claim', async (req, res) => {
 
     return res.json({
       message: 'Recompensa reclamada correctamente',
+      aciertos,
+      respondidas,
+      factor,
       xp: xpResult.xp_otorgado,
       xp_total: xpResult.xp_total,
       nivel: xpResult.nivel,
