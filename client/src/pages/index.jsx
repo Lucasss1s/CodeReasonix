@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import useRequirePreferencias from "../hooks/useRequirePreferencias";
 import API_BASE from "../config/api";
+import { authFetch } from "../utils/authToken";
 import Navbar from "../components/Navbar";
 import "../index.css";
 
@@ -66,17 +66,24 @@ export default function Index() {
       try {
         setLoading(true);
 
-        const [resEj, resRec, resRet] = await Promise.all([
-          axios.get(`${API_BASE}/ejercicios`),
-          axios.get(`${API_BASE}/recomendaciones/home/${clienteId}`),
-          axios.get(`${API_BASE}/recomendaciones/retomar/${clienteId}`),
-        ]);
+        const resEj = await fetch(`${API_BASE}/ejercicios`);
+        const ejerciciosApi = await resEj.json();
+        setEjercicios(ejerciciosApi || []);
 
-        const ejerciciosApi = resEj.data || [];
-        setEjercicios(ejerciciosApi);
-        setRecomendados(resRec.data?.recomendados || []);
-        setIdsResueltos(resRec.data?.resueltosIds || []);
-        setRetomar(resRet.data?.retomar || []);
+        const resRec = await authFetch(
+          `${API_BASE}/recomendaciones/home/${clienteId}`
+        );
+
+        const dataRec = await resRec.json();
+        setRecomendados(dataRec?.recomendados || []);
+        setIdsResueltos(dataRec?.resueltosIds || []);
+
+        const resRet = await authFetch(
+          `${API_BASE}/recomendaciones/retomar/${clienteId}`
+        );
+
+        const dataRet = await resRet.json();
+        setRetomar(dataRet?.retomar || []);
 
         const setTags = new Set();
         ejerciciosApi.forEach((ej) => {

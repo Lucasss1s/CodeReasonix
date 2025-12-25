@@ -1,11 +1,12 @@
 import express from "express";
 import { supabase } from "../config/db.js";
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
 //Get/create pref
-router.get("/:id_cliente", async (req, res) => {
-    const { id_cliente } = req.params;
+router.get("/", requireSesion, async (req, res) => {
+    const id_cliente = req.cliente?.id_cliente;
 
     try {
         const { data, error } = await supabase
@@ -32,9 +33,10 @@ router.get("/:id_cliente", async (req, res) => {
 });
 
 //Update/create pref
-router.post("/", async (req, res) => {
+router.post("/", requireSesion, async (req, res) => {
+    const id_cliente = req.cliente?.id_cliente;
+
     const {
-        id_cliente,
         lenguaje_pref,
         dificultad_objetivo,
         modo_objetivo,

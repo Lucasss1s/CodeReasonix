@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "sonner";
 import useSesion from "../../hooks/useSesion";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken";
 import "./formPreferencias.css";
 
 export default function OnboardingPreferencias() {
@@ -28,12 +28,14 @@ export default function OnboardingPreferencias() {
     try {
       setLoading(true);
 
-      await axios.post(`${API_BASE}/preferencias`, {
-        id_cliente: Number(clienteId),
-        lenguaje_pref: lenguaje,
-        dificultad_objetivo: Number(nivel),
-        modo_objetivo: modo,
-        tiempo_sesion_minutos: Number(tiempo),
+      await authFetch(`${API_BASE}/preferencias`, {
+        method: "POST",
+        body: JSON.stringify({
+          lenguaje_pref: lenguaje,
+          dificultad_objetivo: Number(nivel),
+          modo_objetivo: modo,
+          tiempo_sesion_minutos: Number(tiempo),
+        })
       });
 
       if (typeof window !== "undefined") {
