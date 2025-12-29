@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import API_BASE from "../config/api";
+import { supabase } from "../config/supabase.js";
+import { authFetch } from "../utils/authToken";
 import "./account-settings.css";
 
 
@@ -32,6 +35,7 @@ const scorePassword = (pw) => {
 export default function AccountSettingsModal({ open, onClose, id_cliente, onIdentityUpdated }) {
   const [tab, setTab] = useState("cuenta");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // usuario 
   const [usuario, setUsuario] = useState({
@@ -62,8 +66,8 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
       setLoading(true);
       try {
         //usuario de cliente
-        const u = await axios.get(`${API_BASE}/usuarios/by-cliente/${id_cliente}`);
-        const user = u.data || {};
+        const u = await authFetch(`${API_BASE}/usuarios/by-cliente/${id_cliente}`);
+        const user = await u.json();
         setUsuario({
           id_usuario: user.id_usuario,
           nombre: user.nombre || "",
@@ -127,7 +131,10 @@ const saveProfileIdentity = async () => {
     if (!name) return toast.info("Ingresá un nombre");
     try {
       setLoading(true);
-      await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}`, { nombre: name });
+      await authFetch(`${API_BASE}/usuarios/${usuario.id_usuario}`,{ 
+        method: "PUT", 
+        body: JSON.stringify({ nombre: name }) 
+      });
       setUsuario((u) => ({ ...u, nombre: name }));
       toast.success("Nombre actualizado");
       onIdentityUpdated?.({ nombre: name }); 
@@ -140,22 +147,48 @@ const saveProfileIdentity = async () => {
     }
   };
 
-  //Cambiar contraseña  
+  // Cambiar contraseña
   const submitPasswordChange = async () => {
     if (!usuario.id_usuario) return;
+
     if (!currPass) return toast.info("Ingresá tu contraseña actual");
     if (!newPass) return toast.info("Ingresá la nueva contraseña");
     if (newPass !== newPass2) return toast.error("Las contraseñas nuevas no coinciden");
     if (newPass.length < 6) return toast.error("La contraseña debe tener al menos 6 caracteres");
     if (newPass === currPass) return toast.error("La nueva debe ser distinta a la actual");
+
     try {
       setLoading(true);
-      await axios.put(`${API_BASE}/usuarios/${usuario.id_usuario}/password`, {currPass, newPass});
-      setCurrPass(""); setNewPass(""); setNewPass2("");
-      toast.success("Contraseña actualizada ✅");
+
+      const res = await authFetch(`${API_BASE}/usuarios/password`, {
+        method: "PUT",
+        body: JSON.stringify({ currPass, newPass }),
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error actualizando contraseña");
+      }
+
+      setCurrPass("");
+      setNewPass("");
+      setNewPass2("");
+
+      toast.success("Contraseña actualizada. Volvé a iniciar sesión.");
+
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        localStorage.clear();
+        navigate("/login", { replace: true });
+      }, 1500);
+
     } catch (e) {
       console.error(e);
-      const apiMsg = e?.response?.data?.error || "No se pudo actualizar la contraseña";
+      const apiMsg =
+        e?.response?.data?.error ||
+        e?.message ||
+        "No se pudo actualizar la contraseña";
+
       toast.error(apiMsg);
     } finally {
       setLoading(false);

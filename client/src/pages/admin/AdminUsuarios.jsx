@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Navbar from "../../components/Navbar.jsx";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken";
 import { toast } from "sonner";
 import "./adminUsuarios.css";
 
@@ -26,8 +26,15 @@ export default function AdminUsuarios() {
     try {
       setCargando(true);
       setError("");
-      const res = await axios.get(`${API_BASE}/usuarios`);
-      setUsuarios(res.data || []);
+
+      const res = await authFetch(`${API_BASE}/usuarios`);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error cargando usuarios");
+      }
+
+      const data = await res.json();
+      setUsuarios(data);
     } catch (err) {
       console.error("Error cargando usuarios:", err);
       setError("No se pudieron cargar los usuarios.");
@@ -46,11 +53,16 @@ export default function AdminUsuarios() {
     try {
       setGuardandoId(user.id_usuario);
 
-      const res = await axios.put(`${API_BASE}/usuarios/${user.id_usuario}`, {
-        estado: nuevoEstado,
+      const res = await authFetch(`${API_BASE}/usuarios/${user.id_usuario}`, {
+        method: "PUT",
+        body: JSON.stringify({ estado: nuevoEstado })
       });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Error actualizando usuario");
+      }
 
-      const actualizado = res.data;
+      const actualizado = await res.json();
 
       setUsuarios((prev) =>
         prev.map((u) =>

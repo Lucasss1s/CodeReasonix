@@ -163,18 +163,18 @@ export default function Perfil() {
 
   const cargarPerfil = async () => {
     if (!id_cliente) return;
-    try {
-      const [pRes, uRes] = await Promise.all([
-        axios.get(`${API_BASE}/perfil/${id_cliente}`),
-        axios.get(`${API_BASE}/usuarios/by-cliente/${id_cliente}`)
-      ]);
 
+    try {
+      const pRes = await axios.get(`${API_BASE}/perfil/${id_cliente}`);
       const p = pRes.data || {};
+
       setPerfil((prev) => ({ ...prev, ...p }));
       if (p?.foto_perfil) setPreview(p.foto_perfil);
       setSocials(parseSocials(p?.redes_sociales));
 
-      const u = uRes.data || {};
+      const uRes = await authFetch(`${API_BASE}/usuarios/by-cliente/${id_cliente}`)
+      const u = await uRes.json();
+
       setUsuario({
         id_usuario: u.id_usuario ?? null,
         nombre: u.nombre ?? "",
