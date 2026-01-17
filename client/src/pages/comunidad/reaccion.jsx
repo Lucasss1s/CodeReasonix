@@ -1,5 +1,5 @@
-import axios from "axios";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken";
 
 export default function Reacciones({ idPublicacion, reacciones = [], onUpdate }) {
   const id_cliente = localStorage.getItem("cliente");
@@ -11,10 +11,13 @@ export default function Reacciones({ idPublicacion, reacciones = [], onUpdate })
     }
 
     try {
-      await axios.post(`${API_BASE}/reacciones`, {
-        id_publicacion: idPublicacion,
-        id_cliente,
-        tipo,
+      await authFetch(`${API_BASE}/reacciones`, {
+        method: "POST",
+        body: JSON.stringify({
+          id_publicacion: idPublicacion,
+          id_cliente,
+          tipo,
+        }),
       });
 
       if (onUpdate) onUpdate();

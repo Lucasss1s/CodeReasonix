@@ -1,9 +1,10 @@
 import express from "express";
 import { supabase } from "../config/db.js";
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
-router.get("/publicacion/:id", async (req, res) => {
+router.get("/publicacion/:id", requireSesion, async (req, res) => {
   const { id } = req.params;
   try {
     const { data, error } = await supabase
@@ -31,9 +32,11 @@ router.get("/publicacion/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
-  const { id_publicacion, id_cliente, tipo } = req.body;
-  if (!id_publicacion || !id_cliente || !tipo) {
+router.post("/", requireSesion, async (req, res) => {
+  const { id_publicacion, tipo } = req.body;
+  const id_cliente = req.cliente.id_cliente;
+
+  if (!id_publicacion || !tipo) {
     return res.status(400).json({ error: "Faltan datos" });
   }
 
@@ -43,21 +46,21 @@ router.post("/", async (req, res) => {
       .select("*")
       .eq("id_publicacion", id_publicacion)
       .eq("id_cliente", id_cliente)
-      .single();
+      .maybeSingle();
 
-    if (existingError && existingError.code !== "PGRST116") throw existingError;
+    if (existingError) throw existingError;
+
+    if (existing && existing.tipo === tipo) {
+      const { error: deleteError } = await supabase
+        .from("reaccion")
+        .delete()
+        .eq("id_reaccion", existing.id_reaccion);
+
+      if (deleteError) throw deleteError;
+      return res.json({ deleted: true });
+    }
 
     if (existing) {
-      if (existing.tipo === tipo) {
-        const { error: deleteError } = await supabase
-          .from("reaccion")
-          .delete()
-          .eq("id_reaccion", existing.id_reaccion);
-
-        if (deleteError) throw deleteError;
-        return res.json({ deleted: true });
-      }
-
       const { data: updated, error: updateError } = await supabase
         .from("reaccion")
         .update({ tipo, fecha: new Date() })
