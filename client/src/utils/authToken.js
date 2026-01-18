@@ -34,8 +34,12 @@ export async function authFetch(url, options = {}, { retryOn401 = true } = {}) {
     const headers = {
         ...(options.headers || {}),
         Authorization: `Bearer ${token}`,
-        "Content-Type": headersContentType(options.headers),
     };
+    //setear Content-Type si no es FormData
+    if (!(options.body instanceof FormData)) {
+        headers["Content-Type"] =
+        headersContentType(options.headers) || "application/json";
+    }
 
     let res = await fetch(url, { ...options, headers });
 
@@ -44,12 +48,18 @@ export async function authFetch(url, options = {}, { retryOn401 = true } = {}) {
         const { data, error } = await supabase.auth.refreshSession();
         if (!error && data?.session?.access_token) {
         const newToken = data.session.access_token;
+
         localStorage.setItem("access_token", newToken);
+
         const headers2 = {
             ...(options.headers || {}),
             Authorization: `Bearer ${newToken}`,
-            "Content-Type": headersContentType(options.headers),
         };
+        if (!(options.body instanceof FormData)) {
+        headers2["Content-Type"] =
+            headersContentType(options.headers) || "application/json";
+        }
+
         res = await fetch(url, { ...options, headers: headers2 });
         }
     }

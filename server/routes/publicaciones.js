@@ -1,11 +1,15 @@
 import express from "express";
 import { supabase } from "../config/db.js";
 import multer from "multer";
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
 
-router.get("/", async (req, res) => {
+router.get("/", requireSesion, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("publicacion")
@@ -30,11 +34,12 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", upload.single("imagen"), async (req, res) => {
-  const { id_cliente, contenido } = req.body;
+router.post("/",  upload.single("imagen"), requireSesion, async (req, res) => {
+  const { contenido } = req.body;
+  const id_cliente = req.cliente.id_cliente;
   const file = req.file;
 
-  if (!id_cliente || !contenido) {
+  if (!contenido) {
     return res.status(400).json({ error: "Faltan datos" });
   }
 
@@ -60,10 +65,7 @@ router.post("/", upload.single("imagen"), async (req, res) => {
 
       imagen_url = publicUrl.publicUrl;
     } catch (e) {
-      console.log(
-        "Error subiendo imagen de publicación (¿bucket faltante?):",
-        e?.message || e
-      );
+      console.log("Error subiendo imagen de publicación:", e?.message || e);
       imagen_url = null;
     }
   }
@@ -83,16 +85,11 @@ router.post("/", upload.single("imagen"), async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireSesion, async (req, res) => {
   const { id } = req.params;
-  const { id_cliente } = req.body;
-
-  if (!id_cliente) {
-    return res.status(400).json({ error: "Falta el id_cliente" });
-  }
+  const id_cliente = req.cliente.id_cliente;
 
   try {
-    // Buscar publicacion
     const { data: publi, error: findError } = await supabase
       .from("publicacion")
       .select("id_cliente")
@@ -103,12 +100,10 @@ router.delete("/:id", async (req, res) => {
       return res.status(404).json({ error: "Publicación no encontrada" });
     }
 
-    // Verificar que pertenece al cliente
-    if (publi.id_cliente !== parseInt(id_cliente)) {
+    if (publi.id_cliente !== id_cliente) {
       return res.status(403).json({ error: "No puedes eliminar esta publicación" });
     }
 
-    // Eliminar
     const { error: deleteError } = await supabase
       .from("publicacion")
       .delete()

@@ -35,7 +35,13 @@ import pagoRouter from "./routes/pago.js";
 
 const app = express(); // Instancia
 app.use(cors());
-app.use(express.json()); // Parsea cuerpos JSON en las peticiones
+app.use(express.json({
+    type: (req) => {
+        const contentType = req.headers["content-type"] || "";
+        return contentType.includes("application/json");
+    }
+}));
+
 
 // Endpoint base
 app.get("/", (req, res) => { 

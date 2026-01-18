@@ -7,6 +7,7 @@ import Comentario from "./comentario.jsx";
 import Reaccion from "./reaccion.jsx";
 import useRequirePreferencias from "../../hooks/useRequirePreferencias";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken";
 import "./feed.css";
 
 const extraerHashtags = (texto = "") => {
@@ -62,12 +63,9 @@ export default function Feed() {
   const handleEliminar = async () => {
     if (!publicacionAEliminar) return;
     try {
-      await axios.delete(
-        `${API_BASE}/publicaciones/${publicacionAEliminar.id_publicacion}`,
-        {
-          data: { id_cliente },
-        }
-      );
+      await authFetch(`${API_BASE}/publicaciones/${publicacionAEliminar.id_publicacion}`,{
+        method: "DELETE",
+      });
       await cargarFeed();
       setMenuAbierto(null);
       setPublicacionAEliminar(null);

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken";
 
 export default function PublicacionForm({ setPublicaciones }) {
   const [contenido, setContenido] = useState("");
@@ -38,8 +39,9 @@ export default function PublicacionForm({ setPublicaciones }) {
       formData.append("contenido", contenido);
       if (imagen) formData.append("imagen", imagen);
 
-      await axios.post(`${API_BASE}/publicaciones`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      await authFetch(`${API_BASE}/publicaciones`, {
+        method: "POST",
+        body: formData,
       });
 
       setContenido("");
