@@ -1,4 +1,5 @@
 import { supabase } from "../config/supabase.js";
+import { isFormData } from "./isFormData.js";
 
 /* supabase.auth.getSession() -> si token expira, SDK hce refresh  */
 export async function getValidAccessToken() {
@@ -8,6 +9,7 @@ export async function getValidAccessToken() {
         console.warn("[auth] getSession error:", error);
         return null;
         }
+
         const session = data?.session;
         if (!session?.access_token) return null;
 
@@ -31,34 +33,19 @@ export async function authFetch(url, options = {}, { retryOn401 = true } = {}) {
         return Promise.reject({ code: "NO_TOKEN", message: "No hay sesion" });
     }
 
-    const headers = {
-        ...(options.headers || {}),
-        Authorization: `Bearer ${token}`,
-    };
-    //setear Content-Type si no es FormData
-    if (!(options.body instanceof FormData)) {
-        headers["Content-Type"] =
-        headersContentType(options.headers) || "application/json";
-    }
+    const headers = buildHeaders(token, options);
 
     let res = await fetch(url, { ...options, headers });
 
     if (retryOn401 && (res.status === 401 || res.status === 403)) {
         // refresh adicional 
         const { data, error } = await supabase.auth.refreshSession();
+
         if (!error && data?.session?.access_token) {
         const newToken = data.session.access_token;
-
         localStorage.setItem("access_token", newToken);
 
-        const headers2 = {
-            ...(options.headers || {}),
-            Authorization: `Bearer ${newToken}`,
-        };
-        if (!(options.body instanceof FormData)) {
-        headers2["Content-Type"] =
-            headersContentType(options.headers) || "application/json";
-        }
+        const headers2 = buildHeaders(newToken, options);
 
         res = await fetch(url, { ...options, headers: headers2 });
         }
@@ -67,9 +54,21 @@ export async function authFetch(url, options = {}, { retryOn401 = true } = {}) {
     return res;
 }
 
-function headersContentType(h) {
-    if (!h) return "application/json";
-    if (typeof h["Content-Type"] !== "undefined") return h["Content-Type"];
-    if (typeof h["content-type"] !== "undefined") return h["content-type"];
-    return "application/json";
+function buildHeaders(token, options) {
+    const headers = {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+    };
+
+    if (!isFormData(options.body)) {
+        headers["Content-Type"] =
+        getContentType(options.headers) || "application/json";
+    }
+
+    return headers;
+};
+
+function getContentType(h) {
+    if (!h) return undefined;
+    return h["Content-Type"] || h["content-type"];
 }
