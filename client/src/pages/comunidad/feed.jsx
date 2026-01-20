@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import Navbar from "../../components/Navbar";
 import Publicacion from "./publicacion.jsx";
 import Comentario from "./comentario.jsx";
@@ -30,8 +29,9 @@ export default function Feed() {
 
   const cargarFeed = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/feed`);
-      setPublicaciones(res.data);
+      const res = await authFetch(`${API_BASE}/feed`);
+      const data = await res.json();
+      setPublicaciones(data);
     } catch (err) {
       console.error("Error cargando feed:", err);
     }

@@ -1,9 +1,10 @@
 import express from "express";
 import { supabase } from "../config/db.js";
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", requireSesion, async (req, res) => {
   try {
     const { data: publicaciones, error: pubError } = await supabase
       .from("publicacion")

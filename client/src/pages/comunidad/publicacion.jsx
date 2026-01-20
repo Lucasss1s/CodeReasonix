@@ -1,5 +1,4 @@
 import { useState } from "react";
-import axios from "axios";
 import API_BASE from "../../config/api";
 import { authFetch } from "../../utils/authToken";
 
@@ -27,15 +26,9 @@ export default function PublicacionForm({ setPublicaciones }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const id_cliente = localStorage.getItem("cliente");
-    if (!id_cliente) {
-      alert("Debes iniciar sesión para publicar.");
-      return;
-    }
 
     try {
       const formData = new FormData();
-      formData.append("id_cliente", id_cliente);
       formData.append("contenido", contenido);
       if (imagen) formData.append("imagen", imagen);
 
@@ -47,8 +40,9 @@ export default function PublicacionForm({ setPublicaciones }) {
       setContenido("");
       handleClearImagen();
 
-      const res = await axios.get(`${API_BASE}/feed`);
-      setPublicaciones(res.data);
+      const res = await authFetch(`${API_BASE}/feed`);
+      const data = await res.json();
+      setPublicaciones(data);
     } catch (err) {
       console.error("Error creando publicación:", err);
     }
