@@ -1,5 +1,6 @@
 import express from "express";
 import { supabase } from "../config/db.js";
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
@@ -47,7 +48,7 @@ async function obtenerMiPosicion({vista,columnasSelect,colXp,colResueltos,colUlt
   return { posicion: indice + 1, ...lista[indice] };
 }
 
-router.get("/global", async (req, res) => {
+router.get("/global", requireSesion, async (req, res) => {
   try {
     const limite = Math.min(Number(req.query.limit) || 50, 100);
 
@@ -67,7 +68,7 @@ router.get("/global", async (req, res) => {
   }
 });
 
-router.get("/semanal", async (req, res) => {
+router.get("/semanal", requireSesion, async (req, res) => {
   try {
     const limite = Math.min(Number(req.query.limit) || 50, 100);
 
@@ -87,7 +88,7 @@ router.get("/semanal", async (req, res) => {
   }
 });
 
-router.get("/hoy", async (req, res) => {
+router.get("/hoy", requireSesion, async (req, res) => {
   try {
     const limite = Math.min(Number(req.query.limit) || 50, 100);
 
@@ -107,8 +108,8 @@ router.get("/hoy", async (req, res) => {
   }
 });
 
-router.get("/me/:id_cliente", async (req, res) => {
-  const { id_cliente } = req.params;
+router.get("/me", requireSesion,  async (req, res) => {
+  const  id_cliente  = req.cliente.id_cliente;
   if (!id_cliente)
     return res.status(400).json({ error: "id_cliente obligatorio" });
 
@@ -123,9 +124,7 @@ router.get("/me/:id_cliente", async (req, res) => {
     });
 
     if (!miPosicion)
-      return res
-        .status(404)
-        .json({ error: "Usuario sin ranking todavia" });
+      return res.status(404).json({ error: "Usuario sin ranking todavia" });
 
     res.json(miPosicion);
   } catch (err) {
@@ -134,8 +133,8 @@ router.get("/me/:id_cliente", async (req, res) => {
   }
 });
 
-router.get("/me/semanal/:id_cliente", async (req, res) => {
-  const { id_cliente } = req.params;
+router.get("/me/semanal", requireSesion,  async (req, res) => {
+  const  id_cliente  = req.cliente.id_cliente;
   if (!id_cliente)
     return res.status(400).json({ error: "id_cliente obligatorio" });
 
@@ -150,9 +149,7 @@ router.get("/me/semanal/:id_cliente", async (req, res) => {
     });
 
     if (!miPosicion)
-      return res
-        .status(404)
-        .json({ error: "Usuario sin ranking semanal todavía" });
+      return res.status(404).json({ error: "Usuario sin ranking semanal todavia" });
 
     res.json(miPosicion);
   } catch (err) {
@@ -161,8 +158,8 @@ router.get("/me/semanal/:id_cliente", async (req, res) => {
   }
 });
 
-router.get("/me/hoy/:id_cliente", async (req, res) => {
-  const { id_cliente } = req.params;
+router.get("/me/hoy", requireSesion,  async (req, res) => {
+  const id_cliente  = req.cliente.id_cliente;
   if (!id_cliente)
     return res.status(400).json({ error: "id_cliente obligatorio" });
 
@@ -177,9 +174,7 @@ router.get("/me/hoy/:id_cliente", async (req, res) => {
     });
 
     if (!miPosicion)
-      return res
-        .status(404)
-        .json({ error: "Usuario sin ranking hoy todavía"});
+      return res.status(404).json({ error: "Usuario sin ranking hoy todavia"});
 
     res.json(miPosicion);
   } catch (err) {
