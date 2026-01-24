@@ -1,11 +1,12 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
 const ESTADOS_VALIDOS = ['pendiente', 'en_revision', 'aceptada', 'rechazada'];
 
-router.get('/', async (_req, res) => {
+router.get('/', requireSesion, async (_req, res) => {
   try {
     const { data, error } = await supabase
       .from('postulacion')
@@ -28,8 +29,8 @@ router.get('/', async (_req, res) => {
   }
 });
 
-router.get('/mias/:id_cliente', async (req, res) => {
-  const id_cliente = Number(req.params.id_cliente);
+router.get('/mias', requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
   if (!id_cliente) return res.status(400).json({ error: 'id_cliente es obligatorio' });
 
   try {
@@ -54,7 +55,7 @@ router.get('/mias/:id_cliente', async (req, res) => {
   }
 });
 
-router.get('/por-oferta/:id_oferta', async (req, res) => {
+router.get('/por-oferta/:id_oferta', requireSesion, async (req, res) => {
   const id_oferta = Number(req.params.id_oferta);
   if (!id_oferta) return res.status(400).json({ error: 'id_oferta es obligatorio' });
 
@@ -80,8 +81,9 @@ router.get('/por-oferta/:id_oferta', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
-  const { id_oferta, id_cliente } = req.body;
+router.post('/', requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
+  const { id_oferta } = req.body;
   let { estado } = req.body;
 
   if (!id_oferta || !id_cliente) {
@@ -114,7 +116,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.patch('/:id_postulacion', async (req, res) => {
+router.patch('/:id_postulacion', requireSesion, async (req, res) => {
   const id_postulacion = Number(req.params.id_postulacion);
   const { estado } = req.body;
 
@@ -141,7 +143,7 @@ router.patch('/:id_postulacion', async (req, res) => {
   }
 });
 
-router.delete('/:id_postulacion', async (req, res) => {
+router.delete('/:id_postulacion', requireSesion, async (req, res) => {
   const id_postulacion = Number(req.params.id_postulacion);
   if (!id_postulacion) return res.status(400).json({ error: 'id_postulacion es obligatorio' });
 

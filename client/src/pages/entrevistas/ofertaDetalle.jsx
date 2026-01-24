@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
@@ -31,8 +32,8 @@ export default function OfertaDetalle() {
   const cargarSiPostule = async () => {
     if (!id_cliente) return setYaPostulado(false);
     try {
-      const res = await axios.get(`${API_BASE}/postulaciones/mias/${id_cliente}`);
-      const lista = res.data || [];
+      const res = await authFetch(`${API_BASE}/postulaciones/mias`);
+      const lista = await res.json();
       setYaPostulado(lista.some(p => Number(p.id_oferta) === Number(id)));
     } catch (err) {
       console.error("Error verificando postulaciones:", err);
@@ -58,10 +59,12 @@ export default function OfertaDetalle() {
 
     try {
       setPosting(true);
-      await axios.post(`${API_BASE}/postulaciones`, {
-        id_oferta: Number(id),
-        id_cliente: Number(id_cliente),
-        estado: "pendiente",
+      await authFetch(`${API_BASE}/postulaciones`, {
+        method: 'POST',
+        body: JSON.stringify({
+          id_oferta: Number(id),
+          estado: "pendiente",
+        }),
       });
       setYaPostulado(true);
       toast.success("¡Postulación enviada!");

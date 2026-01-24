@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
@@ -13,10 +13,9 @@ export default function Postulacion() {
   const cargar = async () => {
     if (!id_cliente) return;
     try {
-      const res = await axios.get(
-        `${API_BASE}/postulaciones/mias/${id_cliente}`
-      );
-      setItems(res.data || []);
+      const res = await authFetch(`${API_BASE}/postulaciones/mias`);
+      const data = await res.json();
+      setItems(data);
     } catch (err) {
       console.error("Error cargando postulaciones:", err);
     }

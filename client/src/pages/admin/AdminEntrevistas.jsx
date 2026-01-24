@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../../components/Navbar.jsx";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken.js";
 import { toast } from "sonner";
 import "./adminEntrevistas.css";
 
@@ -294,8 +295,9 @@ export default function AdminEntrevistas() {
   const loadPostulaciones = async () => {
     try {
       setLoadingPostulaciones(true);
-      const res = await axios.get(`${API_BASE}/postulaciones`);
-      setPostulaciones(res.data || []);
+      const res = await authFetch(`${API_BASE}/postulaciones`);
+      const data = await res.json();
+      setPostulaciones(data);
     } catch (err) {
       console.error("Error cargando postulaciones:", err);
       toast.error("No se pudieron cargar las postulaciones.");
@@ -323,8 +325,11 @@ export default function AdminEntrevistas() {
 
     try {
       setSavingPostulacionId(p.id_postulacion);
-      await axios.patch(`${API_BASE}/postulaciones/${p.id_postulacion}`, {
-        estado: nuevoEstado,
+      await authFetch(`${API_BASE}/postulaciones/${p.id_postulacion}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          estado: nuevoEstado,
+        }),
       });
       toast.success("Estado de postulación actualizado.");
       await loadPostulaciones();
@@ -342,9 +347,9 @@ export default function AdminEntrevistas() {
   const handleDeletePostulacion = async (p) => {
     if (!window.confirm("¿Eliminar esta postulación?")) return;
     try {
-      await axios.delete(
-        `${API_BASE}/postulaciones/${p.id_postulacion}`
-      );
+      await authFetch(`${API_BASE}/postulaciones/${p.id_postulacion}`,{
+        method: 'DELETE',
+      });
       toast.success("Postulación eliminada.");
       await loadPostulaciones();
     } catch (err) {
