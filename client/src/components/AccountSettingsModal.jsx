@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "sonner";
 import API_BASE from "../config/api";
 import { supabase } from "../config/supabase.js";
@@ -76,11 +75,11 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
         setTmpNombre(user.nombre || "");
 
         //perfil
-        const p = await axios.get(`${API_BASE}/perfil/${id_cliente}`);
-        const pp = p.data || {};
+        const res = await authFetch(`${API_BASE}/perfil`);
+        const data = await res.json();
         setPerfil({
-          display_name: pp.display_name || "",
-          username: pp.username || "",
+          display_name: data.display_name || "",
+          username: data.username || "",
         });
       } catch (e) {
         console.error(e);
@@ -107,7 +106,10 @@ const saveProfileIdentity = async () => {
   };
   try {
     setLoading(true);
-    await axios.put(`${API_BASE}/perfil/${id_cliente}`, payload);
+    await authFetch(`${API_BASE}/perfil`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
     toast.success("Perfil actualizado");
     onIdentityUpdated?.(payload);
   } catch (e) {

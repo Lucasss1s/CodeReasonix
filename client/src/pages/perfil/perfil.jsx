@@ -165,12 +165,12 @@ export default function Perfil() {
     if (!id_cliente) return;
 
     try {
-      const pRes = await axios.get(`${API_BASE}/perfil/${id_cliente}`);
-      const p = pRes.data || {};
+      const res = await authFetch(`${API_BASE}/perfil`);
+      const data = await res.json();
 
-      setPerfil((prev) => ({ ...prev, ...p }));
-      if (p?.foto_perfil) setPreview(p.foto_perfil);
-      setSocials(parseSocials(p?.redes_sociales));
+      setPerfil((prev) => ({ ...prev, ...data }));
+      if (data?.foto_perfil) setPreview(data.foto_perfil);
+      setSocials(parseSocials(data?.redes_sociales));
 
       const uRes = await authFetch(`${API_BASE}/usuarios/by-cliente/${id_cliente}`)
       const u = await uRes.json();
@@ -229,7 +229,10 @@ export default function Perfil() {
         avatar_frame: selectedFrameId,
         banner_url: perfil.banner_url ?? null
       };
-      await axios.put(`${API_BASE}/perfil/${id_cliente}`, body);
+      await authFetch(`${API_BASE}/perfil`,{
+        method: 'PUT',
+        body: JSON.stringify(body),
+      });
       setMensaje("Perfil actualizado ✅");
       setEditMode(false);
       setTimeout(() => setMensaje(""), 1500);
@@ -249,12 +252,14 @@ export default function Perfil() {
     formData.append("foto", file);
     try {
       setUploading(true);
-      const res = await axios.post(`${API_BASE}/perfil/${id_cliente}/foto`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const res = await authFetch(`${API_BASE}/perfil/foto`, {
+        method: 'POST',
+        body: formData,
       });
-      const url = res.data?.url;
+      const data = await res.json();
+      const url = data.url;
       setPerfil((p) => ({ ...p, foto_perfil: url }));
-      setPreview(url);
+      setPreview(url + "?t=" + Date.now()); // cache busting
       toast.success("Foto actualizada");
     } catch (err) {
       console.error("Error subiendo foto:", err);
@@ -276,11 +281,13 @@ export default function Perfil() {
     formData.append("banner", file);
     try {
       setBannerUploading(true);
-      const res = await axios.post(`${API_BASE}/perfil/${id_cliente}/banner`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const res = await authFetch(`${API_BASE}/perfil/banner`, {
+        method: 'POST',
+        body: formData,
       });
-      const url = res.data?.url;
-      setPerfil((p) => ({ ...p, banner_url: url }));
+      const data = await res.json();
+      const url = data.url;
+      setPerfil((p) => ({ ...p, banner_url: url + "?t=" + Date.now() }));
       toast.success("Banner actualizado");
     } catch (err) {
       console.error("Error subiendo banner:", err);
@@ -304,7 +311,12 @@ export default function Perfil() {
     if (!isOwnProfile) return;
     try {
       setBannerUploading(true);
-      await axios.put(`${API_BASE}/perfil/${id_cliente}`, { banner_url: null });
+      await authFetch(`${API_BASE}/perfil`, { 
+        method: 'PUT',
+        body: JSON.stringify({
+          banner_url: null, 
+        })
+      });
       setPerfil((p) => ({ ...p, banner_url: null }));
       toast.success("Banner eliminado");
     } catch (e) {
@@ -343,7 +355,12 @@ export default function Perfil() {
     if (!isOwnProfile) return;
     try {
       setUploading(true);
-      await axios.put(`${API_BASE}/perfil/${id_cliente}`, { foto_perfil: null });
+      await authFetch(`${API_BASE}/perfil`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          foto_perfil: null,
+        })
+      });
       setPreview(null);
       setPerfil((p) => ({ ...p, foto_perfil: null }));
       toast.success("Foto eliminada");

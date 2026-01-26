@@ -1,12 +1,13 @@
 import express from "express";
 import { supabase } from "../config/db.js";
+import { requireSesion } from "../middlewares/requireSesion.js";
 import multer from "multer";
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() }); 
 
-router.get("/:id_cliente", async (req, res) => {
-  const { id_cliente } = req.params;
+router.get("/", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
 
   try {
     const { data, error } = await supabase
@@ -23,8 +24,8 @@ router.get("/:id_cliente", async (req, res) => {
   }
 });
 
-router.put('/:id_cliente', async (req, res) => {
-  const { id_cliente } = req.params;
+router.put('/', requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
 
   const allowed = ['biografia', 'skills', 'redes_sociales', 'foto_perfil', 'display_name', 'username', 'avatar_frame', 'banner_url'];
   const updateData = {};
@@ -63,8 +64,8 @@ router.put('/:id_cliente', async (req, res) => {
   }
 });
 
-router.post("/:id_cliente/foto", upload.single("foto"), async (req, res) => {
-  const { id_cliente } = req.params;
+router.post("/foto",  requireSesion, upload.single("foto"), async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
   const file = req.file;
 
   if (!file) return res.status(400).json({ error: "No se subió ninguna imagen" });
@@ -99,46 +100,8 @@ router.post("/:id_cliente/foto", upload.single("foto"), async (req, res) => {
   }
 });
 
-//Normalizador de @username 
-function normalizeUsername(u = "") {
-  return u
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "")
-    .replace(/[^a-z0-9._-]/g, ""); 
-}
-function isValidUsername(u = "") {
-  return /^[a-z0-9._-]{3,20}$/.test(u);
-}
-
-//disponibilidad de username
-router.get('/username/availability/:username', async (req, res) => {
-  const raw = req.params.username || "";
-  const u = normalizeUsername(raw);
-  if (!u || !isValidUsername(u)) {
-    return res.json({ ok: false, reason: 'invalid' });
-  }
-  try {
-    const { data, error } = await supabase
-      .from('perfil')
-      .select('id_perfil')
-      .eq('username', u)
-      .limit(1);
-
-    if (error) throw error;
-    const taken = (data || []).length > 0;
-    res.json({ ok: !taken, reason: taken ? 'taken' : 'ok' });
-  } catch (err) {
-    console.error('Error check username:', err);
-    res.status(500).json({ ok: false, reason: 'error' });
-  }
-});
-
-router.post( "/:id_cliente/banner", upload.single("banner"), async (req, res) => {
-    const id_cliente = Number(req.params.id_cliente);
-    if (!id_cliente) {
-      return res.status(400).json({ error: "id_cliente inválido" });
-    }
+router.post( "/banner", requireSesion, upload.single("banner"), async (req, res) => {
+    const id_cliente = req.cliente.id_cliente;
 
     const file = req.file;
     if (!file) {

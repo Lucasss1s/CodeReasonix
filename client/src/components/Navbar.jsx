@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import axios from "axios";
 import { supabase } from "../config/supabase.js";
 import { toast } from "sonner";
 import "./navbar.css";
 import RewardOnRoute from "./RewardOnRoute";
 import API_BASE from "../config/api";
 import logoCodeReasonix from "../assets/logo-codereasonix.svg";
+import { authFetch } from "../utils/authToken.js";
 
 export default function Navbar() {
   const [usuario, setUsuario] = useState(null);
@@ -52,8 +52,9 @@ export default function Navbar() {
 
         if (id_cliente) {
           try {
-            const res = await axios.get(`${API_BASE}/perfil/${id_cliente}`);
-            setFotoPerfil(res.data?.foto_perfil || "/default-avatar.png");
+            const res = await authFetch(`${API_BASE}/perfil`);
+            const data = await res.json();
+            setFotoPerfil(data?.foto_perfil || "/default-avatar.png");
           } catch {
             setFotoPerfil("/default-avatar.png");
           }
