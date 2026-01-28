@@ -203,14 +203,10 @@ router.put('/password', requireSesion, async (req, res) => {
   res.json({ ok: true });
 });
 
-router.get('/by-cliente/:id_cliente', requireSesion, async (req, res) => {
-  const { id_cliente } = req.params;
+router.get('/by-cliente/', requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
 
   try {
-    if (Number(id_cliente) !== req.cliente.id_cliente) {
-      return res.status(403).json({ error: 'No autorizado' });
-    }
-
     const { data: cli, error: cliErr } = await supabase
       .from('cliente')
       .select('id_usuario')
@@ -240,36 +236,49 @@ router.get('/by-cliente/:id_cliente', requireSesion, async (req, res) => {
   }
 });
 
-router.get('/:id', requireSesion, async (req, res) => {
+router.put('/me', requireSesion, async (req, res) => {
+  const id_usuario = req.userLocal.id_usuario;
+  const { nombre, email } = req.body;
+
+  const updateData = {};
+  if (nombre !== undefined) updateData.nombre = nombre;
+  if (email !== undefined) updateData.email = email;
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({ error: "Nada para actualizar" });
+  }
+
+  const { data, error } = await supabase
+    .from('usuario')
+    .update(updateData)
+    .eq('id_usuario', id_usuario)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: "Error actualizando usuario" });
+
+  res.json(data);
+});
+
+router.put('/:id/estado', async (req, res) => {
   const { id } = req.params;
+  const { estado } = req.body;
 
-  if (req.userLocal.id_usuario !== Number(id)) {
-    return res.status(403).json({ error: 'No autorizado' });
-  }
+  const { data, error } = await supabase
+    .from('usuario')
+    .update({ estado })
+    .eq('id_usuario', id)
+    .select()
+    .single();
 
-  try {
-    const { data, error } = await supabase
-      .from('usuario')
-      .select('id_usuario, nombre, email, estado, fecha_registro')
-      .eq('id_usuario', id)
-      .single();
+  if (error) return res.status(500).json({ error: "Error actualizando estado" });
 
-    if (error) throw error;
-    if (!data) return res.status(404).json({ error: 'Usuario no encontrado' });
-    res.json(data);
-  } catch (err) {
-    console.error('Error obteniendo usuario:', err);
-    res.status(500).json({ error: 'Error obteniendo usuario' });
-  }
+  res.json(data);
 });
 
 router.post('/confirm-email', async (req, res) => {
   const { sesion_id } = req.body;
-
-  if (!sesion_id) {
-    return res.status(400).json({ error: 'sesion_id requerido' });
-  }
-
+  
   try {
     const { data: user, error: userErr } = await supabase
       .from('usuario')

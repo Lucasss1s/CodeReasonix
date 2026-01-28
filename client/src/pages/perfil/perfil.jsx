@@ -172,7 +172,7 @@ export default function Perfil() {
       if (data?.foto_perfil) setPreview(data.foto_perfil);
       setSocials(parseSocials(data?.redes_sociales));
 
-      const uRes = await authFetch(`${API_BASE}/usuarios/by-cliente/${id_cliente}`)
+      const uRes = await authFetch(`${API_BASE}/usuarios/by-cliente/`)
       const u = await uRes.json();
 
       setUsuario({

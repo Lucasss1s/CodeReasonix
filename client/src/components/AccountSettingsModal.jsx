@@ -65,7 +65,7 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
       setLoading(true);
       try {
         //usuario de cliente
-        const u = await authFetch(`${API_BASE}/usuarios/by-cliente/${id_cliente}`);
+        const u = await authFetch(`${API_BASE}/usuarios/by-cliente/`);
         const user = await u.json();
         setUsuario({
           id_usuario: user.id_usuario,
@@ -133,7 +133,7 @@ const saveProfileIdentity = async () => {
     if (!name) return toast.info("Ingresá un nombre");
     try {
       setLoading(true);
-      await authFetch(`${API_BASE}/usuarios/${usuario.id_usuario}`,{ 
+      await authFetch(`${API_BASE}/usuarios/me`,{ 
         method: "PUT", 
         body: JSON.stringify({ nombre: name }) 
       });

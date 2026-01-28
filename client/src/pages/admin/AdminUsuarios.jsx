@@ -53,7 +53,7 @@ export default function AdminUsuarios() {
     try {
       setGuardandoId(user.id_usuario);
 
-      const res = await authFetch(`${API_BASE}/usuarios/${user.id_usuario}`, {
+      const res = await authFetch(`${API_BASE}/usuarios/${user.id_usuario}/estado`, {
         method: "PUT",
         body: JSON.stringify({ estado: nuevoEstado })
       });
