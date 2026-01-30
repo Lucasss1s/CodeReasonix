@@ -1,9 +1,10 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
+import { requireSesion } from '../middlewares/requireSesion.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', requireSesion, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('oferta_laboral')
@@ -18,7 +19,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireSesion, async (req, res) => {
   const id = Number(req.params.id);
   try {
     const { data, error } = await supabase
@@ -35,7 +36,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireSesion, async (req, res) => {
   const { id_empresa, titulo, descripcion, ubicacion, requisitos, fecha_publicacion } = req.body;
   if (!id_empresa || !titulo) {
     return res.status(400).json({ error: 'id_empresa y titulo son obligatorios' });
@@ -65,7 +66,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireSesion, async (req, res) => {
   const id = Number(req.params.id);
   const { id_empresa, titulo, descripcion, ubicacion, requisitos, fecha_publicacion } = req.body;
 
@@ -85,7 +86,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireSesion, async (req, res) => {
   const id = Number(req.params.id);
   try {
     const { error } = await supabase.from('oferta_laboral').delete().eq('id_oferta', id);

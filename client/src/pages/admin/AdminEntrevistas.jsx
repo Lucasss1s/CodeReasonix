@@ -187,8 +187,9 @@ export default function AdminEntrevistas() {
   const loadOfertas = async () => {
     try {
       setLoadingOfertas(true);
-      const res = await axios.get(`${API_BASE}/ofertas`);
-      setOfertas(res.data || []);
+      const res = await authFetch(`${API_BASE}/ofertas`);
+      const data = await res.json(); 
+      setOfertas(data);
     } catch (err) {
       console.error("Error cargando ofertas:", err);
       toast.error("No se pudieron cargar las ofertas laborales.");
@@ -251,13 +252,16 @@ export default function AdminEntrevistas() {
       };
 
       if (ofertaForm.id_oferta) {
-        await axios.put(
-          `${API_BASE}/ofertas/${ofertaForm.id_oferta}`,
-          payload
-        );
+        await authFetch(`${API_BASE}/ofertas/${ofertaForm.id_oferta}`,{
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
         toast.success("Oferta laboral actualizada correctamente.");
       } else {
-        await axios.post(`${API_BASE}/ofertas`, payload);
+        await authFetch(`${API_BASE}/ofertas`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
         toast.success("Oferta laboral creada correctamente.");
       }
 
@@ -281,7 +285,9 @@ export default function AdminEntrevistas() {
     )
       return;
     try {
-      await axios.delete(`${API_BASE}/ofertas/${o.id_oferta}`);
+      await authFetch(`${API_BASE}/ofertas/${o.id_oferta}`,{
+        method: 'DELETE'
+      });
       toast.success("Oferta eliminada.");
       await loadOfertas();
     } catch (err) {

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import { toast } from "sonner";
 import API_BASE from "../../config/api";
 import { authFetch } from "../../utils/authToken";
@@ -20,8 +19,9 @@ export default function OfertaDetalle() {
 
   const cargarOferta = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/ofertas/${id}`);
-      setOferta(res.data);
+      const res = await authFetch(`${API_BASE}/ofertas/${id}`);
+      const data = await res.json();
+      setOferta(data);
     } catch (err) {
       console.error("Error cargando oferta:", err);
     } finally {
