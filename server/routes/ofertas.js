@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
 import { requireSesion } from '../middlewares/requireSesion.js';
+import { requireAdmin } from '../middlewares/requireAdmin.js';
 
 const router = express.Router();
 
@@ -36,12 +37,8 @@ router.get('/:id', requireSesion, async (req, res) => {
   }
 });
 
-router.post('/', requireSesion, async (req, res) => {
+router.post('/', requireSesion, requireAdmin, async (req, res) => {
   const { id_empresa, titulo, descripcion, ubicacion, requisitos, fecha_publicacion } = req.body;
-  if (!id_empresa || !titulo) {
-    return res.status(400).json({ error: 'id_empresa y titulo son obligatorios' });
-  }
-
   try {
     const insertPayload = {
       id_empresa: Number(id_empresa),
@@ -66,7 +63,7 @@ router.post('/', requireSesion, async (req, res) => {
   }
 });
 
-router.put('/:id', requireSesion, async (req, res) => {
+router.put('/:id', requireSesion, requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   const { id_empresa, titulo, descripcion, ubicacion, requisitos, fecha_publicacion } = req.body;
 
@@ -86,7 +83,7 @@ router.put('/:id', requireSesion, async (req, res) => {
   }
 });
 
-router.delete('/:id', requireSesion, async (req, res) => {
+router.delete('/:id', requireSesion, requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   try {
     const { error } = await supabase.from('oferta_laboral').delete().eq('id_oferta', id);
