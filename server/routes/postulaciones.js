@@ -1,12 +1,13 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
 import { requireSesion } from "../middlewares/requireSesion.js";
+import { requireAdmin } from '../middlewares/requireAdmin.js';
 
 const router = express.Router();
 
 const ESTADOS_VALIDOS = ['pendiente', 'en_revision', 'aceptada', 'rechazada'];
 
-router.get('/', requireSesion, async (_req, res) => {
+router.get('/', requireSesion, requireAdmin, async (_req, res) => {
   try {
     const { data, error } = await supabase
       .from('postulacion')
@@ -55,7 +56,7 @@ router.get('/mias', requireSesion, async (req, res) => {
   }
 });
 
-router.get('/por-oferta/:id_oferta', requireSesion, async (req, res) => {
+router.get('/por-oferta/:id_oferta', requireSesion, requireAdmin, async (req, res) => {
   const id_oferta = Number(req.params.id_oferta);
   if (!id_oferta) return res.status(400).json({ error: 'id_oferta es obligatorio' });
 
@@ -116,7 +117,7 @@ router.post('/', requireSesion, async (req, res) => {
   }
 });
 
-router.patch('/:id_postulacion', requireSesion, async (req, res) => {
+router.patch('/:id_postulacion', requireSesion, requireAdmin, async (req, res) => {
   const id_postulacion = Number(req.params.id_postulacion);
   const { estado } = req.body;
 
@@ -143,7 +144,7 @@ router.patch('/:id_postulacion', requireSesion, async (req, res) => {
   }
 });
 
-router.delete('/:id_postulacion', requireSesion, async (req, res) => {
+router.delete('/:id_postulacion', requireSesion, requireAdmin, async (req, res) => {
   const id_postulacion = Number(req.params.id_postulacion);
   if (!id_postulacion) return res.status(400).json({ error: 'id_postulacion es obligatorio' });
 

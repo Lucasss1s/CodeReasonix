@@ -2,10 +2,11 @@ import express from 'express';
 import { supabase } from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import { requireSesion } from '../middlewares/requireSesion.js';
+import { requireAdmin } from '../middlewares/requireAdmin.js';
 
 const router = express.Router();
 
-router.get('/', requireSesion, async (req, res) => {
+router.get('/', requireSesion, requireAdmin, async (req, res) => {
   try {
     const { data: usuarios, error } = await supabase
       .from('usuario')
@@ -132,8 +133,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const id_cliente =
-      clienteRows && clienteRows.length > 0 ? clienteRows[0].id_cliente : null;
+    const id_cliente = clienteRows && clienteRows.length > 0 ? clienteRows[0].id_cliente : null;
 
     const { data: adminRows, error: adminError } = await supabase
       .from('administrador')
@@ -260,7 +260,7 @@ router.put('/me', requireSesion, async (req, res) => {
   res.json(data);
 });
 
-router.put('/:id/estado', async (req, res) => {
+router.put('/:id/estado', requireSesion, requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
 

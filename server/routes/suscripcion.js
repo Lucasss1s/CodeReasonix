@@ -37,7 +37,6 @@ async function normalizarSuscripcionSiExpirada(id_cliente) {
 router.get("/mi", requireSesion, async (req, res) => {
   try {
     const id_cliente = req.cliente?.id_cliente;
-    if (!id_cliente) return res.status(404).json({ error: "No se encontró cliente asociado" });
 
     const sus = await normalizarSuscripcionSiExpirada(id_cliente);
     res.json({ suscripcion: sus ?? null });
@@ -117,7 +116,6 @@ router.delete("/:id", requireSesion, async (req, res) => {
 router.post("/cancel", requireSesion, async (req, res) => {
   try {
     const id_cliente = req.cliente?.id_cliente;
-    if (!id_cliente) return res.status(400).json({ error: "Cliente no encontrado" });
 
     const { data: last, error: lastErr } = await supabase
       .from("suscripcion")
@@ -158,7 +156,6 @@ router.post("/cancel", requireSesion, async (req, res) => {
 router.post("/renew", requireSesion, async (req, res) => {
   try {
     const id_cliente = req.cliente?.id_cliente;
-    if (!id_cliente) return res.status(400).json({ error: "Cliente no encontrado" });
 
     const { data: last, error: lastErr } = await supabase
       .from("suscripcion")
@@ -257,7 +254,6 @@ router.post("/activate-manual", requireSesion, async (req, res) => {
 
   try {
     const id_cliente = req.cliente?.id_cliente;
-    if (!id_cliente) return res.status(400).json({ error: "Cliente no encontrado" });
 
     const periodo_fin = new Date();
     periodo_fin.setDate(periodo_fin.getDate() + 30);

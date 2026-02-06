@@ -1,12 +1,14 @@
 import express from "express";
 import { checkAndGrantLogros, getLogrosWithProgress } from "../services/logros.js";
 import { supabase } from "../config/db.js";
+import { requireSesion } from "../middlewares/requireSesion.js";
+import { requireAdmin } from "../middlewares/requireAdmin.js";
 
 const router = express.Router();
 
 /*Verificar y devolver nuevos otorgados */
-router.post("/check/:id_cliente", async (req, res) => {
-  const id_cliente = Number(req.params.id_cliente);
+router.post("/check", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
   if (!id_cliente) return res.status(400).json({ error: "id_cliente requerido" });
   try {
     const nuevos = await checkAndGrantLogros(id_cliente);
@@ -18,8 +20,8 @@ router.post("/check/:id_cliente", async (req, res) => {
 });
 
 /*listar logros: desbloqueados + defs con progreso*/
-router.get("/me/:id_cliente", async (req, res) => {
-  const id_cliente = Number(req.params.id_cliente);
+router.get("/me", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
   if (!id_cliente) return res.status(400).json({ error: "id_cliente requerido" });
   try {
     const { obtenidos, defs } = await getLogrosWithProgress(id_cliente);
@@ -30,8 +32,7 @@ router.get("/me/:id_cliente", async (req, res) => {
   }
 });
 
-//Condiciones existentes 
-router.get("/condiciones-soportadas", (req, res) => {
+router.get("/condiciones-soportadas", requireSesion, requireAdmin, (req, res) => {
   return res.json([
     {
       tipo: "login",
@@ -64,7 +65,7 @@ router.get("/condiciones-soportadas", (req, res) => {
   ]);
 });
 
-router.get("/", async (req, res) => {
+router.get("/", requireSesion, requireAdmin, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("logro")
@@ -79,7 +80,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", requireSesion, requireAdmin, async (req, res) => {
   const { titulo, descripcion, condicion, xp_otorgado = 0, icono = null, activo = true } = req.body;
 
   if (!titulo || !condicion?.tipo) {
@@ -101,7 +102,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id_logro", async (req, res) => {
+router.put("/:id_logro", requireSesion, requireAdmin, async (req, res) => {
   const id_logro = Number(req.params.id_logro);
   if (!id_logro) {
     return res.status(400).json({ error: "id_logro inválido" });
@@ -125,7 +126,7 @@ router.put("/:id_logro", async (req, res) => {
   }
 });
 
-router.patch("/:id_logro/activo", async (req, res) => {
+router.patch("/:id_logro/activo", requireSesion, requireAdmin, async (req, res) => {
   const id_logro = Number(req.params.id_logro);
   const { activo } = req.body;
 

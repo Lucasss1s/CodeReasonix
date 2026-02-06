@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import API_BASE from "../../config/api";
+import { authFetch } from "../../utils/authToken.js";
 import Navbar from "../../components/Navbar.jsx";
 import { toast } from "sonner";
 import "./adminLogros.css";
@@ -41,13 +41,14 @@ export default function AdminLogros() {
         try {
         setCargando(true);
 
-        const [logrosRes, condRes] = await Promise.all([
-            axios.get(`${API_BASE}/logros`),
-            axios.get(`${API_BASE}/logros/condiciones-soportadas`)
-        ]);
+        const logrosRes = await authFetch(`${API_BASE}/logros`);
+        const logrosData = await logrosRes.json();
 
-        setLogros(logrosRes.data || []);
-        setCondiciones(condRes.data || []);
+        const condRes = await authFetch(`${API_BASE}/logros/condiciones-soportadas`);
+        const condData = await condRes.json();
+
+        setLogros(logrosData);
+        setCondiciones(condData);
         } catch {
             toast.error("Error cargando datos");
         } finally {
@@ -106,10 +107,16 @@ export default function AdminLogros() {
             setGuardando(true);
 
             if (editando) {
-                await axios.put(`${API_BASE}/logros/${editando.id_logro}`, payload);
+                await authFetch(`${API_BASE}/logros/${editando.id_logro}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload),
+                });
                 toast.success("Logro actualizado");
             } else {
-                await axios.post(`${API_BASE}/logros`, payload);
+                await authFetch(`${API_BASE}/logros`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                });
                 toast.success("Logro creado");
             }
 
@@ -124,7 +131,12 @@ export default function AdminLogros() {
 
     const toggleActivo = async (logro) => {
         try {
-            await axios.patch(`${API_BASE}/logros/${logro.id_logro}/activo`, { activo: !logro.activo });
+            await authFetch(`${API_BASE}/logros/${logro.id_logro}/activo`, { 
+                method: 'PATCH',
+                body: JSON.stringify({
+                    activo: !logro.activo, 
+                }),
+            });
             cargarTodo();
         } catch {
             toast.error("No se pudo cambiar el estado");

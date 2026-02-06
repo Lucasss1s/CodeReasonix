@@ -1,16 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import API_BASE from "../config/api";
+import { authFetch } from "../utils/authToken";
 
-async function readSafeJson(res) {
-    const ct = res.headers.get("content-type") || "";
-    const text = await res.text();
-    if (ct.includes("application/json")) {
-        try { return JSON.parse(text); } catch { return null; }
-    }
-    return null;
-    }
-
-    export default function useAchievements(id_cliente) {
+export default function useAchievements(id_cliente) {
     const [loading, setLoading] = useState(false);
     const [defs, setDefs] = useState([]);
     const [unlocked, setUnlocked] = useState([]);
@@ -22,13 +14,12 @@ async function readSafeJson(res) {
         setLoading(true);
         setError(null);
         try {
-        const res = await fetch(`${API_BASE}/logros/me/${id_cliente}`);
-        const data = await readSafeJson(res);
+        const res = await authFetch(`${API_BASE}/logros/me`);
+        const data = await res.json();
 
         if (!res.ok) {
-            throw new Error(`GET /logros/me/${id_cliente} → HTTP ${res.status}${data?.error ? " · " + data.error : ""}`);
+            throw new Error(data?.error || "No se pudieron cargar los logros.");
         }
-        if (!data) throw new Error("Respuesta inválida del servidor (no JSON).");
 
         const obtenidos = Array.isArray(data.obtenidos) ? data.obtenidos : [];
         const allDefs   = Array.isArray(data.defs) ? data.defs : [];
@@ -56,9 +47,14 @@ async function readSafeJson(res) {
     const recalc = useCallback(async () => {
         if (!id_cliente) return { nuevos: [] };
         try {
-        const res = await fetch(`${API_BASE}/logros/check/${id_cliente}`, { method: "POST" });
-        const data = await readSafeJson(res);
-        if (!res.ok) throw new Error(`POST /logros/check → HTTP ${res.status}${data?.error ? " · " + data.error : ""}`);
+        const res = await authFetch(`${API_BASE}/logros/check`, { 
+            method: "POST", 
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data?.error || "No se pudieron cargar los logros.");
+        }
         await fetchList();
         return data || { nuevos: [] };
         } catch (e) {
