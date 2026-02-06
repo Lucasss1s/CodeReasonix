@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import "./ejercicio-historial.css";
 import API_BASE from "../config/api";
+import { authFetch } from "../utils/authToken";
 
 export default function EjercicioHistorial({
   idEjercicio,
-  idCliente,
   onCountChange,
   onLoadFromHistory,
 }) {
@@ -16,35 +16,51 @@ export default function EjercicioHistorial({
   const [expanded, setExpanded] = useState(null); 
   const [filters, setFilters] = useState({ lenguaje: "", estado: "" }); 
   const [page, setPage] = useState({ limit: 30, offset: 0 });
+  const [lastBatchSize, setLastBatchSize] = useState(0);
 
-  const hasMore = total > items.length;
+  const hasMore = items.length < total && lastBatchSize === page.limit;
+
+  const buildParams = ({ limit, offset, lenguaje, estado }) => {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+
+  if (lenguaje) params.set("lenguaje", lenguaje);
+  if (estado) params.set("estado", estado);
+
+  return params.toString();
+};
+
 
   const fetchList = async (reset = false) => {
-    if (!idEjercicio || !idCliente) return;
+    if (!idEjercicio) return;
+
+    const offset = reset ? 0 : page.offset;
+
     try {
       if (reset) setLoading(true);
-      const params = new URLSearchParams({
-        limit: String(page.limit),
-        offset: String(reset ? 0 : page.offset),
+
+      const query = buildParams({
+        limit: page.limit,
+        offset,
+        lenguaje: filters.lenguaje,
+        estado: filters.estado,
       });
-      if (filters.lenguaje) params.set("lenguaje", filters.lenguaje);
-      if (filters.estado) params.set("estado", filters.estado);
 
-      const res = await fetch(`${API_BASE}/historial/${idCliente}/ejercicio/${idEjercicio}?` + params.toString());
+      const res = await authFetch(`${API_BASE}/historial/ejercicio/${idEjercicio}?${query}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const { items: newItems = [], total = 0 } = await res.json();
 
-      if (reset) {
-        setItems(data.items || []);
-        setTotal(data.total || 0);
-        onCountChange?.(data.total || 0);
-        setPage((p) => ({ ...p, offset: (data.items || []).length }));
-      } else {
-        setItems((prev) => [...prev, ...(data.items || [])]);
-        setTotal(data.total || 0);
-        onCountChange?.(data.total || 0);
-        setPage((p) => ({ ...p, offset: prevLength => prevLength }));
-      }
+      setLastBatchSize(newItems.length);
+      setItems((prev) => (reset ? newItems : [...prev, ...newItems]));
+      setPage((p) => ({
+        ...p,
+        offset: offset + newItems.length,
+      }));
+      setTotal(total);
+      onCountChange?.(total);
+
     } catch (err) {
       console.error("[HISTORIAL] list fail", err);
       toast.error("No se pudo cargar el historial");
@@ -54,29 +70,34 @@ export default function EjercicioHistorial({
   };
 
   useEffect(() => {
-    setPage({ limit: 30, offset: 0 });
+    setLastBatchSize(0);
     fetchList(true);
     // eslint-disable-next-line 
-  }, [idEjercicio, idCliente]);
+  }, [idEjercicio]);
 
   useEffect(() => {
-    const t = setTimeout(() => fetchList(true), 150);
+    const t = setTimeout(() => {
+      setPage({ limit: 30, offset: 0 });
+      setLastBatchSize(0);
+      fetchList(true);
+    }, 150);
     return () => clearTimeout(t);
     // eslint-disable-next-line 
   }, [filters]);
 
   const stats = useMemo(() => {
-    const aprob = items.filter((i) => i.resultado).length;
+    const intentos = items.length;
+    const aprobados = items.filter((i) => i.resultado).length;
+
     return {
-      intentos: total,
-      aprobados: aprob,
-      ratio: total > 0 ? (aprob / total) : 0,
+      intentos,
+      aprobados,
+      ratio: intentos > 0 ? aprobados / intentos : 0,
     };
-  }, [items, total]);
+  }, [items]);
 
   const loadMore = () => {
     if (!hasMore) return;
-    setPage((p) => ({ ...p, offset: p.offset + p.limit }));
     fetchList(false);
   };
 
@@ -84,7 +105,7 @@ export default function EjercicioHistorial({
     if (!id_submit_final) return;
     setFetchingCode(id_submit_final);
     try {
-      const res = await fetch(`${API_BASE}/historial/submit/${id_submit_final}?id_cliente=${idCliente}`);
+      const res = await authFetch(`${API_BASE}/historial/submit/${id_submit_final}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
 

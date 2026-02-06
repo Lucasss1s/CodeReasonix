@@ -1,11 +1,13 @@
 import express from "express";
 import { supabase } from "../config/db.js";
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
-
-router.get("/:id_cliente/ejercicio/:id_ejercicio", async (req, res) => {
-  const { id_cliente, id_ejercicio } = req.params;
+router.get("/ejercicio/:id_ejercicio", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
+  
+  const { id_ejercicio } = req.params;
   const limit = Math.min(parseInt(req.query.limit || "30", 10), 100);
   const offset = Math.max(parseInt(req.query.offset || "0", 10), 0);
   const lenguaje = req.query.lenguaje || null;
@@ -35,6 +37,9 @@ router.get("/:id_cliente/ejercicio/:id_ejercicio", async (req, res) => {
       let totales = null;
       try {
         const det = row.detalles;
+        if (typeof det === "string") {
+          try { det = JSON.parse(det); } catch {}
+        }
         if (Array.isArray(det)) {
           totales = det.length;
           aceptados = det.filter(
@@ -66,12 +71,10 @@ router.get("/:id_cliente/ejercicio/:id_ejercicio", async (req, res) => {
   }
 });
 
-router.get("/submit/:id_submit_final", async (req, res) => {
-  const { id_submit_final } = req.params;
-  const id_cliente = req.query.id_cliente;
+router.get("/submit/:id_submit_final", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
 
-  if (!id_cliente)
-    return res.status(400).json({ error: "id_cliente requerido" });
+  const { id_submit_final } = req.params;
 
   try {
     const { data, error } = await supabase
@@ -98,8 +101,11 @@ router.get("/submit/:id_submit_final", async (req, res) => {
   }
 });
 
-router.get("/:id_cliente/ejercicio/:id_ejercicio/count", async (req, res) => {
-  const { id_cliente, id_ejercicio } = req.params;
+router.get("/ejercicio/:id_ejercicio/count", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
+
+  const { id_ejercicio } = req.params;
+
   try {
     const { count, error } = await supabase
       .from("submit_final")

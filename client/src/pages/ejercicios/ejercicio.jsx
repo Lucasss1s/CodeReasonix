@@ -327,7 +327,7 @@ function Ejercicio() {
 
     const loadHistCount = async () => {
         try {
-        const res = await fetch(`${API_BASE}/historial/${clienteId}/ejercicio/${id}/count`);
+        const res = await authFetch(`${API_BASE}/historial/ejercicio/${id}/count`);
         if (!res.ok) {
             let body = null;
             try {
