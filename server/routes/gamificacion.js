@@ -4,12 +4,12 @@ import { otorgarXPUnaVezPorDia, desglosarXP } from "../services/gamificacion.js"
 import { actualizarStreak } from "../services/streak.js";
 import { checkAndGrantLogros } from "../services/logros.js";
 import { obtenerMonedas } from "../services/monedas.js"; 
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
-router.post("/login-xp", async (req, res) => {
-  const { id_cliente } = req.body;
-  if (!id_cliente) return res.status(400).json({ error: "Falta id_cliente" });
+router.post("/login-xp", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
 
   try {
     // XP login diario
@@ -61,9 +61,8 @@ router.post("/login-xp", async (req, res) => {
   }
 });
 
-router.get("/me/:id_cliente", async (req, res) => {
-  const id_cliente = parseInt(req.params.id_cliente, 10);
-  if (!id_cliente) return res.status(400).json({ error: "id_cliente inválido" });
+router.get("/me", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
 
   try {
     const { data: ux } = await supabase
@@ -147,11 +146,8 @@ router.get("/me/:id_cliente", async (req, res) => {
   }
 });
 
-router.get("/monedas/:id_cliente", async (req, res) => {
-  const id_cliente = parseInt(req.params.id_cliente, 10);
-  if (!id_cliente) {
-    return res.status(400).json({ error: "id_cliente inválido" });
-  }
+router.get("/monedas", requireSesion, async (req, res) => {
+  const id_cliente = req.cliente.id_cliente;
 
   try {
     const monedas = await obtenerMonedas(id_cliente);

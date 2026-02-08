@@ -107,12 +107,9 @@ export default function Navbar() {
 
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/gamificacion/login-xp`, {
+        const res = await authFetch(`${API_BASE}/gamificacion/login-xp`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id_cliente: Number(id) }),
         });
-
         const data = await res.json();
 
         localStorage.setItem(key, today);

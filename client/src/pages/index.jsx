@@ -66,9 +66,9 @@ export default function Index() {
       try {
         setLoading(true);
 
-        const resEj = await fetch(`${API_BASE}/ejercicios`);
+        const resEj = await authFetch(`${API_BASE}/ejercicios/`);
         const ejerciciosApi = await resEj.json();
-        setEjercicios(ejerciciosApi || []);
+        setEjercicios(ejerciciosApi);
 
         const resRec = await authFetch(
           `${API_BASE}/recomendaciones/home/${clienteId}`

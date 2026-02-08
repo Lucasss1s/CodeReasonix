@@ -1,9 +1,11 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
+import { requireSesion } from '../middlewares/requireSesion.js';
+import { requireAdmin } from '../middlewares/requireAdmin.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', requireSesion, requireAdmin, async (req, res) => {
   const q = (req.query.q || '').trim();
   try {
     let query = supabase.from('empresa').select('*').order('id_empresa', { ascending: true });
@@ -18,7 +20,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireSesion, requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   try {
     const { data, error } = await supabase
@@ -35,7 +37,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', requireSesion, requireAdmin, async (req, res) => {
   const { nombre, descripcion, sector } = req.body;
   if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
 
@@ -54,7 +56,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireSesion, requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   const { nombre, descripcion, sector } = req.body;
 
@@ -74,7 +76,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireSesion, requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   try {
     const { error } = await supabase.from('empresa').delete().eq('id_empresa', id);

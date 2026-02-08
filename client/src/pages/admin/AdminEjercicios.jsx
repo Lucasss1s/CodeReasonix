@@ -5,6 +5,7 @@ import API_BASE from '../../config/api';
 import Navbar from '../../components/Navbar.jsx';
 import { toast } from 'sonner';
 import './adminEjercicios.css';
+import { authFetch } from '../../utils/authToken.js';
 
 export default function AdminEjercicios() {
     const navigate = useNavigate();
@@ -36,8 +37,9 @@ export default function AdminEjercicios() {
     const cargarLista = async () => {
         try {
             setCargando(true);
-            const res = await axios.get(`${API_BASE}/ejercicios?admin=1`);
-            setEjercicios(res.data || []);
+            const res = await authFetch(`${API_BASE}/ejercicios/admin`);
+            const data = await res.json()
+            setEjercicios(data);
         } catch (err) {
             console.error('Error cargando ejercicios:', err);
             toast.error('No se pudieron cargar los ejercicios');
@@ -70,7 +72,8 @@ export default function AdminEjercicios() {
 
     const handleEditar = async (id) => {
         try {
-            const { data } = await axios.get(`${API_BASE}/ejercicios/${id}?admin=1`);
+            const res = await authFetch(`${API_BASE}/ejercicios/admin/${id}`);
+            const data = await res.json();
             setSeleccionado(data);
             setMostrarForm(true);
         } catch (err) {
@@ -82,7 +85,12 @@ export default function AdminEjercicios() {
     const toggleHabilitar = async (ej) => {
         const nuevoEstado = !ej.disabled;
         try {
-            await axios.put(`${API_BASE}/ejercicios/${ej.id_ejercicio}`, { disabled: !ej.disabled });
+            await authFetch(`${API_BASE}/ejercicios/${ej.id_ejercicio}`, { 
+                method: 'PUT',
+                body: JSON.stringify({
+                    disabled: !ej.disabled,
+                }),
+            });
             toast.success(
                 nuevoEstado? "Ejercicio deshabilitado": "Ejercicio habilitado"
             );
@@ -93,74 +101,39 @@ export default function AdminEjercicios() {
         }
     };
 
-    // helpers fetch casos/pistas
-    async function fetchCasos(id) {
-        const candidates = [
-        `${API_BASE}/casos-prueba/ejercicios/${id}/casos?admin=1`,
-        `${API_BASE}/ejercicios/${id}/casos?admin=1`,
-        `${API_BASE}/ejercicios/${id}?admin=1`,
-        ];
-        for (const url of candidates) {
-            try {
-                const r = await axios.get(url);
-                if (r.data?.casos) return r.data.casos;
-                if (r.data?.casos_prueba) return r.data.casos_prueba;
-                if (Array.isArray(r.data)) return r.data;
-                if (r.data?.casos_prueba) return r.data.casos_prueba;
-            } catch (e) {
-                if (e.response && e.response.status === 404) continue;
-                console.error('fetchCasos error (no 404):', e);
-            }
-        }
-        return [];
-    }
-
-    async function fetchPistas(id) {
-        const candidates = [
-        `${API_BASE}/ejercicio-pistas/${id}/pistas?admin=1`,
-        `${API_BASE}/ejercicios/${id}/pistas?admin=1`,
-        `${API_BASE}/ejercicios/${id}?admin=1`,
-        ];
-        for (const url of candidates) {
-            try {
-                const r = await axios.get(url);
-                if (r.data?.pistas) return r.data.pistas;
-                if (r.data?.pistas) return r.data.pistas;
-                if (Array.isArray(r.data)) return r.data;
-            } catch (e) {
-                if (e.response && e.response.status === 404) continue;
-                console.error('fetchPistas error (no 404):', e);
-            }
-        }
-        return [];
-    }
 
     const verCasos = async (id) => {
         try {
-            const casos = await fetchCasos(id);
-            const ex = await axios
-                .get(`${API_BASE}/ejercicios/${id}?admin=1`)
-                .then((r) => r.data)
-                .catch(() => null);
-            setSeleccionado({ id_ejercicio: id, titulo: ex?.titulo || `Ej ${id}`, casos_prueba: casos });
+            const res = await authFetch(`${API_BASE}/ejercicios/admin/${id}`);
+            const data = await res.json();
+
+            setSeleccionado({
+                id_ejercicio: data.id_ejercicio,
+                titulo: data.titulo,
+                casos_prueba: data.casos_prueba || []
+            });
+
             setMostrandoCasos(true);
         } catch (err) {
-            console.error('Error al obtener casos:', err);
+            console.error(err);
             toast.error('No se pudieron cargar casos');
         }
     };
 
     const verPistas = async (id) => {
         try {
-            const pistas = await fetchPistas(id);
-            const ex = await axios
-                .get(`${API_BASE}/ejercicios/${id}?admin=1`)
-                .then((r) => r.data)
-                .catch(() => null);
-            setSeleccionado({ id_ejercicio: id, titulo: ex?.titulo || `Ej ${id}`, pistas });
+            const res = await authFetch(`${API_BASE}/ejercicios/admin/${id}`);
+            const data = await res.json();
+
+            setSeleccionado({
+                id_ejercicio: data.id_ejercicio,
+                titulo: data.titulo,
+                pistas: data.pistas || []
+            });
+
             setMostrandoPistas(true);
         } catch (err) {
-            console.error('Error al obtener pistas:', err);
+            console.error(err);
             toast.error('No se pudieron cargar pistas');
         }
     };
@@ -324,6 +297,17 @@ export default function AdminEjercicios() {
     );
 }
 
+function useLockBodyScroll(active) {
+    useEffect(() => {
+        if (!active) return;
+        const original = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+        document.body.style.overflow = original;
+        };
+    }, [active]);
+}
+
 //validaciones y UX
 function EjercicioForm({ ejercicio, onClose }) {
     const esEdicion = !!ejercicio?.id_ejercicio;
@@ -341,6 +325,8 @@ function EjercicioForm({ ejercicio, onClose }) {
     const [tagsCSV, setTagsCSV] = useState((ejercicio?.etiquetas || []).join(', '));
     const [disabled, setDisabled] = useState(Boolean(ejercicio?.disabled));
     const [guardando, setGuardando] = useState(false);
+
+    useLockBodyScroll(true);
 
     function validarAntesGuardar() {
         if (!titulo || !titulo.trim()) {
@@ -380,10 +366,16 @@ function EjercicioForm({ ejercicio, onClose }) {
         try {
             setGuardando(true);
             if (esEdicion) {
-                await axios.put(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}`, payload);
+                await authFetch(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload),
+                });
                 toast.success('Ejercicio actualizado');
             } else {
-                await axios.post(`${API_BASE}/ejercicios`, payload);
+                await authFetch(`${API_BASE}/ejercicios`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                });
                 toast.success('Ejercicio creado');
             }
             onClose();
@@ -396,8 +388,8 @@ function EjercicioForm({ ejercicio, onClose }) {
     };
 
     return (
-        <div className="modal-overlay admin-page">
-            <div className="modal-card form-card">
+        <div className="modal-overlay admin-page" onClick={onClose}>
+            <div className="modal-card form-card" onClick={(e) => e.stopPropagation()}>
                 <h3 className="modal-title">{esEdicion ? 'Editar ejercicio' : 'Crear ejercicio'}</h3>
 
                 <div className="form-grid">
@@ -444,22 +436,26 @@ function CasosModal({ ejercicio, onClose }) {
     const [editId, setEditId] = useState(null);
     const [editPayload, setEditPayload] = useState(null);
 
+    useLockBodyScroll(true);
+
     useEffect(() => {
-        (async () => {
+    (async () => {
         try {
-            setCargando(true);
-            const res = await axios
-            .get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`)
-            .catch(() => axios.get(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`).catch(() => ({ data: { casos: ejercicio.casos_prueba || [] } })));
-            setCasos(res.data.casos || res.data || []);
+        setCargando(true);
+        const res = await axios.get(
+            `${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`
+        );
+        setCasos(res.data.casos || []);
         } catch (err) {
-            console.warn('No existe endpoint /casos admin o fallo, usando casos públicos si vienen en ejercicio', err);
-            setCasos(ejercicio.casos_prueba || []);
+        console.error('Error cargando casos:', err);
+        toast.error('No se pudieron cargar los casos');
+        setCasos([]);
         } finally {
-            setCargando(false);
+        setCargando(false);
         }
-        })();
-    }, [ejercicio]);
+    })();
+    }, [ejercicio.id_ejercicio]);
+
 
     const validarCaso = (p) => {
         if (!p.salida_esperada || !String(p.salida_esperada).trim()) {
@@ -480,9 +476,9 @@ function CasosModal({ ejercicio, onClose }) {
         if (!validarCaso(nuevo)) return;
         try {
         const payload = { entrada_procesada: JSON.parse(nuevo.entrada_procesada), salida_esperada: nuevo.salida_esperada, publico: nuevo.publico };
-        await axios.post(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos`, payload).catch(() => axios.post(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}/casos`, payload));
+        await axios.post(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos`, payload);
         toast.success('Caso agregado');
-        const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`).catch(() => axios.get(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`));
+        const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`);
         setCasos(r.data.casos || r.data || []);
         setNuevo({ entrada_procesada: JSON.stringify({ python: '', javascript: '', java: '' }, null, 2), salida_esperada: '', publico: true });
         } catch (err) {
@@ -505,7 +501,7 @@ function CasosModal({ ejercicio, onClose }) {
         try {
             await axios.put(`${API_BASE}/casos-prueba/casos/${editId}`, { entrada_procesada: JSON.parse(editPayload.entrada_procesada), salida_esperada: editPayload.salida_esperada, publico: editPayload.publico });
             toast.success('Caso actualizado');
-            const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`).catch(() => axios.get(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`));
+            const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`);
             setCasos(r.data.casos || r.data || []);
             cancelEdit();
         } catch (err) {
@@ -518,7 +514,7 @@ function CasosModal({ ejercicio, onClose }) {
         try {
             await axios.put(`${API_BASE}/casos-prueba/casos/${c.id_caso}`, { publico: !c.publico });
             toast.success('Caso actualizado');
-            const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`).catch(() => axios.get(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`));
+            const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`);
             setCasos(r.data.casos || r.data || []);
         } catch (err) {
             console.error('Error actualizando caso:', err);
@@ -527,8 +523,8 @@ function CasosModal({ ejercicio, onClose }) {
     };
 
     return (
-        <div className="modal-overlay">
-        <div className="modal-card wide">
+        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-card wide"  onClick={(e) => e.stopPropagation()}>
             <h3>Casos — {ejercicio.titulo}</h3>
 
             {cargando ? (
@@ -614,98 +610,74 @@ function PistasModal({ ejercicio, onClose }) {
     const [nuevo, setNuevo] = useState({ titulo: '', contenido: '', orden: 1 });
     const [cargando, setCargando] = useState(true);
 
+    useLockBodyScroll(true);
+
     useEffect(() => {
-        (async () => {
+    (async () => {
+        try {
         setCargando(true);
-        const candidates = [
-            `${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas?admin=1`,
-            `${API_BASE}/ejercicios/${ejercicio.id_ejercicio}/pistas?admin=1`,
-            `${API_BASE}/ejercicios/${ejercicio.id_ejercicio}?admin=1`,
-        ];
+        const res = await axios.get(
+            `${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas?admin=1`
+        );
 
-        let loaded = [];
-        for (const url of candidates) {
-            try {
-            const r = await axios.get(url);
-            // normalizar endpoint
-            if (r.data?.pistas) {
-                loaded = r.data.pistas;
-                break;
-            }
-            if (r.data?.pistas_prueba) {
-                loaded = r.data.pistas_prueba;
-                break;
-            }
-            if (Array.isArray(r.data)) {
-                loaded = r.data;
-                break;
-            }
-            if (r.data?.pistas) {
-                loaded = r.data.pistas;
-                break;
-            }
-            } catch (e) {
-            if (e.response && e.response.status === 404) continue;
-            console.error('fetchPistas error (no 404):', e);
-            }
-        }
+        const ordered = (res.data.pistas || [])
+            .slice()
+            .sort((a, b) => Number(a.orden) - Number(b.orden));
 
-        // ordenar por campo 'orden'
-        loaded = (loaded || []).slice().sort((a, b) => (Number(a.orden) || 0) - (Number(b.orden) || 0));
-        setPistas(loaded);
+        setPistas(ordered);
 
-        // set default orden
-        const nextOrden = loaded.length ? (Number(loaded[loaded.length - 1].orden || 0) + 1) : 1;
+        const nextOrden = ordered.length
+            ? Number(ordered[ordered.length - 1].orden) + 1
+            : 1;
+
         setNuevo({ titulo: '', contenido: '', orden: nextOrden });
-
+        } catch (err) {
+        console.error('Error cargando pistas:', err);
+        toast.error('No se pudieron cargar las pistas');
+        setPistas([]);
+        } finally {
         setCargando(false);
-        })();
-    }, [ejercicio]);
+        }
+    })();
+    }, [ejercicio.id_ejercicio]);
 
     const crearPista = async () => {
         if (!nuevo.titulo || !nuevo.titulo.trim()) {
-        toast.error('Título de pista requerido');
-        return;
+            toast.error('Título de pista requerido');
+            return;
         }
         if (!nuevo.contenido || !nuevo.contenido.trim()) {
-        toast.error('Contenido de pista requerido');
-        return;
+            toast.error('Contenido de pista requerido');
+            return;
         }
 
         try {
-        await axios.post(`${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas`, nuevo).catch(async (e) => {
-            // x cambio de ruta
-            if (e.response && e.response.status === 404) {
-            return axios.post(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}/pistas`, nuevo);
-            }
-            throw e;
-        });
+            await axios.post(`${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas`,nuevo);
+            toast.success('Pista creada');
 
-        toast.success('Pista creada');
+            setCargando(true);
+            const res = await axios.get(`${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas?admin=1`);
+            const ordered = (res.data.pistas || [])
+            .slice()
+            .sort((a, b) => Number(a.orden) - Number(b.orden));
+            setPistas(ordered);
 
-        // refresh
-        try {
-            const r = await axios
-            .get(`${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas?admin=1`)
-            .catch(() => axios.get(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}/pistas?admin=1`).catch(() => axios.get(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}?admin=1`)));
-            const loaded = r.data?.pistas || r.data || [];
-            const sorted = (Array.isArray(loaded) ? loaded.slice() : []).sort((a, b) => (Number(a.orden) || 0) - (Number(b.orden) || 0));
-            setPistas(sorted);
-            const nextOrden = sorted.length ? (Number(sorted[sorted.length - 1].orden || 0) + 1) : 1;
+            const nextOrden = ordered.length
+            ? Number(ordered[ordered.length - 1].orden) + 1
+            : 1;
+            
             setNuevo({ titulo: '', contenido: '', orden: nextOrden });
-        } catch (errRefresh) {
-            console.warn('Pista creada pero fallo refresh:', errRefresh);
-            setNuevo((prev) => ({ titulo: '', contenido: '', orden: prev.orden + 1 }));
-        }
         } catch (err) {
-        console.error('Error creando pista:', err);
-        toast.error('No se pudo crear pista');
+            console.error('Error creando pista:', err);
+            toast.error('No se pudo crear pista');
+        } finally {
+            setCargando(false);
         }
     };
 
     return (
-        <div className="modal-overlay">
-        <div className="modal-card wide">
+        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-card wide" onClick={(e) => e.stopPropagation()}>
             <h3>Pistas — {ejercicio.titulo}</h3>
 
             {cargando ? (
@@ -759,9 +731,11 @@ function BugsModal({ ejercicio, onClose }) {
     // eslint-disable-next-line
     const [bugs, setBugs] = useState(ejercicio.bugs || []);
 
+    useLockBodyScroll(true);
+
     return (
-        <div className="modal-overlay">
-        <div className="modal-card wide">
+        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-card wide" onClick={(e) => e.stopPropagation()}>
             <h3>Reportes — {ejercicio.titulo}</h3>
             {bugs.length === 0 ? (
             <div className="admin-empty">No hay reportes</div>

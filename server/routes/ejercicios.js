@@ -1,12 +1,13 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
+import { requireSesion } from '../middlewares/requireSesion.js';
+import { requireAdmin } from '../middlewares/requireAdmin.js';
 
 const router = express.Router();
 
-// Helper 
 async function ensureEtiquetas(etiquetas = []) {
     if (!Array.isArray(etiquetas) || etiquetas.length === 0) return [];
-    const trimmed = etiquetas.map(t => t.trim()).filter(Boolean);
+    const trimmed = [...new Set(etiquetas.map(t => t.trim()).filter(Boolean))];
     if (trimmed.length === 0) return [];
 
     const { data: existentes, error: errEx } = await supabase
@@ -33,114 +34,172 @@ async function ensureEtiquetas(etiquetas = []) {
     return all.map(a => a.id_etiqueta);
 }
 
-router.get('/', async (req, res) => {
-    const isAdmin = String(req.query.admin || '') === '1';
-    try {
-        let q = supabase.from('ejercicio').select('id_ejercicio, titulo, descripcion, dificultad, disabled, plantillas');
-        if (!isAdmin) q = q.eq('disabled', false);
-        const { data: ejerciciosData, error: errorEj } = await q.order('id_ejercicio', { ascending: true });
+async function attachEtiquetasToEjercicios(ejerciciosData = []) {
+    if (!Array.isArray(ejerciciosData) || ejerciciosData.length === 0) {
+        return [];
+    }
 
-        if (errorEj) throw errorEj;
+    const ids = ejerciciosData.map(e => e.id_ejercicio);
 
-        const { data: relData, error: errorRel } = await supabase
+    // relacion ejercicio-etiqueta
+    const { data: relData, error: errorRel } = await supabase
         .from('ejercicio_etiqueta')
-        .select('id_ejercicio, id_etiqueta');
+        .select('id_ejercicio, id_etiqueta')
+        .in('id_ejercicio', ids);
 
-        if (errorRel) throw errorRel;
+    if (errorRel) throw errorRel;
 
-        const { data: etiquetasData, error: errorEt } = await supabase
+    if (!relData || relData.length === 0) {
+        return ejerciciosData.map(e => ({ ...e, etiquetas: [] }));
+    }
+
+    //etiqueta
+    const etiquetaIds = [...new Set(relData.map(r => r.id_etiqueta))];
+
+    const { data: etiquetasData, error: errorEt } = await supabase
         .from('etiqueta')
-        .select('id_etiqueta, nombre');
+        .select('id_etiqueta, nombre')
+        .in('id_etiqueta', etiquetaIds);
 
-        if (errorEt) throw errorEt;
+    if (errorEt) throw errorEt;
 
-        const etiquetasById = new Map((etiquetasData || []).map(r => [r.id_etiqueta, r.nombre]));
-        const etiquetasPorEjercicio = {};
-        (relData || []).forEach((row) => {
-        const { id_ejercicio, id_etiqueta } = row;
+    const etiquetasById = new Map(
+        (etiquetasData || []).map(e => [e.id_etiqueta, e.nombre])
+    );
+
+    const etiquetasPorEjercicio = {};
+    relData.forEach(({ id_ejercicio, id_etiqueta }) => {
         const nombre = etiquetasById.get(id_etiqueta);
         if (!nombre) return;
-        if (!etiquetasPorEjercicio[id_ejercicio]) etiquetasPorEjercicio[id_ejercicio] = [];
+
+        if (!etiquetasPorEjercicio[id_ejercicio]) {
+        etiquetasPorEjercicio[id_ejercicio] = [];
+        }
         etiquetasPorEjercicio[id_ejercicio].push(nombre);
-        });
+    });
 
-        const ejercicios = (ejerciciosData || []).map((ej) => {
-        const rawTags = etiquetasPorEjercicio[ej.id_ejercicio] || [];
-        const etiquetas = [...new Set(rawTags)];
-        return { ...ej, etiquetas };
-        });
+    return ejerciciosData.map(ej => ({
+        ...ej,
+        etiquetas: [...new Set(etiquetasPorEjercicio[ej.id_ejercicio] || [])]
+    }));
+    }
 
+    
+router.get('/', requireSesion, async (req, res) => {
+    try {
+        const { data: ejerciciosData, error } = await supabase
+        .from('ejercicio')
+        .select('id_ejercicio, titulo, descripcion, dificultad, plantillas')
+        .eq('disabled', false)
+        .order('id_ejercicio', { ascending: true });
+
+        if (error) throw error;
+
+        const ejercicios = await attachEtiquetasToEjercicios(ejerciciosData);
         res.json(ejercicios);
     } catch (err) {
-        console.error('Error listando ejercicios:', err);
+        console.error('Error listando ejercicios (user):', err);
+        res.status(500).json({ error: 'Error listando ejercicios' });
+    }
+});
+
+router.get('/admin', requireSesion, requireAdmin, async (req, res) => {
+    try {
+        const { data: ejerciciosData, error } = await supabase
+        .from('ejercicio')
+        .select('id_ejercicio, titulo, descripcion, dificultad, disabled, plantillas')
+        .order('id_ejercicio', { ascending: true });
+
+        if (error) throw error;
+
+        const ejercicios = await attachEtiquetasToEjercicios(ejerciciosData);
+        res.json(ejercicios);
+    } catch (err) {
+        console.error('Error listando ejercicios (admin):', err);
         res.status(500).json({ error: 'Error listando ejercicios' });
     }
 });
 
 // Detalle ejercicio con casos de prueba
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireSesion, async (req, res) => {
     const { id } = req.params;
-    const isAdmin = String(req.query.admin || '') === '1';
 
     try {
-        let query = supabase
+        const { data: ejercicio, error } = await supabase
         .from('ejercicio')
-        .select('id_ejercicio, titulo, descripcion, dificultad, plantillas, disabled')
-        .eq('id_ejercicio', id);
+        .select('id_ejercicio, titulo, descripcion, dificultad, plantillas')
+        .eq('id_ejercicio', id)
+        .eq('disabled', false)
+        .maybeSingle();
 
-        if (!isAdmin) query = query.eq('disabled', false);
-
-        const { data: ejercicio, error: errorEjercicio } = await query.maybeSingle();
-
-        if (errorEjercicio) throw errorEjercicio;
+        if (error) throw error;
         if (!ejercicio) return res.status(404).json({ error: 'Ejercicio no encontrado' });
 
-        // etiquetas
-        const { data: rels, error: errorRels } = await supabase
-        .from('ejercicio_etiqueta')
-        .select('id_etiqueta')
-        .eq('id_ejercicio', id);
+        const [ejConEtiquetas] = await attachEtiquetasToEjercicios([ejercicio]);
 
-        if (errorRels) throw errorRels;
+        const { data: casos } = await supabase
+        .from('caso_prueba')
+        .select('id_caso, entrada_procesada, salida_esperada')
+        .eq('id_ejercicio', id)
+        .eq('publico', true);
 
-        let etiquetas = [];
-        if (rels && rels.length > 0) {
-        const ids = rels.map((r) => r.id_etiqueta);
-        const { data: tags, error: errorTags } = await supabase
-            .from('etiqueta')
-            .select('id_etiqueta, nombre')
-            .in('id_etiqueta', ids);
+        const { data: pistas } = await supabase
+        .from('ejercicio_pista')
+        .select('id_pista, titulo, contenido, orden')
+        .eq('id_ejercicio', id)
+        .order('orden');
 
-        if (errorTags) throw errorTags;
-        etiquetas = (tags || []).map((t) => t.nombre);
-        }
+        res.json({
+        ...ejConEtiquetas,
+        casos_prueba: casos || [],
+        pistas: pistas || []
+        });
+    } catch (err) {
+        console.error('Error obteniendo ejercicio (user):', err);
+        res.status(500).json({ error: 'Error obteniendo ejercicio' });
+    }
+});
 
-        let casosQ = supabase
+router.get('/admin/:id', requireSesion, requireAdmin, async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const { data: ejercicio, error } = await supabase
+        .from('ejercicio')
+        .select('id_ejercicio, titulo, descripcion, dificultad, plantillas, disabled')
+        .eq('id_ejercicio', id)
+        .maybeSingle();
+
+        if (error) throw error;
+        if (!ejercicio) return res.status(404).json({ error: 'Ejercicio no encontrado' });
+
+        const [ejConEtiquetas] = await attachEtiquetasToEjercicios([ejercicio]);
+
+        const { data: casos } = await supabase
         .from('caso_prueba')
         .select('id_caso, entrada_procesada, salida_esperada, publico')
         .eq('id_ejercicio', id);
-        if (!isAdmin) casosQ = casosQ.eq('publico', true);
 
-        const { data: casos, error: errorCasos } = await casosQ;
-        if (errorCasos) throw errorCasos;
-
-        // pistas 
-        const { data: pistas, error: errP } = await supabase
+        const { data: pistas } = await supabase
         .from('ejercicio_pista')
-        .select('id_pista,id_ejercicio,titulo,contenido,orden')
+        .select('id_pista, titulo, contenido, orden')
         .eq('id_ejercicio', id)
-        .order('orden', { ascending: true });
-        if (errP) throw errP;
+        .order('orden');
 
-        res.json({ ...ejercicio, etiquetas, casos_prueba: casos || [], pistas: pistas || [] });
+        res.json({
+        ...ejConEtiquetas,
+        casos_prueba: casos || [],
+        pistas: pistas || []
+        });
     } catch (err) {
-        console.error('Error obteniendo ejercicio:', err);
+        console.error('Error obteniendo ejercicio (admin):', err);
         res.status(500).json({ error: 'Error obteniendo ejercicio' });
     }
-    });
+});
 
 
-router.post('/', async (req, res) => {
+
+router.post('/', requireSesion, requireAdmin, async (req, res) => {
     const { titulo, descripcion, dificultad = 1, plantillas = {}, etiquetas = [], disabled = false } = req.body || {};
     if (!titulo || !descripcion) return res.status(400).json({ error: 'titulo y descripcion son obligatorios' });
 
@@ -167,7 +226,7 @@ router.post('/', async (req, res) => {
 });
 
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireSesion, requireAdmin, async (req, res) => {
     const { id } = req.params;
     const { titulo, descripcion, dificultad, plantillas, etiquetas, disabled } = req.body || {};
 
@@ -186,6 +245,7 @@ router.put('/:id', async (req, res) => {
         .select()
         .maybeSingle();
         if (errUp) throw errUp;
+        if (!updated) return res.status(404).json({ error: 'Ejercicio no encontrado' });
 
         if (Array.isArray(etiquetas)) {
         const { error: delRelErr } = await supabase.from('ejercicio_etiqueta').delete().eq('id_ejercicio', id);

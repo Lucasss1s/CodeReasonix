@@ -4,6 +4,7 @@ import { supabase } from "../../config/supabase.js";
 import API_BASE from "../../config/api";
 import { toast } from "sonner";
 import "./auth.css";
+import { authFetch } from "../../utils/authToken.js";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -181,10 +182,11 @@ export default function Login() {
 
       if (dataBackend.id_cliente) {
         try {
-          const resXp = await fetch(`${API_BASE}/gamificacion/login-xp`, {
+          const resXp = await authFetch(`${API_BASE}/gamificacion/login-xp`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_cliente: dataBackend.id_cliente }),
+            body: JSON.stringify({ 
+              id_cliente: dataBackend.id_cliente 
+            }),
           });
           const xpData = await resXp.json();
 

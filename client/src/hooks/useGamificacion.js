@@ -1,31 +1,27 @@
 import { useEffect, useState } from "react";
 import { getGamificacionMe } from "../api/gamificacion.js";
 
-export default function useGamificacion(id_cliente) {
+export default function useGamificacion() {
     const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(!!id_cliente);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        if (!id_cliente) return;
-        let cancel = false;
-        (async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await getGamificacionMe(id_cliente);
-            if (!cancel) setData(res);
+            const res = await getGamificacionMe();
+            setData(res);
+            setError(null);
         } catch (e) {
-            if (!cancel) setError(e);
+            setError(e);
         } finally {
-            if (!cancel) setLoading(false);
+            setLoading(false);
         }
-        })();
-        return () => { cancel = true; };
-    }, [id_cliente]);
+    };
 
-    return { data, loading, error, refetch: async () => {
-        if (!id_cliente) return;
-        const res = await getGamificacionMe(id_cliente);
-        setData(res);
-    }};
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    return { data, loading, error, refetch: fetchData };
 }

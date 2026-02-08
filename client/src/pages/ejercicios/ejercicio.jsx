@@ -205,7 +205,7 @@ function Ejercicio() {
     useEffect(() => {
         const fetchEjercicio = async () => {
             try {
-                const res = await fetch(`${API_BASE}/ejercicios/${id}`);
+                const res = await authFetch(`${API_BASE}/ejercicios/${id}`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 setEjercicio(data);

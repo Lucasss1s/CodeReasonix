@@ -35,7 +35,7 @@ function ProgressBar({ current, total, label }) {
     }
 
     export default function GamificationHUD({ id_cliente }) {
-    const { data, loading, error, refetch } = useGamificacion(id_cliente);
+    const { data, loading, error, refetch } = useGamificacion();
 
     const today = useMemo(() => data?.hoy ?? {}, [data]);
     const progreso =

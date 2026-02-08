@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import { toast } from "sonner";
 import API_BASE from "../../config/api";
 import Navbar from "../../components/Navbar";
@@ -128,7 +127,7 @@ export default function Perfil() {
   const isOwnProfile = !id_cliente_param || parseInt(id_cliente_param, 10) === id_cliente_logueado;
 
   // eslint-disable-next-line 
-  const { data: gami, loading: gLoading, error: gError, refetch } = useGamificacion(id_cliente);
+  const { data: gami, loading: gLoading, error: gError, refetch } = useGamificacion();
   // eslint-disable-next-line 
   const { loading: aLoading, error: aError, defs, unlocked, locked, refresh, recalc } = useAchievements(id_cliente);
   // eslint-disable-next-line 
@@ -148,8 +147,9 @@ export default function Perfil() {
     const cargarMonedas = async () => {
       try {
         setMonedasLoading(true);
-        const res = await axios.get(`${API_BASE}/gamificacion/monedas/${id_cliente}`);
-        setMonedas(res.data?.monedas ?? 0);
+        const res = await authFetch(`${API_BASE}/gamificacion/monedas`);
+        const data = await res.json();
+        setMonedas(data?.monedas ?? 0);
       } catch (e) {
         console.error("Error cargando monedas:", e);
         setMonedas(0);

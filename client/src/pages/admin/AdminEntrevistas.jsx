@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Navbar from "../../components/Navbar.jsx";
 import API_BASE from "../../config/api";
 import { authFetch } from "../../utils/authToken.js";
@@ -89,12 +88,15 @@ export default function AdminEntrevistas() {
   const loadEmpresas = async (opts = {}) => {
     try {
       setLoadingEmpresas(true);
-      const params = {};
+      const params = new URLSearchParams();
       if (opts.useSearch && empresaSearch.trim()) {
-        params.q = empresaSearch.trim();
+        params.set('q', empresaSearch.trim());
       }
-      const res = await axios.get(`${API_BASE}/empresas`, { params });
-      setEmpresas(res.data || []);
+      const queryString = params.toString();
+      const url = `${API_BASE}/empresas${queryString ? `?${queryString}` : ''}`;
+      const res = await authFetch(url);
+      const data = await res.json()
+      setEmpresas(data);
     } catch (err) {
       console.error("Error cargando empresas:", err);
       toast.error("No se pudieron cargar las empresas.");
@@ -143,13 +145,17 @@ export default function AdminEntrevistas() {
       };
 
       if (empresaForm.id_empresa) {
-        await axios.put(
-          `${API_BASE}/empresas/${empresaForm.id_empresa}`,
-          payload
+        await authFetch(`${API_BASE}/empresas/${empresaForm.id_empresa}`,{
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        }
         );
         toast.success("Empresa actualizada correctamente.");
       } else {
-        await axios.post(`${API_BASE}/empresas`, payload);
+        await authFetch(`${API_BASE}/empresas`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
         toast.success("Empresa creada correctamente.");
       }
 
@@ -173,7 +179,9 @@ export default function AdminEntrevistas() {
     )
       return;
     try {
-      await axios.delete(`${API_BASE}/empresas/${empresa.id_empresa}`);
+      await authFetch(`${API_BASE}/empresas/${empresa.id_empresa}`,{
+        method: 'DELETE'
+      });
       toast.success("Empresa eliminada.");
       await loadEmpresas();
     } catch (err) {

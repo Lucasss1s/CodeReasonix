@@ -23,6 +23,9 @@
 .monospace { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; font-size:0.9rem; }
 .edit-block, .new-case-block { margin-top:12px; padding:12px; border-radius:8px; background: rgba(255,255,255,0.02); }
 .actions-row { display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+.modal-overlay { position: fixed; inset: 0;  background: rgba(5, 8, 20, 0.72);  backdrop-filter: blur(2px);  display: flex;  align-items: center;  justify-content: center;  z-index: 1000;}
+.modal-card {  background: #0b1224;  border-radius: 14px;  padding: 18px;  max-height: calc(100vh - 80px);  overflow-y: auto;  box-shadow: 0 20px 60px rgba(0,0,0,0.5);}
+.modal-card.wide {  width: 1200px;  max-width: calc(100% - 32px);}
 
 /* helpers */
 .filters-actions { margin-left: auto; display:flex; gap:8px; }
