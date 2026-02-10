@@ -44,7 +44,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/ejercicio/:id" element={<Ejercicio />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/resultado/:id" element={<ResultadoFinal />} />
+        <Route path="/resultado/:id_submit_final" element={<ResultadoFinal />} />
         <Route path="/logout" element={<Logout />} />
         <Route path="/comunidad" element={<Feed />} />
         <Route path="/perfil" element={<Perfil />} />

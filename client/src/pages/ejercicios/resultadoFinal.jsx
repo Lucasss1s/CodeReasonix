@@ -17,13 +17,14 @@ import useRequirePreferencias from "../../hooks/useRequirePreferencias";
 import "./resultadoFinal.css";
 import RewardOnRoute from "../../components/RewardOnRoute";
 import { toast } from "sonner";
+import { authFetch } from "../../utils/authToken";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function ResultadoFinal() {
     useRequirePreferencias();
 
-    const { id } = useParams();
+    const { id_submit_final  } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
     const [resultado, setResultado] = useState(null);
@@ -46,16 +47,16 @@ function ResultadoFinal() {
     useEffect(() => {
         const fetchResultado = async () => {
             try {
-                const res = await fetch(`${API_BASE}/submit-final/${id}`);
+                const res = await authFetch(`${API_BASE}/submit-final/${id_submit_final }`);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
                 setResultado(data);
 
-                const resComp = await fetch(`${API_BASE}/submit-final/comparacion/${data.id_ejercicio}?lenguaje=${encodeURIComponent(data.lenguaje)}`);
-                if (resComp.ok) {
-                    const comp = await resComp.json();
-                    setComparacion(comp);
-                }
+                const resComp = await authFetch(`${API_BASE}/submit-final/comparacion/${data.id_ejercicio}?lenguaje=${encodeURIComponent(data.lenguaje)}`);
+                if (!resComp.ok) throw new Error(`HTTP ${resComp.status}`);
+                const comp = await resComp.json();
+                setComparacion(comp);
+                
             } catch (err) {
                 console.error("Error cargando resultado final:", err);
                 setError("No se pudo cargar el resultado final.");
@@ -64,7 +65,7 @@ function ResultadoFinal() {
             }
         };
         fetchResultado();
-    }, [id]);
+    }, [id_submit_final ]);
 
     if (loading) return <div className="loading">Cargando resultado final...</div>;
     if (error)

@@ -205,27 +205,25 @@ router.get("/retomar/:id_cliente", requireSesion, async (req, res) => {
         const { data: ejercicios, error: ejError } = await supabase
         .from("ejercicio")
         .select("id_ejercicio, titulo, descripcion, dificultad")
-        .in("id_ejercicio", ids);
+        .in("id_ejercicio", ids)
+        .eq("disabled", false);
 
         if (ejError) throw ejError;
+
+        const validIds = new Set((ejercicios || []).map(e => e.id_ejercicio));
+        const topValidos = top.filter(s => validIds.has(s.id_ejercicio));
 
         const ejMap = {};
         for (const ej of ejercicios || []) {
         ejMap[ej.id_ejercicio] = ej;
         }
 
-        const retomar = top
-        .map((s) => {
-            const ej = ejMap[s.id_ejercicio];
-            if (!ej) return null;
-            return {
-            ...ej,
-            ultimo_lenguaje: s.ultimo_lenguaje,
-            total_intentos: s.total_intentos,
-            ultima_fecha: s.ultima_fecha,
-            };
-        })
-        .filter(Boolean);
+        const retomar = topValidos.map(s => ({
+        ...ejMap[s.id_ejercicio],
+        ultimo_lenguaje: s.ultimo_lenguaje,
+        total_intentos: s.total_intentos,
+        ultima_fecha: s.ultima_fecha,
+        }));
 
         return res.json({ retomar });
     } catch (err) {

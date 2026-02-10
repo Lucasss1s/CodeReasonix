@@ -3,6 +3,15 @@ import { supabase } from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import { requireSesion } from '../middlewares/requireSesion.js';
 import { requireAdmin } from '../middlewares/requireAdmin.js';
+import { validate } from '../middlewares/validate.js';
+import {
+  registerSchema,
+  loginSchema,
+  changePasswordSchema,
+  updateMeSchema,
+  updateEstadoSchema,
+  confirmEmailSchema
+} from '../schemas/usuarios.js';
 
 const router = express.Router();
 
@@ -20,12 +29,8 @@ router.get('/', requireSesion, requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/register', async (req, res) => {
+router.post('/register', validate(registerSchema), async (req, res) => {
   const { nombre, email, password, sesion_id } = req.body;
-
-  if (!nombre || !email || !password || !sesion_id) {
-    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-  }
 
   try {
     const { data: existingUser, error: existErr } = await supabase
@@ -94,10 +99,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
-    return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
 
   try {
     const { data: users, error } = await supabase
@@ -112,7 +115,7 @@ router.post('/login', async (req, res) => {
     const user = users[0];
 
     if (user.estado === false) {
-      return res.status(403).json({ error: 'Esta cuenta está suspendida / baneada.' });
+      return res.status(403).json({ error: 'Esta cuenta está suspendida' });
     }
 
     const valid = await bcrypt.compare(password, user.contraseña);
@@ -166,13 +169,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.put('/password', requireSesion, async (req, res) => {
+router.put('/password', requireSesion, validate(changePasswordSchema), async (req, res) => {
   const id_usuario = req.userLocal.id_usuario;
   const { currPass, newPass } = req.body;
-
-  if (!currPass || !newPass) {
-    return res.status(400).json({ error: 'Faltan campos' });
-  }
 
   const { data: user, error } = await supabase
     .from('usuario')
@@ -236,17 +235,13 @@ router.get('/by-cliente/', requireSesion, async (req, res) => {
   }
 });
 
-router.put('/me', requireSesion, async (req, res) => {
+router.put('/me', requireSesion, validate(updateMeSchema), async (req, res) => {
   const id_usuario = req.userLocal.id_usuario;
   const { nombre, email } = req.body;
 
   const updateData = {};
   if (nombre !== undefined) updateData.nombre = nombre;
   if (email !== undefined) updateData.email = email;
-
-  if (Object.keys(updateData).length === 0) {
-    return res.status(400).json({ error: "Nada para actualizar" });
-  }
 
   const { data, error } = await supabase
     .from('usuario')
@@ -260,7 +255,7 @@ router.put('/me', requireSesion, async (req, res) => {
   res.json(data);
 });
 
-router.put('/:id/estado', requireSesion, requireAdmin, async (req, res) => {
+router.put('/:id/estado', requireSesion, requireAdmin, validate(updateEstadoSchema), async (req, res) => {
   const { id } = req.params;
   const { estado } = req.body;
 
@@ -276,7 +271,7 @@ router.put('/:id/estado', requireSesion, requireAdmin, async (req, res) => {
   res.json(data);
 });
 
-router.post('/confirm-email', async (req, res) => {
+router.post('/confirm-email', validate(confirmEmailSchema), async (req, res) => {
   const { sesion_id } = req.body;
   
   try {

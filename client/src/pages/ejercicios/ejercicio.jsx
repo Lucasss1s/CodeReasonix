@@ -568,7 +568,6 @@ function Ejercicio() {
             const res = await authFetch(`${API_BASE}/submit-final`, {
             method: "POST",
             body: JSON.stringify({
-                id_cliente: clienteId,
                 id_ejercicio: ejercicio.id_ejercicio,
                 codigo_fuente: fullSource,
                 codigo_editor: codigo, 
