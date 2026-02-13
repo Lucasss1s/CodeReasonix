@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import API_BASE from "../../config/api";
 // eslint-disable-next-line 
 import { motion } from "framer-motion";
 import { Bar } from "react-chartjs-2";
@@ -17,7 +16,10 @@ import useRequirePreferencias from "../../hooks/useRequirePreferencias";
 import "./resultadoFinal.css";
 import RewardOnRoute from "../../components/RewardOnRoute";
 import { toast } from "sonner";
-import { authFetch } from "../../utils/authToken";
+import {
+    getSubmitFinal,
+    getComparacion,
+} from "../../api/submitFinal";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -47,14 +49,13 @@ function ResultadoFinal() {
     useEffect(() => {
         const fetchResultado = async () => {
             try {
-                const res = await authFetch(`${API_BASE}/submit-final/${id_submit_final }`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
+                const data = await getSubmitFinal(id_submit_final);
                 setResultado(data);
 
-                const resComp = await authFetch(`${API_BASE}/submit-final/comparacion/${data.id_ejercicio}?lenguaje=${encodeURIComponent(data.lenguaje)}`);
-                if (!resComp.ok) throw new Error(`HTTP ${resComp.status}`);
-                const comp = await resComp.json();
+                const comp = await getComparacion(
+                    data.id_ejercicio,
+                    data.lenguaje
+                );
                 setComparacion(comp);
                 
             } catch (err) {

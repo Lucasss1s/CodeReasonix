@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar.jsx";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
+import {
+  getUsuarios,
+  updateUsuarioEstado,
+} from "../../api/usuarios.js";
 import { toast } from "sonner";
 import "./adminUsuarios.css";
 
@@ -27,13 +29,7 @@ export default function AdminUsuarios() {
       setCargando(true);
       setError("");
 
-      const res = await authFetch(`${API_BASE}/usuarios`);
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Error cargando usuarios");
-      }
-
-      const data = await res.json();
+      const data = await getUsuarios();
       setUsuarios(data);
     } catch (err) {
       console.error("Error cargando usuarios:", err);
@@ -53,16 +49,7 @@ export default function AdminUsuarios() {
     try {
       setGuardandoId(user.id_usuario);
 
-      const res = await authFetch(`${API_BASE}/usuarios/${user.id_usuario}/estado`, {
-        method: "PUT",
-        body: JSON.stringify({ estado: nuevoEstado })
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Error actualizando usuario");
-      }
-
-      const actualizado = await res.json();
+      const actualizado = await updateUsuarioEstado(user.id_usuario, nuevoEstado);
 
       setUsuarios((prev) =>
         prev.map((u) =>

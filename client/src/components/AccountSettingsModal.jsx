@@ -4,6 +4,11 @@ import { toast } from "sonner";
 import API_BASE from "../config/api";
 import { supabase } from "../config/supabase.js";
 import { authFetch } from "../utils/authToken";
+import {
+  getUsuarioByCliente,
+  updateUsuarioMe,
+  changePassword,
+} from "../api/usuarios.js";
 import "./account-settings.css";
 
 
@@ -65,8 +70,7 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
       setLoading(true);
       try {
         //usuario de cliente
-        const u = await authFetch(`${API_BASE}/usuarios/by-cliente/`);
-        const user = await u.json();
+        const user = await getUsuarioByCliente();
         setUsuario({
           id_usuario: user.id_usuario,
           nombre: user.nombre || "",
@@ -133,10 +137,7 @@ const saveProfileIdentity = async () => {
     if (!name) return toast.info("Ingresá un nombre");
     try {
       setLoading(true);
-      await authFetch(`${API_BASE}/usuarios/me`,{ 
-        method: "PUT", 
-        body: JSON.stringify({ nombre: name }) 
-      });
+      await updateUsuarioMe({ nombre: name });
       setUsuario((u) => ({ ...u, nombre: name }));
       toast.success("Nombre actualizado");
       onIdentityUpdated?.({ nombre: name }); 
@@ -162,15 +163,7 @@ const saveProfileIdentity = async () => {
     try {
       setLoading(true);
 
-      const res = await authFetch(`${API_BASE}/usuarios/password`, {
-        method: "PUT",
-        body: JSON.stringify({ currPass, newPass }),
-      });
-      
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Error actualizando contraseña");
-      }
+      await changePassword(currPass, newPass);
 
       setCurrPass("");
       setNewPass("");

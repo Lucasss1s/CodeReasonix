@@ -12,7 +12,7 @@ import EjercicioPistas from "../../components/EjercicioPistas.jsx";
 import EjercicioHistorial from "../../components/EjercicioHistorial.jsx";
 import EjercicioBugReport from "../../components/EjercicioBugReport.jsx";
 import { getValidAccessToken, authFetch } from "../../utils/authToken";
-
+import { submitFinal } from "../../api/submitFinal.js";
 
 function splitTemplatePorLenguaje(rawTemplate, lenguaje) {
     if (!rawTemplate) return { header: "", driver: "" };
@@ -562,39 +562,23 @@ function Ejercicio() {
             }
 
             if (!esPremium) {
-            toast("Tu envío no tiene prioridad (Suscripción gratuita). Submits gratuitos: 5/día", { timeout: 4000 });
+                toast("Tu envío no tiene prioridad (Suscripción gratuita). Submits gratuitos: 5/día", { timeout: 4000 });
             } 
 
-            const res = await authFetch(`${API_BASE}/submit-final`, {
-            method: "POST",
-            body: JSON.stringify({
+            const { data, headers } = await submitFinal({
                 id_ejercicio: ejercicio.id_ejercicio,
                 codigo_fuente: fullSource,
-                codigo_editor: codigo, 
+                codigo_editor: codigo,
                 lenguaje,
-            }),
             });
 
-            const remainingHeader = res.headers.get("X-RateLimit-Remaining");
+            const remainingHeader = headers.get("X-RateLimit-Remaining");
             if (remainingHeader !== null) {
-            const left = isFinite(Number(remainingHeader)) ? Number(remainingHeader) : null;
-            if (left !== null) toast(`Envíos restantes hoy: ${left}`, { timeout: 3000 });
+                const left = Number(remainingHeader);
+                if (Number.isFinite(left)) {
+                    toast(`Envíos restantes hoy: ${left}`, { timeout: 3000 });
+                }
             }
-
-            if (!res.ok) {
-            if (res.status === 429) {
-                const body = await res.json().catch(() => ({}));
-                throw new Error(body.error || "Límite de envíos alcanzado");
-            }
-            if (res.status === 401) {
-                toast.error("Sesión inválida. Volvé a iniciar sesión.");
-                navigate("/logout");
-                return;
-            }
-            throw new Error(`HTTP ${res.status}`);
-            }
-
-            const data = await res.json();
 
             const idSubmit = data.insert?.id_submit_final ?? data.id_submit_final ?? "";
 
@@ -603,10 +587,6 @@ function Ejercicio() {
                 toast.success(`¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`);
             });
             }
-
-        /*  if (data.reward?.amount) {
-                toast.success(`+${data.reward.amount} XP ${data.reward.icon || ""}`, { timeout: 3000 });
-            } */
 
             if (data.resultado === "aceptado" && data.reward?.amount) {
             const qs = new URLSearchParams({
@@ -623,10 +603,12 @@ function Ejercicio() {
             }
 
         } catch (err) {
-            console.error("Error en submit final:", err);
-            const msg = err?.message || "Error al enviar el código final.";
-            setError(msg);
-            toast.error(msg);
+            if (err.status === 429) {
+                toast.error(err.message || "Límite de envíos alcanzado");
+                return;
+            }
+
+            toast.error(err.message || "Error enviando solución");
         } finally {
             setLoadingFinal(false);
         }

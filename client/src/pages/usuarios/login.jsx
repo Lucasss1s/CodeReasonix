@@ -5,6 +5,9 @@ import API_BASE from "../../config/api";
 import { toast } from "sonner";
 import "./auth.css";
 import { authFetch } from "../../utils/authToken.js";
+import {
+  loginUsuario,
+} from "../../api/usuarios.js";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -116,30 +119,20 @@ export default function Login() {
         localStorage.setItem("expires_at", sessionData.session.expires_at);
       }
 
-      const res = await fetch(`${API_BASE}/usuarios/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await loginUsuario(email, password);
 
       if (res.status === 403) {
-        const dataError = await res.json();
-
-        if (dataError?.error === "email_pendiente") {
+        if (res.data?.error === "email_pendiente") {
           await supabase.auth.signOut();
-
           localStorage.setItem("pending_email", email);
-
           toast.info("Tenés que confirmar tu correo antes de iniciar sesión");
           navigate("/email-pendiente", { replace: true });
-
           return; 
         }
 
-        const rawMsg = dataError?.error || dataError?.message || null;
-        const msg = rawMsg
-          ? translateError(rawMsg)
-          : "Tu cuenta está baneada. Contactá con soporte.";
+        const msg = translateError(
+          res.data?.error || "Tu cuenta está baneada"
+        );
 
         await supabase.auth.signOut();
 
@@ -152,18 +145,14 @@ export default function Login() {
       }
 
       if (!res.ok) {
-        let dataError = null;
-        try {
-          dataError = await res.json();
-        // eslint-disable-next-line
-        } catch (_) {}
-        const rawMsg = dataError?.error || dataError?.message || `Error del servidor: ${res.status}`;
-        const friendly = translateError(rawMsg);
+        const friendly = translateError(
+          res.data?.error || `Error del servidor (${res.status})`
+        );
         toast.error(friendly);
         return;
       }
 
-      const dataBackend = await res.json();
+      const dataBackend = res.data;
 
       const esAdmin = !!dataBackend.es_admin;
       localStorage.setItem("es_admin", esAdmin ? "true" : "false");

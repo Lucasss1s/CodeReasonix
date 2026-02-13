@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
 import { supabase } from "../../config/supabase.js";
-import API_BASE from "../../config/api";
+import {
+  registerUsuario,
+} from "../../api/usuarios.js";
 import { toast } from "sonner";
 import "./auth.css";
 
@@ -66,12 +67,7 @@ export default function Register() {
       const sesion_id = signupData?.user?.id;
       if (!sesion_id) throw new Error("No se pudo obtener el UUID de Supabase");
 
-      await axios.post(`${API_BASE}/usuarios/register`, {
-        nombre,
-        email,
-        password,
-        sesion_id
-      });
+      await registerUsuario({ nombre, email, password, sesion_id });
 
       localStorage.setItem("pending_email", email);
       navigate("/email-pendiente", { replace: true });

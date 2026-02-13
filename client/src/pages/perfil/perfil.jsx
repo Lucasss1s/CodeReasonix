@@ -11,7 +11,9 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import "../../components/achievement.css";
 import SubscriptionButton from "../../components/btnSuscripcion";
 import { authFetch } from "../../utils/authToken";
-
+import {
+  getUsuarioByCliente,
+} from "../../api/usuarios.js";
 import "./perfil.css";
 
 const FRAME_TIERS = [
@@ -172,13 +174,12 @@ export default function Perfil() {
       if (data?.foto_perfil) setPreview(data.foto_perfil);
       setSocials(parseSocials(data?.redes_sociales));
 
-      const uRes = await authFetch(`${API_BASE}/usuarios/by-cliente/`)
-      const u = await uRes.json();
+      const user = await getUsuarioByCliente();
 
       setUsuario({
-        id_usuario: u.id_usuario ?? null,
-        nombre: u.nombre ?? "",
-        email: u.email ?? ""
+        id_usuario: user.id_usuario ?? null,
+        nombre: user.nombre ?? "",
+        email: user.email ?? ""
       });
     } catch (err) {
       console.error("Error cargando perfil/usuario:", err);

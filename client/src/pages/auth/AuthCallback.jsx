@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { supabase } from "../../config/supabase";
-import axios from "axios";
-import API_BASE from "../../config/api";
+import {
+    confirmEmail,
+} from "../../api/usuarios";
 import { useNavigate } from "react-router-dom";
 
 export default function AuthCallback() {
@@ -32,9 +33,7 @@ export default function AuthCallback() {
             return;
         }
 
-        await axios.post(`${API_BASE}/usuarios/confirm-email`, {
-            sesion_id: user.id,
-        });
+        await confirmEmail(user.id);
 
         navigate("/login", { replace: true });
         };
