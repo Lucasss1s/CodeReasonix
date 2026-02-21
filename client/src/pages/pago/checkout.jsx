@@ -3,6 +3,11 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import API_BASE from "../../config/api";
 import { authFetch } from "../../utils/authToken";
+import {
+  getSuscripcion,
+  cancelSuscripcion,
+  renewSuscripcion,
+} from "../../api/suscripcion";
 import "./checkout.css";
 
 function Modal({ open, title, onClose, children }) {
@@ -90,17 +95,12 @@ export default function Checkout() {
 
   const fetchSus = async () => {
     try {
-      const res = await authFetch(`${API_BASE}/suscripcion/mi`, { method: "GET" });
-      if (res.ok) {
-        const b = await res.json().catch(() => ({}));
-        setSus(b.suscripcion ?? null);
-      } else {
-        setSus(null);
-      }
+      const data = await getSuscripcion();
+      setSus(data);
     } catch (e) {
       console.warn("fetchSus error:", e);
       setSus(null);
-      setError("No se pudo consultar el estado de suscripción.");
+      setError("No se pudo consultar el estado de suscripción");
     } finally {
       setLoadingInitial(false);
     }
@@ -206,19 +206,13 @@ export default function Checkout() {
     setShowCancelConfirm(false);
     setLoading(true);
     try {
-      const res = await authFetch(`${API_BASE}/suscripcion/cancel`, { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(()=>({}));
-        throw new Error(body.error || `HTTP ${res.status}`);
-      }
-      const b = await res.json().catch(()=>({}));
-      setSus(b.suscripcion ?? null);
-      toast.success("Renovación automática desactivada. Mantendrás beneficios hasta la fecha de finalización.");
-      await fetchSus();
+      const data = await cancelSuscripcion();
+      setSus(data);
+      toast.success("Renovación automática desactivada. Mantendrás beneficios hasta la fecha de finalización");
       navigate("/perfil");
     } catch (e) {
       console.error("cancel:", e);
-      toast.error(e.message || "No se pudo cancelar la renovación.");
+      toast.error(e.message || "No se pudo cancelar la renovación");
     } finally {
       setLoading(false);
     }
@@ -228,21 +222,13 @@ export default function Checkout() {
   const handleRenew = async () => {
     setLoading(true);
     try {
-      const res = await authFetch(`${API_BASE}/suscripcion/renew`, { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(()=>({}));
-        toast.error(body.error || "No se pudo renovar. Intentá nuevamente.");
-        await fetchSus();
-        return;
-      }
-      const body = await res.json().catch(()=>({}));
-      setSus(body.suscripcion ?? null);
-      toast.success("Renovación realizada. Renovación automática activada.");
-      await fetchSus();
+      const data = await renewSuscripcion();
+      setSus(data);
+      toast.success("Renovación realizada. Renovación automática activada");
       navigate("/perfil");
     } catch (e) {
       console.error("renew error:", e);
-      toast.error("Error renovando suscripción.");
+      toast.error("Error renovando suscripción");
     } finally {
       setLoading(false);
     }

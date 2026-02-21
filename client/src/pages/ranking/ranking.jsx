@@ -101,9 +101,9 @@ export default function RankingPage() {
           obtenerRankingGlobal(TOP_MOSTRAR),
           obtenerRankingSemanal(TOP_MOSTRAR),
           obtenerRankingHoy(TOP_MOSTRAR),
-          obtenerMiRankingGlobal(clienteId),
-          obtenerMiRankingSemanal(clienteId),
-          obtenerMiRankingHoy(clienteId),
+          obtenerMiRankingGlobal(),
+          obtenerMiRankingSemanal(),
+          obtenerMiRankingHoy(),
         ]);
 
         setRankingGlobal(g?.ranking || []);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API_BASE from "../config/api";
-import { authFetch } from "../utils/authToken";
+import { getSuscripcion } from "../api/suscripcion";
 
 export default function SubscriptionButton({ className = "" }) {
     const [sus, setSus] = useState(null);
@@ -12,16 +12,10 @@ export default function SubscriptionButton({ className = "" }) {
 
     const fetchSus = async () => {
         try {
-        const res = await authFetch(`${API_BASE}/suscripcion/mi`, { method: "GET" });
-        if (res.ok) {
-            const b = await res.json().catch(() => ({}));
-            setSus(b.suscripcion ?? null);
-        } else {
-            setSus(null);
-        }
+        const sus = await getSuscripcion();
+        setSus(sus);
         } catch (e) {
         console.warn("fetchSus error:", e);
-        setSus(null);
         } finally {
         setInitializing(false);
         }

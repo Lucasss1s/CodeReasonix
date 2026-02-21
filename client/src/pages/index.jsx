@@ -3,6 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import useRequirePreferencias from "../hooks/useRequirePreferencias";
 import API_BASE from "../config/api";
 import { authFetch } from "../utils/authToken";
+import{
+  getRecomendaciones,
+  retomarRecomendaciones,
+} from "../api/recomendaciones";
 import Navbar from "../components/Navbar";
 import "../index.css";
 
@@ -70,19 +74,11 @@ export default function Index() {
         const ejerciciosApi = await resEj.json();
         setEjercicios(ejerciciosApi);
 
-        const resRec = await authFetch(
-          `${API_BASE}/recomendaciones/home/${clienteId}`
-        );
-
-        const dataRec = await resRec.json();
+        const dataRec = await getRecomendaciones();
         setRecomendados(dataRec?.recomendados || []);
         setIdsResueltos(dataRec?.resueltosIds || []);
 
-        const resRet = await authFetch(
-          `${API_BASE}/recomendaciones/retomar/${clienteId}`
-        );
-
-        const dataRet = await resRet.json();
+        const dataRet = await retomarRecomendaciones();
         setRetomar(dataRet?.retomar || []);
 
         const setTags = new Set();

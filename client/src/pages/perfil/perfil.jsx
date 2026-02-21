@@ -14,6 +14,7 @@ import { authFetch } from "../../utils/authToken";
 import {
   getUsuarioByCliente,
 } from "../../api/usuarios.js";
+import { getSuscripcion } from "../../api/suscripcion.js";
 import "./perfil.css";
 
 const FRAME_TIERS = [
@@ -193,13 +194,8 @@ export default function Perfil() {
     const load = async () => {
       if (!isOwnProfile) return;
       try {
-        const res = await authFetch(`${API_BASE}/suscripcion/mi`, { method: "GET" });
-        if (res.ok) {
-          const body = await res.json().catch(() => ({}));
-          setSuscripcion(body.suscripcion ?? null);
-        } else {
-          setSuscripcion(null);
-        }
+        const data = await getSuscripcion();
+        setSuscripcion(data);
       } catch (e) {
         console.warn("No se pudo cargar suscripcion:", e);
       }

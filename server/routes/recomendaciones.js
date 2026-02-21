@@ -5,11 +5,8 @@ import { requireSesion } from '../middlewares/requireSesion.js';
 const router = express.Router();
 
 //Lista ejercicios recomendados
-router.get("/home/:id_cliente", requireSesion, async (req, res) => {
+router.get("/home", requireSesion, async (req, res) => {
     const id = req.cliente?.id_cliente;
-    if (!id) {
-        return res.status(404).json({ error: "Cliente no encontrado" });
-    }
 
     try {
         //Pref usario
@@ -114,13 +111,8 @@ router.get("/home/:id_cliente", requireSesion, async (req, res) => {
 });
 
 
-router.get("/retomar/:id_cliente", requireSesion, async (req, res) => {
-    const { id_cliente } = req.params;
-    const id = Number(id_cliente);
-
-    if (!id) {
-        return res.status(400).json({ error: "id_cliente inválido" });
-    }
+router.get("/retomar", requireSesion, async (req, res) => {
+    const id = req.cliente?.id_cliente;
 
     try {
         //Intentos finales

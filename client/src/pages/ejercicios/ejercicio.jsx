@@ -13,6 +13,8 @@ import EjercicioHistorial from "../../components/EjercicioHistorial.jsx";
 import EjercicioBugReport from "../../components/EjercicioBugReport.jsx";
 import { getValidAccessToken, authFetch } from "../../utils/authToken";
 import { submitFinal } from "../../api/submitFinal.js";
+import { submit } from "../../api/submit.js";
+import { getSuscripcion } from "../../api/suscripcion.js";
 
 function splitTemplatePorLenguaje(rawTemplate, lenguaje) {
     if (!rawTemplate) return { header: "", driver: "" };
@@ -453,17 +455,8 @@ function Ejercicio() {
             //Consult suscription
             let esPremium = false;
             try {
-                const susRes = await authFetch(`${API_BASE}/suscripcion/mi`, { method: "GET" });
-                if (susRes.ok) {
-                    const susBody = await susRes.json().catch(() => ({}));
-                    const s = susBody.suscripcion;
-                    esPremium = !!(s && s.estado === "activo" && s.periodo_fin && new Date(s.periodo_fin) > new Date());
-                } else if (susRes.status === 401 || susRes.status === 403) {
-                    toast.error("No autorizado. Volve a iniciar sesión");
-                    navigate("/logout");
-                    setLoadingSubmit(false);
-                    return;
-                }
+                const data = await getSuscripcion();      
+                esPremium = !!(data && data.estado === "activo" && data.periodo_fin && new Date(data.periodo_fin) > new Date());
             } catch (e) {
             console.warn("No se pudo verificar suscripción:", e);
             }
@@ -473,18 +466,16 @@ function Ejercicio() {
             } 
 
             //submit con authFetch 
-            const res = await authFetch(`${API_BASE}/submit`, {
-                method: "POST",
-                body: JSON.stringify({
-                    id_cliente: clienteId,
-                    id_ejercicio: ejercicio.id_ejercicio,
-                    codigo_fuente: fullSource,
-                    lenguaje,
-                }),
+            const {data , headers} = await submit({
+                id_cliente: clienteId,
+                id_ejercicio: ejercicio.id_ejercicio,
+                codigo_fuente: fullSource,
+                lenguaje,
+                
             });
 
             //Cabeceras rate-limit 
-            const remainingHeader = res.headers.get("X-RateLimit-Remaining");
+            const remainingHeader = headers.get("X-RateLimit-Remaining");
             if (remainingHeader !== null) {
                 const left = isFinite(Number(remainingHeader)) ? Number(remainingHeader) : null;
             if (left !== null) {
@@ -492,16 +483,6 @@ function Ejercicio() {
             }
             }
 
-            if (!res.ok) {
-            //Limite
-            if (res.status === 429) {
-                const body = await res.json().catch(() => ({}));
-                throw new Error(body.error);
-            }
-            throw new Error(`HTTP ${res.status}`);
-            }
-
-            const data = await res.json();
             const detalles = data.detalles || [];
             setResultados(detalles);
 
@@ -518,10 +499,11 @@ function Ejercicio() {
                 confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
             }
         } catch (err) {
-            console.error("Error en submit:", err);
-            const msg = err?.message || "Error al enviar el codigo.";
-            setError(msg);
-            toast.error(msg);
+            if (err.status === 429) {
+                toast.error(err.data?.error || "Límite de envíos alcanzado");
+                return;
+            }
+            toast.error("Error al enviar el código");
         } finally {
             setLoadingSubmit(false);
         }
@@ -546,17 +528,8 @@ function Ejercicio() {
 
             let esPremium = false;
             try {
-            const susRes = await authFetch(`${API_BASE}/suscripcion/mi`, { method: "GET" });
-            if (susRes.ok) {
-                const susBody = await susRes.json().catch(() => ({}));
-                const s = susBody.suscripcion;
-                esPremium = !!(s && s.estado === "activo" && s.periodo_fin && new Date(s.periodo_fin) > new Date());
-            } else if (susRes.status === 401 || susRes.status === 403) {
-                toast.error("No autorizado. Volvé a iniciar sesión.");
-                navigate("/logout");
-                setLoadingFinal(false);
-                return;
-            }
+            const data = await getSuscripcion();
+            esPremium = !!(data && data.estado === "activo" && data.periodo_fin && new Date(data.periodo_fin) > new Date());
             } catch (e) {
             console.warn("No se pudo verificar suscripción (final):", e);
             }
