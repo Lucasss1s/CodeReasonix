@@ -4,34 +4,6 @@ import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
-router.get("/publicacion/:id", requireSesion, async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { data, error } = await supabase
-      .from("reaccion")
-      .select(`
-        id_reaccion,
-        tipo,
-        fecha,
-        cliente (
-          id_cliente,
-          usuario (
-            id_usuario,
-            nombre,
-            email
-          )
-        )
-      `)
-      .eq("id_publicacion", id);
-
-    if (error) throw error;
-    res.json(data);
-  } catch (err) {
-    console.error("Error obteniendo reacciones:", err);
-    res.status(500).json({ error: "Error obteniendo reacciones" });
-  }
-});
-
 router.post("/", requireSesion, async (req, res) => {
   const { id_publicacion, tipo } = req.body;
   const id_cliente = req.cliente.id_cliente;

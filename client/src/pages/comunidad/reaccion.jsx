@@ -1,5 +1,4 @@
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
+import { toggleReaccion } from "../../api/reacciones";
 
 export default function Reacciones({ idPublicacion, reacciones = [], onUpdate }) {
   const id_cliente = localStorage.getItem("cliente");
@@ -11,15 +10,7 @@ export default function Reacciones({ idPublicacion, reacciones = [], onUpdate })
     }
 
     try {
-      await authFetch(`${API_BASE}/reacciones`, {
-        method: "POST",
-        body: JSON.stringify({
-          id_publicacion: idPublicacion,
-          id_cliente,
-          tipo,
-        }),
-      });
-
+      await toggleReaccion(idPublicacion, tipo);
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Error creando reacción:", err);

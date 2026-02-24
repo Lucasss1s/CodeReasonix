@@ -1,6 +1,6 @@
 import { useState } from "react";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
+import { createPublicacion } from "../../api/publicaciones";
+import { feed } from "../../api/feed";
 
 export default function PublicacionForm({ setPublicaciones }) {
   const [contenido, setContenido] = useState("");
@@ -32,16 +32,11 @@ export default function PublicacionForm({ setPublicaciones }) {
       formData.append("contenido", contenido);
       if (imagen) formData.append("imagen", imagen);
 
-      await authFetch(`${API_BASE}/publicaciones`, {
-        method: "POST",
-        body: formData,
-      });
-
+      await createPublicacion(formData);
       setContenido("");
       handleClearImagen();
 
-      const res = await authFetch(`${API_BASE}/feed`);
-      const data = await res.json();
+      const data = await feed();
       setPublicaciones(data);
     } catch (err) {
       console.error("Error creando publicación:", err);

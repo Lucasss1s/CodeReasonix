@@ -5,8 +5,8 @@ import Publicacion from "./publicacion.jsx";
 import Comentario from "./comentario.jsx";
 import Reaccion from "./reaccion.jsx";
 import useRequirePreferencias from "../../hooks/useRequirePreferencias";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
+import { deletePublicacion } from "../../api/publicaciones.js";
+import { feed } from "../../api/feed.js";
 import "./feed.css";
 
 const extraerHashtags = (texto = "") => {
@@ -29,8 +29,7 @@ export default function Feed() {
 
   const cargarFeed = async () => {
     try {
-      const res = await authFetch(`${API_BASE}/feed`);
-      const data = await res.json();
+      const data = await feed();
       setPublicaciones(data);
     } catch (err) {
       console.error("Error cargando feed:", err);
@@ -63,9 +62,7 @@ export default function Feed() {
   const handleEliminar = async () => {
     if (!publicacionAEliminar) return;
     try {
-      await authFetch(`${API_BASE}/publicaciones/${publicacionAEliminar.id_publicacion}`,{
-        method: "DELETE",
-      });
+      await deletePublicacion(publicacionAEliminar.id_publicacion);
       await cargarFeed();
       setMenuAbierto(null);
       setPublicacionAEliminar(null);

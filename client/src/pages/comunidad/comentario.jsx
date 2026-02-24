@@ -1,6 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
-import API_BASE from "../../config/api";
+import { createComentario } from "../../api/comentarios";
 
 export default function Comentarios({ idPublicacion, comentarios = [], onUpdate }) {
   const [nuevoComentario, setNuevoComentario] = useState("");
@@ -14,11 +13,7 @@ export default function Comentarios({ idPublicacion, comentarios = [], onUpdate 
     }
 
     try {
-      await axios.post(`${API_BASE}/comentarios`, {
-        id_publicacion: idPublicacion,
-        id_cliente,
-        contenido: nuevoComentario,
-      });
+      await createComentario(idPublicacion, nuevoComentario);
       setNuevoComentario("");
       if (onUpdate) onUpdate();
     } catch (err) {

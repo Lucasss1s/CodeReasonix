@@ -9,31 +9,6 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-router.get("/", requireSesion, async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from("publicacion")
-      .select(`
-        id_publicacion,
-        contenido,
-        imagen_url,
-        fecha,
-        cliente (
-          id_cliente,
-          id_usuario,
-          usuario (id_usuario, nombre, email)
-        )
-      `)
-      .order("fecha", { ascending: false });
-
-    if (error) throw error;
-    res.json({ publicaciones: data });
-  } catch (err) {
-    console.error("Error obteniendo publicaciones:", err);
-    res.status(500).json({ error: "Error obteniendo publicaciones" });
-  }
-});
-
 router.post("/",  upload.single("imagen"), requireSesion, async (req, res) => {
   const { contenido } = req.body;
   const id_cliente = req.cliente.id_cliente;
