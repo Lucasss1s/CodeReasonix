@@ -1,8 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar.jsx";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken.js";
+import { 
+  getPostulaciones,
+  patchPostulaciones,
+  deletePostulaciones,
+} from "../../api/postulaciones.js";
+import { 
+  getOfertas,
+  putOferta,
+  postOferta,
+  deleteOfertas,
+} from "../../api/ofertas.js";
+import { 
+  getEmpresas,
+  postEmpresa,
+  putEmpresa,
+  deleteEmpresa,
+} from "../../api/empresa.js";
 import { toast } from "sonner";
 import "./adminEntrevistas.css";
 
@@ -85,17 +100,10 @@ export default function AdminEntrevistas() {
     }
   }, [navigate]);
 
-  const loadEmpresas = async (opts = {}) => {
+  const loadEmpresas = async () => {
     try {
       setLoadingEmpresas(true);
-      const params = new URLSearchParams();
-      if (opts.useSearch && empresaSearch.trim()) {
-        params.set('q', empresaSearch.trim());
-      }
-      const queryString = params.toString();
-      const url = `${API_BASE}/empresas${queryString ? `?${queryString}` : ''}`;
-      const res = await authFetch(url);
-      const data = await res.json()
+      const { data } = await getEmpresas(empresaSearch.trim());
       setEmpresas(data);
     } catch (err) {
       console.error("Error cargando empresas:", err);
@@ -145,17 +153,10 @@ export default function AdminEntrevistas() {
       };
 
       if (empresaForm.id_empresa) {
-        await authFetch(`${API_BASE}/empresas/${empresaForm.id_empresa}`,{
-          method: 'PUT',
-          body: JSON.stringify(payload),
-        }
-        );
+        await putEmpresa(empresaForm.id_empresa, payload);
         toast.success("Empresa actualizada correctamente.");
       } else {
-        await authFetch(`${API_BASE}/empresas`, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
+        await postEmpresa(payload);
         toast.success("Empresa creada correctamente.");
       }
 
@@ -179,9 +180,7 @@ export default function AdminEntrevistas() {
     )
       return;
     try {
-      await authFetch(`${API_BASE}/empresas/${empresa.id_empresa}`,{
-        method: 'DELETE'
-      });
+      await deleteEmpresa(empresa.id_empresa);
       toast.success("Empresa eliminada.");
       await loadEmpresas();
     } catch (err) {
@@ -195,8 +194,7 @@ export default function AdminEntrevistas() {
   const loadOfertas = async () => {
     try {
       setLoadingOfertas(true);
-      const res = await authFetch(`${API_BASE}/ofertas`);
-      const data = await res.json(); 
+      const data = await getOfertas();
       setOfertas(data);
     } catch (err) {
       console.error("Error cargando ofertas:", err);
@@ -260,17 +258,11 @@ export default function AdminEntrevistas() {
       };
 
       if (ofertaForm.id_oferta) {
-        await authFetch(`${API_BASE}/ofertas/${ofertaForm.id_oferta}`,{
-          method: 'PUT',
-          body: JSON.stringify(payload),
-        });
-        toast.success("Oferta laboral actualizada correctamente.");
+        await putOferta(ofertaForm.id_oferta, payload);
+        toast.success("Oferta laboral actualizada");
       } else {
-        await authFetch(`${API_BASE}/ofertas`, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        });
-        toast.success("Oferta laboral creada correctamente.");
+        await postOferta(payload);
+        toast.success("Oferta laboral enviada");
       }
 
       await loadOfertas();
@@ -293,10 +285,8 @@ export default function AdminEntrevistas() {
     )
       return;
     try {
-      await authFetch(`${API_BASE}/ofertas/${o.id_oferta}`,{
-        method: 'DELETE'
-      });
-      toast.success("Oferta eliminada.");
+      await deleteOfertas(o.id_oferta);
+      toast.success("Oferta eliminada");
       await loadOfertas();
     } catch (err) {
       console.error("Error eliminando oferta:", err);
@@ -309,8 +299,7 @@ export default function AdminEntrevistas() {
   const loadPostulaciones = async () => {
     try {
       setLoadingPostulaciones(true);
-      const res = await authFetch(`${API_BASE}/postulaciones`);
-      const data = await res.json();
+      const data = await getPostulaciones();
       setPostulaciones(data);
     } catch (err) {
       console.error("Error cargando postulaciones:", err);
@@ -339,13 +328,8 @@ export default function AdminEntrevistas() {
 
     try {
       setSavingPostulacionId(p.id_postulacion);
-      await authFetch(`${API_BASE}/postulaciones/${p.id_postulacion}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          estado: nuevoEstado,
-        }),
-      });
-      toast.success("Estado de postulación actualizado.");
+      await patchPostulaciones(p.id_postulacion, nuevoEstado);
+      toast.success("Estado de postulación actualizado");
       await loadPostulaciones();
     } catch (err) {
       console.error("Error actualizando estado de postulación:", err);
@@ -361,9 +345,7 @@ export default function AdminEntrevistas() {
   const handleDeletePostulacion = async (p) => {
     if (!window.confirm("¿Eliminar esta postulación?")) return;
     try {
-      await authFetch(`${API_BASE}/postulaciones/${p.id_postulacion}`,{
-        method: 'DELETE',
-      });
+      await deletePostulaciones(p.id_postulacion);
       toast.success("Postulación eliminada.");
       await loadPostulaciones();
     } catch (err) {

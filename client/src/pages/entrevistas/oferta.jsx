@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
+import { getOfertas } from "../../api/ofertas";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
@@ -12,8 +11,7 @@ export default function Oferta() {
 
   const cargarOfertas = async () => {
     try {
-      const res = await authFetch(`${API_BASE}/ofertas`);
-      const data = await res.json();
+      const data = await getOfertas();
       setOfertas(data);
     } catch (err) {
       console.error("Error cargando ofertas:", err);

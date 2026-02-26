@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
+import { 
+  mePostulaciones,
+  createPostulaciones,
+} from "../../api/postulaciones";
+import { getByIDOfertas } from "../../api/ofertas";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
@@ -19,8 +22,7 @@ export default function OfertaDetalle() {
 
   const cargarOferta = async () => {
     try {
-      const res = await authFetch(`${API_BASE}/ofertas/${id}`);
-      const data = await res.json();
+      const data = await getByIDOfertas(id);
       setOferta(data);
     } catch (err) {
       console.error("Error cargando oferta:", err);
@@ -32,8 +34,7 @@ export default function OfertaDetalle() {
   const cargarSiPostule = async () => {
     if (!id_cliente) return setYaPostulado(false);
     try {
-      const res = await authFetch(`${API_BASE}/postulaciones/mias`);
-      const lista = await res.json();
+      const lista = await mePostulaciones();
       setYaPostulado(lista.some(p => Number(p.id_oferta) === Number(id)));
     } catch (err) {
       console.error("Error verificando postulaciones:", err);
@@ -59,13 +60,7 @@ export default function OfertaDetalle() {
 
     try {
       setPosting(true);
-      await authFetch(`${API_BASE}/postulaciones`, {
-        method: 'POST',
-        body: JSON.stringify({
-          id_oferta: Number(id),
-          estado: "pendiente",
-        }),
-      });
+      await createPostulaciones(id);
       setYaPostulado(true);
       toast.success("¡Postulación enviada!");
       await cargarSiPostule();

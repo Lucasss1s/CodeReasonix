@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
+import { mePostulaciones } from "../../api/postulaciones";
 import Navbar from "../../components/Navbar";
 import "./entrevistas.css";
 
@@ -13,8 +12,7 @@ export default function Postulacion() {
   const cargar = async () => {
     if (!id_cliente) return;
     try {
-      const res = await authFetch(`${API_BASE}/postulaciones/mias`);
-      const data = await res.json();
+      const data = await mePostulaciones();
       setItems(data);
     } catch (err) {
       console.error("Error cargando postulaciones:", err);

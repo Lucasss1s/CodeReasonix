@@ -30,9 +30,8 @@ router.get('/', requireSesion, requireAdmin, async (_req, res) => {
   }
 });
 
-router.get('/mias', requireSesion, async (req, res) => {
+router.get('/me', requireSesion, async (req, res) => {
   const id_cliente = req.cliente.id_cliente;
-  if (!id_cliente) return res.status(400).json({ error: 'id_cliente es obligatorio' });
 
   try {
     const { data, error } = await supabase
@@ -53,32 +52,6 @@ router.get('/mias', requireSesion, async (req, res) => {
   } catch (err) {
     console.error('Error obteniendo postulaciones del cliente:', err);
     res.status(500).json({ error: 'Error obteniendo postulaciones del cliente' });
-  }
-});
-
-router.get('/por-oferta/:id_oferta', requireSesion, requireAdmin, async (req, res) => {
-  const id_oferta = Number(req.params.id_oferta);
-  if (!id_oferta) return res.status(400).json({ error: 'id_oferta es obligatorio' });
-
-  try {
-    const { data, error } = await supabase
-      .from('postulacion')
-      .select(`
-        id_postulacion,
-        id_oferta,
-        id_cliente,
-        fecha,
-        estado,
-        cliente:cliente(id_cliente)
-      `)
-      .eq('id_oferta', id_oferta)
-      .order('fecha', { ascending: false });
-
-    if (error) throw error;
-    res.json(data);
-  } catch (err) {
-    console.error('Error obteniendo postulaciones por oferta:', err);
-    res.status(500).json({ error: 'Error obteniendo postulaciones por oferta' });
   }
 });
 
