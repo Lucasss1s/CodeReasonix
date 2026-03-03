@@ -4,9 +4,9 @@ import { supabase } from "../config/supabase.js";
 import { toast } from "sonner";
 import "./navbar.css";
 import RewardOnRoute from "./RewardOnRoute";
-import API_BASE from "../config/api";
 import logoCodeReasonix from "../assets/logo-codereasonix.svg";
-import { authFetch } from "../utils/authToken.js";
+import { getPerfil } from "../api/perfil.js";
+import { postLoginXP } from "../api/gamificacion.js";
 
 export default function Navbar() {
   const [usuario, setUsuario] = useState(null);
@@ -52,8 +52,7 @@ export default function Navbar() {
 
         if (id_cliente) {
           try {
-            const res = await authFetch(`${API_BASE}/perfil`);
-            const data = await res.json();
+            const data = await getPerfil();
             setFotoPerfil(data?.foto_perfil || "/default-avatar.png");
           } catch {
             setFotoPerfil("/default-avatar.png");
@@ -107,17 +106,8 @@ export default function Navbar() {
 
     (async () => {
       try {
-        const res = await authFetch(`${API_BASE}/gamificacion/login-xp`, {
-          method: "POST",
-        });
-        const data = await res.json();
-
+        const data = await postLoginXP();
         localStorage.setItem(key, today);
-
-        if (!res.ok) {
-          console.warn("login-xp desde Navbar falló:", data?.error);
-          return;
-        }
 
         if (data.otorgado) {
           const a = data?.reward_login?.amount || 0;

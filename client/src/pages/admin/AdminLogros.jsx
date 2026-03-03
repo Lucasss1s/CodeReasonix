@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken.js";
+import { 
+    getLogros,
+    condicionesLogros,
+    updateLogros,
+    createLogros,
+    activoLogros,
+} from "../../api/logros.js";
 import Navbar from "../../components/Navbar.jsx";
 import { toast } from "sonner";
 import "./adminLogros.css";
@@ -41,11 +46,8 @@ export default function AdminLogros() {
         try {
         setCargando(true);
 
-        const logrosRes = await authFetch(`${API_BASE}/logros`);
-        const logrosData = await logrosRes.json();
-
-        const condRes = await authFetch(`${API_BASE}/logros/condiciones-soportadas`);
-        const condData = await condRes.json();
+        const logrosData = await getLogros();
+        const condData = await condicionesLogros();
 
         setLogros(logrosData);
         setCondiciones(condData);
@@ -107,16 +109,10 @@ export default function AdminLogros() {
             setGuardando(true);
 
             if (editando) {
-                await authFetch(`${API_BASE}/logros/${editando.id_logro}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(payload),
-                });
+                await updateLogros(editando.id_logro, payload);
                 toast.success("Logro actualizado");
             } else {
-                await authFetch(`${API_BASE}/logros`, {
-                    method: 'POST',
-                    body: JSON.stringify(payload),
-                });
+                await createLogros(payload);
                 toast.success("Logro creado");
             }
 
@@ -131,12 +127,7 @@ export default function AdminLogros() {
 
     const toggleActivo = async (logro) => {
         try {
-            await authFetch(`${API_BASE}/logros/${logro.id_logro}/activo`, { 
-                method: 'PATCH',
-                body: JSON.stringify({
-                    activo: !logro.activo, 
-                }),
-            });
+            await activoLogros(logro.id_logro, !logro.activo);
             cargarTodo();
         } catch {
             toast.error("No se pudo cambiar el estado");

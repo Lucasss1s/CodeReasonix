@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import useSesion from "../../hooks/useSesion";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
+import { preferencias } from "../../api/preferencias";
 import "./formPreferencias.css";
 
 export default function OnboardingPreferencias() {
@@ -28,15 +27,7 @@ export default function OnboardingPreferencias() {
     try {
       setLoading(true);
 
-      await authFetch(`${API_BASE}/preferencias`, {
-        method: "POST",
-        body: JSON.stringify({
-          lenguaje_pref: lenguaje,
-          dificultad_objetivo: Number(nivel),
-          modo_objetivo: modo,
-          tiempo_sesion_minutos: Number(tiempo),
-        })
-      });
+      await preferencias(lenguaje, nivel, modo, tiempo);
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem("crx_pref_lenguaje", lenguaje);

@@ -4,10 +4,10 @@ import { supabase } from "../../config/supabase.js";
 import API_BASE from "../../config/api";
 import { toast } from "sonner";
 import "./auth.css";
-import { authFetch } from "../../utils/authToken.js";
 import {
   loginUsuario,
 } from "../../api/usuarios.js";
+import { getMonedasGamificacion } from "../../api/gamificacion.js";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -171,18 +171,12 @@ export default function Login() {
 
       if (dataBackend.id_cliente) {
         try {
-          const resXp = await authFetch(`${API_BASE}/gamificacion/login-xp`, {
-            method: "POST",
-            body: JSON.stringify({ 
-              id_cliente: dataBackend.id_cliente 
-            }),
-          });
-          const xpData = await resXp.json();
+          const xpData = await getMonedasGamificacion();
 
           const today = new Date().toISOString().slice(0, 10);
           localStorage.setItem(`login_xp_last:${dataBackend.id_cliente}`, today);
 
-          if (resXp.ok && xpData.otorgado) {
+          if (xpData.otorgado) {
             const a = xpData?.reward_login?.amount || 0;
             const b = xpData?.reward_streak?.amount || 0;
             const total = a + b;
@@ -196,8 +190,6 @@ export default function Login() {
                 toast.success(`¡Logro desbloqueado! ${l.icono} ${l.titulo} ${l.xp_otorgado ? `(+${l.xp_otorgado} XP)` : ""}`);
               });
             }
-          } else if (!resXp.ok) {
-            console.warn("No se pudo otorgar XP de login:", xpData?.error);
           }
         } catch (e) {
           console.warn("Error llamando /gamificacion/login-xp", e);

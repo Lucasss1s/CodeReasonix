@@ -10,11 +10,17 @@ import AccountSettingsModal from "../../components/AccountSettingsModal";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "../../components/achievement.css";
 import SubscriptionButton from "../../components/btnSuscripcion";
-import { authFetch } from "../../utils/authToken";
 import {
   getUsuarioByCliente,
 } from "../../api/usuarios.js";
 import { getSuscripcion } from "../../api/suscripcion.js";
+import { 
+  getPerfil,
+  updatePerfil,
+  fotoPerfil,
+  bannerPerfil,
+} from "../../api/perfil.js";
+import { getMonedasGamificacion } from "../../api/gamificacion.js";
 import "./perfil.css";
 
 const FRAME_TIERS = [
@@ -150,8 +156,7 @@ export default function Perfil() {
     const cargarMonedas = async () => {
       try {
         setMonedasLoading(true);
-        const res = await authFetch(`${API_BASE}/gamificacion/monedas`);
-        const data = await res.json();
+        const data = await getMonedasGamificacion();
         setMonedas(data?.monedas ?? 0);
       } catch (e) {
         console.error("Error cargando monedas:", e);
@@ -168,8 +173,7 @@ export default function Perfil() {
     if (!id_cliente) return;
 
     try {
-      const res = await authFetch(`${API_BASE}/perfil`);
-      const data = await res.json();
+      const data = await getPerfil();
 
       setPerfil((prev) => ({ ...prev, ...data }));
       if (data?.foto_perfil) setPreview(data.foto_perfil);
@@ -218,7 +222,7 @@ export default function Perfil() {
         return "basic";
       })();
 
-      const body = {
+      const payload = {
         biografia: perfil.biografia ?? "",
         skills: perfil.skills ?? "",
         redes_sociales: stringifySocials(socials),
@@ -226,10 +230,9 @@ export default function Perfil() {
         avatar_frame: selectedFrameId,
         banner_url: perfil.banner_url ?? null
       };
-      await authFetch(`${API_BASE}/perfil`,{
-        method: 'PUT',
-        body: JSON.stringify(body),
-      });
+
+      await updatePerfil(payload);
+
       setMensaje("Perfil actualizado ✅");
       setEditMode(false);
       setTimeout(() => setMensaje(""), 1500);
@@ -249,15 +252,13 @@ export default function Perfil() {
     formData.append("foto", file);
     try {
       setUploading(true);
-      const res = await authFetch(`${API_BASE}/perfil/foto`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
+
+      const data = await fotoPerfil(formData);
       const url = data.url;
       setPerfil((p) => ({ ...p, foto_perfil: url }));
       setPreview(url + "?t=" + Date.now()); // cache busting
-      toast.success("Foto actualizada");
+
+      toast.success("Foto actualizada ✅");
     } catch (err) {
       console.error("Error subiendo foto:", err);
       toast.error("Error al subir la foto");
@@ -278,14 +279,12 @@ export default function Perfil() {
     formData.append("banner", file);
     try {
       setBannerUploading(true);
-      const res = await authFetch(`${API_BASE}/perfil/banner`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
+
+      const data = await bannerPerfil(formData);
       const url = data.url;
       setPerfil((p) => ({ ...p, banner_url: url + "?t=" + Date.now() }));
-      toast.success("Banner actualizado");
+
+      toast.success("Banner actualizado ✅");
     } catch (err) {
       console.error("Error subiendo banner:", err);
       toast.error("Error al subir el banner");
@@ -308,13 +307,10 @@ export default function Perfil() {
     if (!isOwnProfile) return;
     try {
       setBannerUploading(true);
-      await authFetch(`${API_BASE}/perfil`, { 
-        method: 'PUT',
-        body: JSON.stringify({
-          banner_url: null, 
-        })
-      });
+
+      await updatePerfil({banner_url: null});
       setPerfil((p) => ({ ...p, banner_url: null }));
+
       toast.success("Banner eliminado");
     } catch (e) {
       console.error(e);
@@ -352,14 +348,11 @@ export default function Perfil() {
     if (!isOwnProfile) return;
     try {
       setUploading(true);
-      await authFetch(`${API_BASE}/perfil`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          foto_perfil: null,
-        })
-      });
+
+      await updatePerfil({foto_perfil: null});
       setPreview(null);
       setPerfil((p) => ({ ...p, foto_perfil: null }));
+
       toast.success("Foto eliminada");
     } catch (e) {
       console.error(e);

@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import API_BASE from "../config/api";
 import { supabase } from "../config/supabase.js";
-import { authFetch } from "../utils/authToken";
 import {
   getUsuarioByCliente,
   updateUsuarioMe,
   changePassword,
 } from "../api/usuarios.js";
+import { 
+  getPerfil,
+  updatePerfil,
+} from "../api/perfil.js";
 import "./account-settings.css";
 
 
@@ -79,8 +81,7 @@ export default function AccountSettingsModal({ open, onClose, id_cliente, onIden
         setTmpNombre(user.nombre || "");
 
         //perfil
-        const res = await authFetch(`${API_BASE}/perfil`);
-        const data = await res.json();
+        const data = await getPerfil();
         setPerfil({
           display_name: data.display_name || "",
           username: data.username || "",
@@ -110,10 +111,7 @@ const saveProfileIdentity = async () => {
   };
   try {
     setLoading(true);
-    await authFetch(`${API_BASE}/perfil`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
+    await updatePerfil(payload);
     toast.success("Perfil actualizado");
     onIdentityUpdated?.(payload);
   } catch (e) {

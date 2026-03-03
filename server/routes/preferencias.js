@@ -4,7 +4,6 @@ import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
-//Get/create pref
 router.get("/", requireSesion, async (req, res) => {
     const id_cliente = req.cliente?.id_cliente;
 
@@ -32,7 +31,6 @@ router.get("/", requireSesion, async (req, res) => {
     }
 });
 
-//Update/create pref
 router.post("/", requireSesion, async (req, res) => {
     const id_cliente = req.cliente?.id_cliente;
 

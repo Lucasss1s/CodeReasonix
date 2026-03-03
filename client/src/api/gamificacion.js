@@ -1,16 +1,23 @@
 import API_BASE from "../config/api";
 import { authFetch } from "../utils/authToken";
+import { parseResponse } from "./apiClient";
 
 export async function getGamificacionMe() {
     const res = await authFetch(`${API_BASE}/gamificacion/me`);
-    if (!res.ok) throw new Error("No se pudo obtener estado de gamificación");
-    return res.json();
+    const { data } = await parseResponse(res);
+    return data;
 }
 
 export async function postLoginXP() {
     const res = await authFetch(`${API_BASE}/gamificacion/login-xp`, {
         method: "POST",
     });
-    if (!res.ok) throw new Error("No se pudo otorgar XP de login");
-    return res.json(); 
+    const { data } = await parseResponse(res);
+    return data;
+}
+
+export async function getMonedasGamificacion() {
+    const res = await authFetch(`${API_BASE}/gamificacion/monedas`);
+    const { data } = await parseResponse(res);
+    return data;
 }

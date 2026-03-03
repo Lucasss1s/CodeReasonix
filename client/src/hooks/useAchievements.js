@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import API_BASE from "../config/api";
-import { authFetch } from "../utils/authToken";
+import { 
+    getLogrosMe,
+    checkLogros,
+} from "../api/logros";
 
 export default function useAchievements(id_cliente) {
     const [loading, setLoading] = useState(false);
@@ -14,12 +16,7 @@ export default function useAchievements(id_cliente) {
         setLoading(true);
         setError(null);
         try {
-        const res = await authFetch(`${API_BASE}/logros/me`);
-        const data = await res.json();
-
-        if (!res.ok) {
-            throw new Error(data?.error || "No se pudieron cargar los logros.");
-        }
+        const data = await getLogrosMe();
 
         const obtenidos = Array.isArray(data.obtenidos) ? data.obtenidos : [];
         const allDefs   = Array.isArray(data.defs) ? data.defs : [];
@@ -47,14 +44,8 @@ export default function useAchievements(id_cliente) {
     const recalc = useCallback(async () => {
         if (!id_cliente) return { nuevos: [] };
         try {
-        const res = await authFetch(`${API_BASE}/logros/check`, { 
-            method: "POST", 
-        });
-        const data = await res.json();
+        const data = await checkLogros();
 
-        if (!res.ok) {
-            throw new Error(data?.error || "No se pudieron cargar los logros.");
-        }
         await fetchList();
         return data || { nuevos: [] };
         } catch (e) {
