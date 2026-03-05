@@ -5,7 +5,17 @@ import API_BASE from '../../config/api';
 import Navbar from '../../components/Navbar.jsx';
 import { toast } from 'sonner';
 import './adminEjercicios.css';
-import { authFetch } from '../../utils/authToken.js';
+import { 
+    getEjerciciosAdmin,
+    getByIDEjercicioAdmin,
+    updateEjercio,
+    createEjercicio,
+} from '../../api/ejercicios.js';
+import { 
+    getPistasEjercicioAdmin,
+    createPistasEjercicio,
+} from '../../api/ejercicioPistas.js';
+import { getReportesEjercicio } from '../../api/ejercicioBug.js';
 
 export default function AdminEjercicios() {
     const navigate = useNavigate();
@@ -37,8 +47,7 @@ export default function AdminEjercicios() {
     const cargarLista = async () => {
         try {
             setCargando(true);
-            const res = await authFetch(`${API_BASE}/ejercicios/admin`);
-            const data = await res.json()
+            const data = await getEjerciciosAdmin();
             setEjercicios(data);
         } catch (err) {
             console.error('Error cargando ejercicios:', err);
@@ -72,8 +81,7 @@ export default function AdminEjercicios() {
 
     const handleEditar = async (id) => {
         try {
-            const res = await authFetch(`${API_BASE}/ejercicios/admin/${id}`);
-            const data = await res.json();
+            const data = await getByIDEjercicioAdmin(id);
             setSeleccionado(data);
             setMostrarForm(true);
         } catch (err) {
@@ -85,15 +93,8 @@ export default function AdminEjercicios() {
     const toggleHabilitar = async (ej) => {
         const nuevoEstado = !ej.disabled;
         try {
-            await authFetch(`${API_BASE}/ejercicios/${ej.id_ejercicio}`, { 
-                method: 'PUT',
-                body: JSON.stringify({
-                    disabled: !ej.disabled,
-                }),
-            });
-            toast.success(
-                nuevoEstado? "Ejercicio deshabilitado": "Ejercicio habilitado"
-            );
+            await updateEjercio(ej.id_ejercicio, {disabled: !ej.disabled});
+            toast.success(nuevoEstado? "Ejercicio deshabilitado": "Ejercicio habilitado");
             cargarLista();
         } catch (err) {
             console.error("Error:", err);
@@ -104,8 +105,7 @@ export default function AdminEjercicios() {
 
     const verCasos = async (id) => {
         try {
-            const res = await authFetch(`${API_BASE}/ejercicios/admin/${id}`);
-            const data = await res.json();
+            const data = await getByIDEjercicioAdmin(id);
 
             setSeleccionado({
                 id_ejercicio: data.id_ejercicio,
@@ -122,8 +122,7 @@ export default function AdminEjercicios() {
 
     const verPistas = async (id) => {
         try {
-            const res = await authFetch(`${API_BASE}/ejercicios/admin/${id}`);
-            const data = await res.json();
+            const data = await getByIDEjercicioAdmin(id);
 
             setSeleccionado({
                 id_ejercicio: data.id_ejercicio,
@@ -140,7 +139,8 @@ export default function AdminEjercicios() {
 
     const verBugs = async (id) => {
         try {
-            const { data } = await axios.get(`${API_BASE}/ejercicio-bug?ejercicio=${id}`);
+            const data  = await getReportesEjercicio(id);
+
             setSeleccionado({ id_ejercicio: id, titulo: `Ej ${id}`, bugs: data?.bugs || [] });
             setMostrandoBugs(true);
         } catch (err) {
@@ -366,16 +366,10 @@ function EjercicioForm({ ejercicio, onClose }) {
         try {
             setGuardando(true);
             if (esEdicion) {
-                await authFetch(`${API_BASE}/ejercicios/${ejercicio.id_ejercicio}`, {
-                    method: 'PUT',
-                    body: JSON.stringify(payload),
-                });
+                await updateEjercio(ejercicio.id_ejercicio, payload);
                 toast.success('Ejercicio actualizado');
             } else {
-                await authFetch(`${API_BASE}/ejercicios`, {
-                    method: 'POST',
-                    body: JSON.stringify(payload),
-                });
+                await createEjercicio(payload);
                 toast.success('Ejercicio creado');
             }
             onClose();
@@ -616,11 +610,8 @@ function PistasModal({ ejercicio, onClose }) {
     (async () => {
         try {
         setCargando(true);
-        const res = await axios.get(
-            `${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas?admin=1`
-        );
-
-        const ordered = (res.data.pistas || [])
+        const data = await getPistasEjercicioAdmin(ejercicio.id_ejercicio);
+        const ordered = (data.pistas || [])
             .slice()
             .sort((a, b) => Number(a.orden) - Number(b.orden));
 
@@ -642,31 +633,32 @@ function PistasModal({ ejercicio, onClose }) {
     }, [ejercicio.id_ejercicio]);
 
     const crearPista = async () => {
-        if (!nuevo.titulo || !nuevo.titulo.trim()) {
+        if (!nuevo.titulo?.trim()) {
             toast.error('Título de pista requerido');
             return;
         }
-        if (!nuevo.contenido || !nuevo.contenido.trim()) {
+
+        if (!nuevo.contenido?.trim()) {
             toast.error('Contenido de pista requerido');
             return;
         }
 
         try {
-            await axios.post(`${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas`,nuevo);
-            toast.success('Pista creada');
-
             setCargando(true);
-            const res = await axios.get(`${API_BASE}/ejercicio-pistas/${ejercicio.id_ejercicio}/pistas?admin=1`);
-            const ordered = (res.data.pistas || [])
-            .slice()
-            .sort((a, b) => Number(a.orden) - Number(b.orden));
-            setPistas(ordered);
 
-            const nextOrden = ordered.length
-            ? Number(ordered[ordered.length - 1].orden) + 1
-            : 1;
-            
+            const res = await createPistasEjercicio(ejercicio.id_ejercicio, nuevo);
+
+            const nuevaPista = res.pista; 
+            const updated = [...pistas, nuevaPista]
+                .sort((a, b) => Number(a.orden) - Number(b.orden));
+
+            setPistas(updated);
+            const nextOrden = updated.length
+                ? Number(updated[updated.length - 1].orden) + 1
+                : 1;
             setNuevo({ titulo: '', contenido: '', orden: nextOrden });
+
+            toast.success('Pista creada');
         } catch (err) {
             console.error('Error creando pista:', err);
             toast.error('No se pudo crear pista');

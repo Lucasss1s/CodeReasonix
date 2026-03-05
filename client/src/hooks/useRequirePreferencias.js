@@ -44,7 +44,7 @@ export default function useRequirePreferencias() {
             console.error("Error verificando preferencias:", err);
             setCargandoPreferencias(false);
         }
-        };
+    };
 
         checkPreferencias();
     }, [cargandoSesion, navigate]);

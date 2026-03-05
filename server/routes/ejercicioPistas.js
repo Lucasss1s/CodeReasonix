@@ -1,14 +1,13 @@
 import express from "express";
 import { supabase } from "../config/db.js";
+import { requireSesion } from '../middlewares/requireSesion.js';
+import { requireAdmin } from '../middlewares/requireAdmin.js';
 
 const router = express.Router();
 
-router.get("/:id_ejercicio/pistas", async (req, res) => {
+router.get("/:id_ejercicio", requireSesion, async (req, res) => {
     const { id_ejercicio } = req.params;
-    const idCliente =
-        req.query.cliente ??
-        req.header("X-Client-Id") ??
-        null;
+    const id_cliente = req.cliente.id_cliente;
 
     try {
         const { data: pistas, error: e1 } = await supabase
@@ -19,26 +18,22 @@ router.get("/:id_ejercicio/pistas", async (req, res) => {
 
         if (e1) throw e1;
 
-        if (!idCliente) {
-        return res.json({
-            pistas: pistas || [],
-            unlocked_por_cliente: [],
-        });
-        }
-
         const ids = (pistas || []).map(p => p.id_pista);
+
         let vistas = [];
         if (ids.length) {
         const { data: v, error: e2 } = await supabase
             .from("ejercicio_pista_vista")
             .select("id_pista")
-            .eq("id_cliente", idCliente)
+            .eq("id_cliente", id_cliente)
             .in("id_pista", ids);
+
         if (e2) throw e2;
         vistas = v || [];
         }
 
         const setVistas = new Set(vistas.map(x => x.id_pista));
+
         const pistasMarcadas = (pistas || []).map(p => ({
         ...p,
         unlocked: setVistas.has(p.id_pista),
@@ -48,20 +43,37 @@ router.get("/:id_ejercicio/pistas", async (req, res) => {
         pistas: pistasMarcadas,
         unlocked_por_cliente: vistas.map(x => x.id_pista),
         });
+
     } catch (err) {
-        console.error("[PISTAS] list fail:", err);
-        return res.status(500).json({ error: "Error listando pistas", details: err?.message });
+        console.error("[PISTAS USER] list fail:", err);
+        return res.status(500).json({ error: "Error listando pistas" });
+    }
+});
+
+router.get("/:id_ejercicio/admin", requireSesion, requireAdmin, async (req, res) => {
+    const { id_ejercicio } = req.params;
+
+    try {
+        const { data, error } = await supabase
+        .from("ejercicio_pista")
+        .select("*")
+        .eq("id_ejercicio", id_ejercicio)
+        .order("orden", { ascending: true });
+
+        if (error) throw error;
+
+        return res.json({ pistas: data || [] });
+
+    } catch (err) {
+        console.error("[PISTAS ADMIN] list fail:", err);
+        return res.status(500).json({ error: "Error listando pistas" });
     }
 });
 
 
-router.post("/:id_ejercicio/unlock", async (req, res) => {
+router.post("/:id_ejercicio/unlock", requireSesion, async (req, res) => {
     const { id_ejercicio } = req.params;
-    const { id_cliente } = req.body;
-
-    if (!id_cliente) {
-        return res.status(400).json({ error: "id_cliente requerido" });
-    }
+    const id_cliente = req.cliente?.id_cliente;
 
     try {
         //Pistas
@@ -121,14 +133,9 @@ router.post("/:id_ejercicio/unlock", async (req, res) => {
     }
 });
 
-router.get("/:id_ejercicio/progress", async (req, res) => {
+router.get("/:id_ejercicio/progress", requireSesion, async (req, res) => {
     const { id_ejercicio } = req.params;
-    const id_cliente =
-        req.query.cliente || req.headers["x-client-id"] || req.headers["x-client"];
-
-    if (!id_cliente) {
-        return res.status(400).json({ error: "id_cliente requerido" });
-    }
+    const id_cliente = req.cliente?.id_cliente;
 
     try {
         const { data: pistas, error: e1 } = await supabase
@@ -162,42 +169,35 @@ router.get("/:id_ejercicio/progress", async (req, res) => {
         });
     } catch (err) {
         console.error("progress fallo:", err?.message, err);
-        return res.status(500).json({
-        error: "No se pudo obtener el progreso de pistas",
-        details: err?.message,
-        });
+        return res.status(500).json({ error: "No se pudo obtener el progreso de pistas", details: err?.message });
     }
 });
 
-router.post("/:id_ejercicio/pistas", async (req, res) => {
+router.post("/:id_ejercicio", requireSesion, requireAdmin, async (req, res) => {
     const { id_ejercicio } = req.params;
     const { titulo, contenido, orden } = req.body || {};
-
-    if (!titulo || !String(titulo).trim()) return res.status(400).json({ error: "titulo es obligatorio" });
-    if (!contenido || !String(contenido).trim()) return res.status(400).json({ error: "contenido es obligatorio" });
 
     try {
         let finalOrden = orden !== undefined ? Number(orden) : null;
 
         if (finalOrden === null) {
-        // ultimo orden
-        const { data: existing, error: e } = await supabase
-            .from("ejercicio_pista")
-            .select("orden")
-            .eq("id_ejercicio", id_ejercicio)
-            .order("orden", { ascending: false })
-            .limit(1);
+            const { data: existing, error: e } = await supabase
+                .from("ejercicio_pista")
+                .select("orden")
+                .eq("id_ejercicio", id_ejercicio)
+                .order("orden", { ascending: false })
+                .limit(1);
 
-        if (e) throw e;
-        const last = (existing && existing[0] && Number(existing[0].orden)) || 0;
-        finalOrden = last + 1;
+            if (e) throw e;
+            const last = (existing && existing[0] && Number(existing[0].orden)) || 0;
+            finalOrden = last + 1;
         }
 
         const payload = {
-        id_ejercicio: Number(id_ejercicio),
-        titulo: titulo.trim(),
-        contenido: contenido.trim(),
-        orden: finalOrden,
+            id_ejercicio: Number(id_ejercicio),
+            titulo: titulo.trim(),
+            contenido: contenido.trim(),
+            orden: finalOrden,
         };
 
         const { data, error } = await supabase

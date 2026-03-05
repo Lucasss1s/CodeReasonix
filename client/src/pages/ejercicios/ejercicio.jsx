@@ -15,6 +15,9 @@ import { getValidAccessToken, authFetch } from "../../utils/authToken";
 import { submitFinal } from "../../api/submitFinal.js";
 import { submit } from "../../api/submit.js";
 import { getSuscripcion } from "../../api/suscripcion.js";
+import { getByIDEjercicio } from "../../api/ejercicios.js";
+import { progressPistasEjercicio } from "../../api/ejercicioPistas.js";
+import { countComentariosEjercicio } from "../../api/ejercicioComentarios.js";
 
 function splitTemplatePorLenguaje(rawTemplate, lenguaje) {
     if (!rawTemplate) return { header: "", driver: "" };
@@ -207,9 +210,7 @@ function Ejercicio() {
     useEffect(() => {
         const fetchEjercicio = async () => {
             try {
-                const res = await authFetch(`${API_BASE}/ejercicios/${id}`);
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const data = await res.json();
+                const data = await getByIDEjercicio(id);
                 setEjercicio(data);
             } catch (err) {
                 console.error("Error cargando ejercicio:", err);
@@ -281,10 +282,9 @@ function Ejercicio() {
         if (!id) return;
         const loadCount = async () => {
             try {
-            const res = await fetch(`${API_BASE}/ejercicio-comentarios/${id}/count`);
-            if (!res.ok) return;
-            const { count } = await res.json();
+            const { count }  = await countComentariosEjercicio(id);
             setCommentCount(count ?? 0);
+
             } catch (err) {
                 console.error("Error cargando numero comentarios:", err);
             }
@@ -298,25 +298,13 @@ function Ejercicio() {
 
     const loadPistasProgress = async () => {
         try {
-        const res = await fetch(`${API_BASE}/ejercicio-pistas/${id}/progress?cliente=${clienteId}`);
-
-        if (!res.ok) {
-            let body = null;
-            try {
-            body = await res.json();
-            // eslint-disable-next-line 
-            } catch (_) {}
-            console.error("Error pistas progress:", res.status, body);
-            return;
-        }
-
-        const data = await res.json();
-        setPistasProgress({
-            total: data.total ?? 0,
-            unlocked: data.unlocked ?? 0,
-        });
+            const data = await progressPistasEjercicio(id);
+            setPistasProgress({
+                total: data.total ?? 0,
+                unlocked: data.unlocked ?? 0,
+            });
         } catch (e) {
-        console.error("Error cargando progreso de pistas:", e);
+            console.error("Error cargando progreso de pistas:", e);
         }
     };
 
@@ -793,7 +781,6 @@ function Ejercicio() {
                 {showBugReport && (
                 <EjercicioBugReport
                     idEjercicio={ejercicio.id_ejercicio}
-                    idCliente={clienteId}
                     lenguaje={lenguaje}
                     codigoActual={reconstructionCode(
                     codigo,

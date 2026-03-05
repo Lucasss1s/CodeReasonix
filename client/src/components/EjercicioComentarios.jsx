@@ -1,22 +1,37 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import "./ejercicio-comentarios.css";
-import API_BASE from "../config/api";
+import { 
+  createComentarioEjercicio, 
+  createComentarioReaccionEjercicio, 
+  deleteComentarioEjercicio, 
+  getComentariosEjercicio, 
+} from "../api/ejercicioComentarios";
 
 function CommentItem({ comment, currentClientId, onReply, onToggleReact, onDelete }) {
   const [confirming, setConfirming] = useState(false);
 
-  const mine = Number(comment.id_cliente) === Number(currentClientId);
+  const mine = comment.es_mio;
   const userName =
     comment.cliente?.usuario?.nombre ||
-    comment.cliente?.usuario?.email?.split("@")[0] ||
-    "Usuario";
+    comment.cliente?.usuario?.email?.split("@")[0] || "Usuario";
 
   const isDeleted = /^\s*🗑️ \[Comentario eliminado por su autor\]/.test(comment.contenido);
-  const myReaction = (comment.reacciones || []).find(
-    (r) => Number(r.id_cliente) === Number(currentClientId) && r.tipo === "like"
-  );
-  const likes = (comment.reacciones || []).filter((r) => r.tipo === "like").length;
+  const { likes, myReaction } = (() => {
+    let likes = 0;
+    let myReaction = false;
+
+    for (const r of comment.reacciones || []) {
+      if (r.tipo === "like") {
+        likes++;
+        if (Number(r.id_cliente) === Number(currentClientId)) {
+          myReaction = true;
+        }
+      }
+    }
+
+    return { likes, myReaction };
+  })();
 
   return (
     <div className={`ex-comment ${comment.parent_id ? "is-reply" : ""} ${isDeleted ? "is-deleted" : ""}`}>
@@ -102,9 +117,7 @@ export default function EjercicioComentarios({
     if (!idEjercicio) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/ejercicio-comentarios/${idEjercicio}/comentarios`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await getComentariosEjercicio(idEjercicio);
       setComments(data || []);
       onCountChange?.(data?.length || 0);
     } catch (err) {
@@ -126,22 +139,18 @@ export default function EjercicioComentarios({
 
     setSending(true);
     try {
-      const payload = { id_cliente: idCliente, contenido };
+      const payload = { contenido };
       if (replyTo?.parent_id) payload.parent_id = replyTo.parent_id;
 
-      const res = await fetch(`${API_BASE}/ejercicio-comentarios/${idEjercicio}/comentarios`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const nuevo = await res.json();
+      const nuevo = await createComentarioEjercicio(idEjercicio, payload);
 
       setComments((prev) => [nuevo, ...prev]);
       onCountChange?.((prevCount) => (typeof prevCount === "number" ? prevCount + 1 : prevCount));
       setText("");
+
       setReplyTo(null);
       toast.success("Comentario publicado");
+      await fetchComments();
     } catch (err) {
       console.error(err);
       toast.error("No se pudo publicar el comentario");
@@ -158,32 +167,38 @@ export default function EjercicioComentarios({
   const toggleReaction = async (idComentario, tipo = "like") => {
     if (!idCliente) return toast.info("Logueate para reaccionar.");
 
-    //Primera (ahorrar recarga)
+    //ahorrar recarga
     setComments(prev => {
       const copy = [...prev];
       const idx = copy.findIndex(c => c.id_comentario === idComentario);
       if (idx === -1) return prev;
 
       const c = copy[idx];
-      const yaLike = (c.reacciones || []).some(r => Number(r.id_cliente) === Number(idCliente) && r.tipo === "like");
-      let reacciones;
-      if (yaLike) {
-        reacciones = (c.reacciones || []).filter(r => !(Number(r.id_cliente) === Number(idCliente) && r.tipo === "like"));
-      } else {
-        reacciones = [...(c.reacciones || []), { id_cliente: idCliente, tipo: "like", fecha: new Date().toISOString() }];
+      let yaLike = false;
+      const nuevasReacciones = [];
+
+      for (const r of c.reacciones || []) {
+        if (Number(r.id_cliente) === Number(idCliente) && r.tipo === "like") {
+          yaLike = true;
+          continue; // remove
+        }
+        nuevasReacciones.push(r);
       }
-      copy[idx] = { ...c, reacciones };
+
+      if (!yaLike) {
+        nuevasReacciones.push({
+          id_cliente: idCliente,
+          tipo: "like",
+          fecha: new Date().toISOString()
+        });
+      }
+
+      copy[idx] = { ...c, reacciones: nuevasReacciones };
       return copy;
     });
 
-    //Llamada real
     try {
-      const res = await fetch(`${API_BASE}/ejercicio-comentarios/comentarios/${idComentario}/reaccion`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_cliente: idCliente, tipo }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await createComentarioReaccionEjercicio(idComentario, tipo);
     } catch (err) {
       console.error(err);
       toast.error("No se pudo actualizar la reacción");
@@ -204,34 +219,11 @@ export default function EjercicioComentarios({
 
   const deleteComment = async (idComentario) => {
     if (!idCliente) return toast.info("Logueate para borrar tu comentario.");
-    try {
-      const res = await fetch(`${API_BASE}/ejercicio-comentarios/comentarios/${idComentario}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Client-Id": String(idCliente), 
-        },
-        body: JSON.stringify({ id_cliente: idCliente }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
 
-      if (data.deleted) {
-        toast.success("Comentario eliminado");
-        //refresh 
-        await fetchComments();
-      } else if (data.softDeleted) {
-        toast.success("Comentario marcado como eliminado");
-        setComments((prev) =>
-          prev.map((c) =>
-            c.id_comentario === idComentario
-              ? { ...c, contenido: "🗑️ [Comentario eliminado por su autor]" }
-              : c
-          )
-        );
-      } else {
-        await fetchComments();
-      }
+    try {
+      await deleteComentarioEjercicio(idComentario);   
+      toast.success("Comentario eliminado");
+      await fetchComments();
     } catch (err) {
       console.error(err);
       toast.error(err.message || "No se pudo borrar el comentario");

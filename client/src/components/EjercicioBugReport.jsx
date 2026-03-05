@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import "./ejercicio-bug.css";
-import API_BASE from "../config/api";
+import { reporteEjercicio } from "../api/ejercicioBug";
 
 export default function EjercicioBugReport({
     idEjercicio,
-    idCliente,
     lenguaje,
     codigoActual,
     onClose,
@@ -19,41 +18,26 @@ export default function EjercicioBugReport({
         e.preventDefault();
         const desc = descripcion.trim();
         if (!desc) {
-        toast.info("Contame brevemente cuál es el problema.");
-        return;
+            toast.info("Contame brevemente cuál es el problema.");
+            return;
         }
 
         setSending(true);
         try {
-        const res = await fetch(`${API_BASE}/ejercicio-bug`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-            id_ejercicio: idEjercicio,
-            id_cliente: idCliente,
-            tipo,
-            descripcion: desc,
-            codigo_fuente: includeCode ? codigoActual : null,
-            }),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-
-        toast.success("Gracias, se registró el reporte 🙌");
-        onClose?.();
+            await reporteEjercicio(idEjercicio, tipo, desc, includeCode ? codigoActual : null);
+            toast.success("Gracias, se registró el reporte 🙌");
+            onClose?.();
         } catch (err) {
-        console.error("[BUG] submit fail:", err);
-        toast.error(err.message || "No se pudo enviar el reporte");
+            toast.error(err.message || "No se pudo enviar el reporte");
         } finally {
-        setSending(false);
+            setSending(false);
         }
     };
 
     const handleBackdrop = (e) => {
         //cerrar si click fuera 
         if (e.target.classList.contains("bug-modal-backdrop")) {
-        onClose?.();
+            onClose?.();
         }
     };
 

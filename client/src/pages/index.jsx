@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useRequirePreferencias from "../hooks/useRequirePreferencias";
-import API_BASE from "../config/api";
-import { authFetch } from "../utils/authToken";
 import{
   getRecomendaciones,
   retomarRecomendaciones,
 } from "../api/recomendaciones";
+import { getEjercicios } from "../api/ejercicios";
 import Navbar from "../components/Navbar";
 import "../index.css";
 
@@ -70,8 +69,7 @@ export default function Index() {
       try {
         setLoading(true);
 
-        const resEj = await authFetch(`${API_BASE}/ejercicios/`);
-        const ejerciciosApi = await resEj.json();
+        const ejerciciosApi = await getEjercicios();
         setEjercicios(ejerciciosApi);
 
         const dataRec = await getRecomendaciones();

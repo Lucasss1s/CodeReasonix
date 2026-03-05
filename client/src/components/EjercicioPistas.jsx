@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import API_BASE from "../config/api";
+import { 
+    getPistasEjercicio,
+    unlockPistasEjercicio,
+} from "../api/ejercicioPistas";
 import "./ejercicio-pistas.css";
 
 export default function EjercicioPistas({ idEjercicio, idCliente, onProgress }) {
@@ -20,20 +24,22 @@ export default function EjercicioPistas({ idEjercicio, idCliente, onProgress }) 
     );
 
     const fetchPistas = async () => {
-        if (!idEjercicio) return;
+        if (!idEjercicio) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
-        try {
-        const url = `${API_BASE}/ejercicio-pistas/${idEjercicio}/pistas?cliente=${idCliente ?? ""}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = data?.pistas || [];
-        setPistas(list);
-        const u = list.filter(p => p.unlocked).length;
-        onProgress?.({ unlocked: u, total: list.length });
+
+        try { 
+            const data = await getPistasEjercicio(idEjercicio);
+            const list = data?.pistas || [];
+            setPistas(list);
+            
+            const u = list.filter(p => p.unlocked).length;
+            onProgress?.({ unlocked: u, total: list.length });
         } catch (err) {
-        console.error("[PISTAS] fetch fail", err);
-        toast.error("No se pudieron cargar las pistas");
+            console.error("[PISTAS] fetch fail", err);
+            toast.error("No se pudieron cargar las pistas");
         } finally {
         setLoading(false);
         }
@@ -49,36 +55,33 @@ export default function EjercicioPistas({ idEjercicio, idCliente, onProgress }) 
         if (!nextLocked) return;
 
         setUnlocking(true);
+
         try {
-        const res = await fetch(`${API_BASE}/ejercicio-pistas/${idEjercicio}/unlock`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_cliente: idCliente }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+            const data = await unlockPistasEjercicio(idEjercicio);
 
-        const pid = data?.pista?.id_pista;
-        if (!pid) {
-            await fetchPistas();
-            return;
-        }
+            const pid = data?.pista?.id_pista;
+            if (!pid) {
+                await fetchPistas();
+                return;
+            }
 
-        setPistas(prev => {
-            const updated = prev.map(p =>
-            p.id_pista === pid ? { ...p, unlocked: true } : p
+            setPistas(prev =>
+                prev.map(p =>
+                    p.id_pista === pid
+                        ? { ...p, unlocked: true }
+                        : p
+                )
             );
-            const u = updated.filter(p => p.unlocked).length;
-            onProgress?.({ unlocked: u, total: updated.length });
-            return updated;
-        });
+            if (data?.progreso) {
+                onProgress?.(data.progreso);
+            }
 
-        toast.success(`Pista #${data?.pista?.orden} desbloqueada`);
+            toast.success(`Pista #${data?.pista?.orden} desbloqueada`);
         } catch (err) {
-        console.error("[PISTAS] unlock fail", err);
-        toast.error(err.message || "No se pudo desbloquear la pista");
+            console.error("[PISTAS] unlock fail", err);
+            toast.error(err.message || "No se pudo desbloquear la pista");
         } finally {
-        setUnlocking(false);
+            setUnlocking(false);
         }
     };
 

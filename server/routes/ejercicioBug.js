@@ -1,28 +1,35 @@
 import express from 'express';
 import { supabase } from '../config/db.js';
+import { requireSesion } from '../middlewares/requireSesion.js';
+import { requireAdmin } from '../middlewares/requireAdmin.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', requireSesion, requireAdmin, async (req, res) => {
     const ejercicio = req.query.ejercicio;
+
     try {
-        let q = supabase.from('ejercicio_bug').select('*').order('id_bug', { ascending: true });
-        if (ejercicio) q = q.eq('id_ejercicio', ejercicio);
-        const { data, error } = await q;
-        if (error) throw error;
+        let query = supabase
+        .from('ejercicio_bug')
+        .select('*')
+        .order('id_bug', { ascending: true });
+        
+    if (ejercicio) query = query.eq('id_ejercicio', ejercicio);
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
         res.json({ bugs: data || [] });
     } catch (err) {
-        console.error('Error listando bugs:', err);
+        console.error("[REPORTES] list fail:", err);
         res.status(500).json({ error: 'Error listando bugs' });
     }
 });
 
-router.post('/', async (req, res) => {
-    const { id_ejercicio, id_cliente, tipo, descripcion, codigo_fuente } = req.body || {};
-
-    if (!id_ejercicio || !descripcion || !descripcion.trim()) {
-        return res.status(400).json({ error: 'id_ejercicio y descripcion son obligatorios' });
-    }
+router.post('/', requireSesion, async (req, res) => {
+    const id_cliente = req.cliente.id_cliente;
+    const { id_ejercicio, tipo, descripcion, codigo_fuente } = req.body || {};
 
     try {
         const { data, error } = await supabase
@@ -30,7 +37,7 @@ router.post('/', async (req, res) => {
         .insert([
             {
             id_ejercicio,
-            id_cliente: id_cliente || null,
+            id_cliente: id_cliente,
             tipo: tipo?.trim() || null,
             descripcion: descripcion.trim(),
             codigo_fuente: codigo_fuente || null,
@@ -43,8 +50,8 @@ router.post('/', async (req, res) => {
 
         return res.json({ ok: true, bug: data });
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: 'Error creando reporte', details: err?.message });
+        console.error("[REPORTES] create fail:", err);
+        return res.status(500).json({ error: 'Error creando reporte' });
     }
 });
 
