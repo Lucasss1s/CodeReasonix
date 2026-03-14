@@ -9,7 +9,7 @@ const router = express.Router();
 /*Verificar y devolver nuevos otorgados */
 router.post("/check", requireSesion, async (req, res) => {
   const id_cliente = req.cliente.id_cliente;
-  if (!id_cliente) return res.status(400).json({ error: "id_cliente requerido" });
+
   try {
     const nuevos = await checkAndGrantLogros(id_cliente);
     return res.json({ nuevos });
@@ -22,7 +22,7 @@ router.post("/check", requireSesion, async (req, res) => {
 /*listar logros: desbloqueados + defs con progreso*/
 router.get("/me", requireSesion, async (req, res) => {
   const id_cliente = req.cliente.id_cliente;
-  if (!id_cliente) return res.status(400).json({ error: "id_cliente requerido" });
+
   try {
     const { obtenidos, defs } = await getLogrosWithProgress(id_cliente);
     return res.json({ obtenidos, defs });

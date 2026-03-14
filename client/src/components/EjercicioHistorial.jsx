@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import "./ejercicio-historial.css";
-import API_BASE from "../config/api";
-import { authFetch } from "../utils/authToken";
+import { 
+  getHistorialEjercicio, 
+  getHistorialSubmit, 
+} from "../api/historial";
 
 export default function EjercicioHistorial({
   idEjercicio,
@@ -48,9 +50,7 @@ export default function EjercicioHistorial({
         estado: filters.estado,
       });
 
-      const res = await authFetch(`${API_BASE}/historial/ejercicio/${idEjercicio}?${query}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const { items: newItems = [], total = 0 } = await res.json();
+      const { items: newItems = [], total = 0 } = await getHistorialEjercicio(idEjercicio, query);
 
       setLastBatchSize(newItems.length);
       setItems((prev) => (reset ? newItems : [...prev, ...newItems]));
@@ -105,9 +105,7 @@ export default function EjercicioHistorial({
     if (!id_submit_final) return;
     setFetchingCode(id_submit_final);
     try {
-      const res = await authFetch(`${API_BASE}/historial/submit/${id_submit_final}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      const data = await getHistorialSubmit(id_submit_final);
 
       const item = data.item;
       if (!item?.codigo_editor) {

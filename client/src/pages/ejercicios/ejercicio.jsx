@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import EjercicioComentarios from "../../components/EjercicioComentarios.jsx";
 import Editor from "@monaco-editor/react";
 import useRequirePreferencias from "../../hooks/useRequirePreferencias";
-import API_BASE from "../../config/api";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import "./ejercicio.css";
@@ -11,13 +10,18 @@ import Navbar from "../../components/Navbar";
 import EjercicioPistas from "../../components/EjercicioPistas.jsx";
 import EjercicioHistorial from "../../components/EjercicioHistorial.jsx";
 import EjercicioBugReport from "../../components/EjercicioBugReport.jsx";
-import { getValidAccessToken, authFetch } from "../../utils/authToken";
+import { getValidAccessToken } from "../../utils/authToken";
 import { submitFinal } from "../../api/submitFinal.js";
 import { submit } from "../../api/submit.js";
 import { getSuscripcion } from "../../api/suscripcion.js";
 import { getByIDEjercicio } from "../../api/ejercicios.js";
 import { progressPistasEjercicio } from "../../api/ejercicioPistas.js";
 import { countComentariosEjercicio } from "../../api/ejercicioComentarios.js";
+import { getHistorialCount } from "../../api/historial.js";
+import { 
+    getCodigoSolucion, 
+    saveCodigoSolucion, 
+} from "../../api/codigoGuardado.js";
 
 function splitTemplatePorLenguaje(rawTemplate, lenguaje) {
     if (!rawTemplate) return { header: "", driver: "" };
@@ -225,9 +229,7 @@ function Ejercicio() {
         const fetchCodigoGuardado = async () => {
             if (!clienteId || !ejercicio) return;
             try {
-            const res = await fetch(`${API_BASE}/codigoGuardado/${clienteId}/${ejercicio.id_ejercicio}/${lenguaje}`);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
+            const data = await getCodigoSolucion(ejercicio.id_ejercicio, lenguaje);
 
             if (data.codigo) {
                 const saved = data.codigo
@@ -259,16 +261,7 @@ function Ejercicio() {
         const timeout = setTimeout(async () => {
             setSaving(true);
             try {
-                await fetch(`${API_BASE}/codigoGuardado`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        id_cliente: clienteId,
-                        id_ejercicio: ejercicio.id_ejercicio,
-                        lenguaje,
-                        codigo,
-                    }),
-                });
+                await saveCodigoSolucion(ejercicio.id_ejercicio, lenguaje, codigo);
             } finally {
                 setTimeout(() => setSaving(false), 700);
             }
@@ -317,18 +310,8 @@ function Ejercicio() {
 
     const loadHistCount = async () => {
         try {
-        const res = await authFetch(`${API_BASE}/historial/ejercicio/${id}/count`);
-        if (!res.ok) {
-            let body = null;
-            try {
-            body = await res.json();
-            // eslint-disable-next-line 
-            } catch (_) {}
-            console.error("Error historial count:", res.status, body);
-            return;
-        }
-        const data = await res.json();
-        setHistCount(data.count ?? 0);
+        const data = await getHistorialCount(id);
+        setHistCount(data?.count ?? 0);
         } catch (e) {
         console.error("Error cargando historial count:", e);
         }
@@ -405,16 +388,7 @@ function Ejercicio() {
 
         setCodigo(plantillaEditable);
 
-        await fetch(`${API_BASE}/codigoGuardado`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-            id_cliente: clienteId,
-            id_ejercicio: ejercicio.id_ejercicio,
-            lenguaje,
-            codigo: plantillaEditable,
-            }),
-        });
+        await saveCodigoSolucion(ejercicio.id_ejercicio, lenguaje, plantillaEditable);
     };
 
     const handleSubmit = async () => {

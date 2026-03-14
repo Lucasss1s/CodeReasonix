@@ -1,10 +1,12 @@
 import express from "express";
 import { supabase } from "../config/db.js";
+import { requireSesion } from "../middlewares/requireSesion.js";
 
 const router = express.Router();
 
-router.get("/:id_cliente/:id_ejercicio/:lenguaje", async (req, res) => {
-    const { id_cliente, id_ejercicio, lenguaje } = req.params;
+router.get("/:id_ejercicio/:lenguaje", requireSesion, async (req, res) => {
+    const id_cliente = req.cliente.id_cliente;
+    const { id_ejercicio, lenguaje } = req.params;
 
     try {
         const { data, error } = await supabase
@@ -26,12 +28,9 @@ router.get("/:id_cliente/:id_ejercicio/:lenguaje", async (req, res) => {
 });
 
 
-router.post("/", async (req, res) => {
-    const { id_cliente, id_ejercicio, lenguaje, codigo } = req.body;
-
-    if (!id_cliente || !id_ejercicio || !lenguaje || codigo === undefined) {
-        return res.status(400).json({ error: "Faltan datos obligatorios" });
-    }
+router.post("/", requireSesion, async (req, res) => {
+    const id_cliente = req.cliente.id_cliente;
+    const { id_ejercicio, lenguaje, codigo } = req.body;
 
     try {
         const { data, error } = await supabase
@@ -51,7 +50,7 @@ router.post("/", async (req, res) => {
 
         if (error) throw error;
 
-        res.json({ message: "Código guardado correctamente", data });
+        res.json({ data });
     } catch (err) {
         console.error("Error guardando código:", err);
         res.status(500).json({ error: "Error guardando código" });

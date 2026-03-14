@@ -50,12 +50,12 @@ async function activarSuscripcionDesdePago(id_cliente) {
     const { data: inserted, error: insErr } = await supabase
         .from("suscripcion")
         .insert([{
-        id_cliente,
-        estado: "activo",
-        periodo_fin: periodoFin,
-        auto_renew: true,
-        creado_en: new Date(),
-        actualizado_en: new Date()
+            id_cliente,
+            estado: "activo",
+            periodo_fin: periodoFin,
+            auto_renew: true,
+            creado_en: new Date(),
+            actualizado_en: new Date(),
         }])
         .select()
         .single();
@@ -68,14 +68,7 @@ async function activarSuscripcionDesdePago(id_cliente) {
 router.post("/create", requireSesion, async (req, res) => {
     try {
         const id_cliente = req.cliente?.id_cliente;
-        if (!id_cliente) {
-        return res.status(400).json({ error: "Cliente no encontrado" });
-        }
-
         const { monto, moneda = "ARS" } = req.body;
-        if (!monto) {
-        return res.status(400).json({ error: "Monto requerido" });
-        }
 
         const { data: pago, error } = await supabase
         .from("pago")
@@ -113,11 +106,11 @@ router.post("/:id/confirm", requireSesion, async (req, res) => {
         .single();
 
         if (error || !pago) {
-        return res.status(404).json({ error: "Pago no encontrado" });
+            return res.status(404).json({ error: "Pago no encontrado" });
         }
 
         if (pago.estado !== "pending") {
-        return res.status(400).json({ error: "El pago ya fue procesado" });
+            return res.status(400).json({ error: "El pago ya fue procesado" });
         }
 
         const rejected = card_number?.endsWith("0000");
@@ -137,14 +130,14 @@ router.post("/:id/confirm", requireSesion, async (req, res) => {
         if (upErr) throw upErr;
 
         if (nuevoEstado === "rejected") {
-        return res.json({ pago: updatedPago });
+            return res.json({ pago: updatedPago });
         }
 
         const suscripcion = await activarSuscripcionDesdePago(pago.id_cliente);
 
         res.json({
-        pago: updatedPago,
-        suscripcion
+            pago: updatedPago,
+            suscripcion
         });
 
     } catch (err) {

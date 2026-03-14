@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
-import API_BASE from '../../config/api';
 import Navbar from '../../components/Navbar.jsx';
 import { toast } from 'sonner';
 import './adminEjercicios.css';
@@ -16,6 +14,11 @@ import {
     createPistasEjercicio,
 } from '../../api/ejercicioPistas.js';
 import { getReportesEjercicio } from '../../api/ejercicioBug.js';
+import { 
+    createCasosPrueba, 
+    getCasosPruebaAdmin, 
+    updateCasosPrueba, 
+} from '../../api/casosPrueba.js';
 
 export default function AdminEjercicios() {
     const navigate = useNavigate();
@@ -41,7 +44,6 @@ export default function AdminEjercicios() {
             return;
         }
         cargarLista();
-        
     },[]);
 
     const cargarLista = async () => {
@@ -435,17 +437,16 @@ function CasosModal({ ejercicio, onClose }) {
     useEffect(() => {
     (async () => {
         try {
-        setCargando(true);
-        const res = await axios.get(
-            `${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`
-        );
-        setCasos(res.data.casos || []);
+            setCargando(true);
+            
+            const data = await getCasosPruebaAdmin(ejercicio.id_ejercicio);
+            setCasos(data.casos || []);
         } catch (err) {
-        console.error('Error cargando casos:', err);
-        toast.error('No se pudieron cargar los casos');
-        setCasos([]);
+            console.error('Error cargando casos:', err);
+            toast.error('No se pudieron cargar los casos');
+            setCasos([]);
         } finally {
-        setCargando(false);
+            setCargando(false);
         }
     })();
     }, [ejercicio.id_ejercicio]);
@@ -469,12 +470,23 @@ function CasosModal({ ejercicio, onClose }) {
     const guardarCaso = async () => {
         if (!validarCaso(nuevo)) return;
         try {
-        const payload = { entrada_procesada: JSON.parse(nuevo.entrada_procesada), salida_esperada: nuevo.salida_esperada, publico: nuevo.publico };
-        await axios.post(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos`, payload);
+        const payload = { 
+            entrada_procesada: JSON.parse(nuevo.entrada_procesada), 
+            salida_esperada: nuevo.salida_esperada, 
+            publico: nuevo.publico 
+        };
+
+        await createCasosPrueba(ejercicio.id_ejercicio, payload);
         toast.success('Caso agregado');
-        const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`);
-        setCasos(r.data.casos || r.data || []);
-        setNuevo({ entrada_procesada: JSON.stringify({ python: '', javascript: '', java: '' }, null, 2), salida_esperada: '', publico: true });
+
+        const data = await getCasosPruebaAdmin(ejercicio.id_ejercicio);
+        setCasos(data.casos || data || []);
+
+        setNuevo({ 
+            entrada_procesada: JSON.stringify({ python: '', javascript: '', java: '' }, null, 2), 
+            salida_esperada: '', 
+            publico: true 
+        });
         } catch (err) {
         console.error('Error guardando caso:', err);
         toast.error('No se pudo guardar caso');
@@ -493,10 +505,17 @@ function CasosModal({ ejercicio, onClose }) {
     const saveEdit = async () => {
         if (!validarCaso(editPayload)) return;
         try {
-            await axios.put(`${API_BASE}/casos-prueba/casos/${editId}`, { entrada_procesada: JSON.parse(editPayload.entrada_procesada), salida_esperada: editPayload.salida_esperada, publico: editPayload.publico });
+            const payload = { 
+                entrada_procesada: JSON.parse(editPayload.entrada_procesada), 
+                salida_esperada: editPayload.salida_esperada,
+                publico: editPayload.publico 
+            };
+
+            await updateCasosPrueba(editId, payload);
             toast.success('Caso actualizado');
-            const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`);
-            setCasos(r.data.casos || r.data || []);
+
+            const data = await getCasosPruebaAdmin(ejercicio.id_ejercicio);
+            setCasos(data.casos || data || []);
             cancelEdit();
         } catch (err) {
             console.error('Error actualizando caso:', err);
@@ -506,10 +525,11 @@ function CasosModal({ ejercicio, onClose }) {
 
     const togglePublico = async (c) => {
         try {
-            await axios.put(`${API_BASE}/casos-prueba/casos/${c.id_caso}`, { publico: !c.publico });
+            await updateCasosPrueba(c.id_caso, { publico: !c.publico });
             toast.success('Caso actualizado');
-            const r = await axios.get(`${API_BASE}/casos-prueba/ejercicios/${ejercicio.id_ejercicio}/casos?admin=1`);
-            setCasos(r.data.casos || r.data || []);
+
+            const data = await getCasosPruebaAdmin(ejercicio.id_ejercicio);
+            setCasos(data.casos || data || []);
         } catch (err) {
             console.error('Error actualizando caso:', err);
             toast.error('No se pudo actualizar caso');

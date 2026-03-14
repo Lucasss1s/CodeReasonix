@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import API_BASE from "../../config/api";
-import { authFetch } from "../../utils/authToken";
 import {
   getSuscripcion,
   cancelSuscripcion,
   renewSuscripcion,
 } from "../../api/suscripcion";
 import "./checkout.css";
+import { 
+  confirmPago, 
+  createPago, 
+} from "../../api/pago";
 
 function Modal({ open, title, onClose, children }) {
   if (!open) return null;
@@ -152,47 +154,18 @@ export default function Checkout() {
 
     try {
       //Crear pago
-      const resCreate = await authFetch(`${API_BASE}/pagos/create`, {
-        method: "POST",
-        body: JSON.stringify({ monto: Number(price), moneda: "ARS" })
-      });
-
-      if (!resCreate.ok) {
-        const b = await resCreate.json().catch(() => ({}));
-        throw new Error(b.error || "No se pudo iniciar el pago");
-      }
-
-      const { pago } = await resCreate.json();
-      if (!pago?.id_pago) {
-        throw new Error("Pago inválido");
-      }
+      const moneda = "ARS";
+      const { pago } = await createPago(price, moneda);
 
       //Confirmar pago 
-      const resConfirm = await authFetch(
-        `${API_BASE}/pagos/${pago.id_pago}/confirm`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            card_number: card.number,
-            exp: card.exp,
-            cvv: card.cvv
-          })
-        }
-      );
-
-      if (!resConfirm.ok) {
-        const b = await resConfirm.json().catch(() => ({}));
-        throw new Error(b.error || "Pago rechazado");
-      }
-
-      const body = await resConfirm.json();
+      const body = await confirmPago(pago.id_pago, card);
       setSus(body.suscripcion ?? null);
 
-      toast.success("Pago aprobado. Suscripción activada.");
+      toast.success("Pago aprobado. Suscripción activada");
+
       await fetchSus();
       setShowPaymentModal(false);
       setCard({ number: "", exp: "", cvv: "" });
-
     } catch (e) {
       console.error("checkout payment error:", e);
       toast.error(e.message || "Error procesando el pago");
@@ -236,12 +209,11 @@ export default function Checkout() {
 
   const handleKeepFree = () => navigate("/perfil");
 
-  // helpers UI
   const ahora = new Date();
-  const vence = sus?.periodo_fin ? new Date(sus.periodo_fin) : null;
-  // eslint-disable-next-line 
-  const estaActivaHoy = vence && vence > ahora;
-  const puedeRenovar = !sus || sus.estado === "inactivo" || (sus.periodo_fin && new Date(sus.periodo_fin) <= ahora);
+  const puedeRenovar = 
+    !sus || 
+    sus.estado === "inactivo" || 
+    (sus.periodo_fin && new Date(sus.periodo_fin) <= ahora);
 
   if (loadingInitial) {
     return (
