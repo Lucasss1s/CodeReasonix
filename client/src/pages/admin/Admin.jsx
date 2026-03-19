@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/Navbar.jsx";
+import { Navbar } from "../../components/index.js";
 import "./admin.css";
 
 export default function Admin() {

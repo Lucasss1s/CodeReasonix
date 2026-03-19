@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import API_BASE from "../config/api";
 import { 
     getPistasEjercicio,
     unlockPistasEjercicio,
-} from "../api/ejercicioPistas";
+} from "../../api/ejercicioPistas";
 import "./ejercicio-pistas.css";
 
 export default function EjercicioPistas({ idEjercicio, idCliente, onProgress }) {

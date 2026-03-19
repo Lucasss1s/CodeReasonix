@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import useGamificacion from "../hooks/useGamificacion";
+import useGamificacion from "../../hooks/useGamificacion";
 import "./gamification.css";
 
 function ProgressBar({ current, total, label }) {
@@ -20,7 +20,7 @@ function ProgressBar({ current, total, label }) {
     );
     }
 
-    function Skeleton() {
+function Skeleton() {
     return (
         <div className="ghud-grid">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -32,9 +32,9 @@ function ProgressBar({ current, total, label }) {
         ))}
         </div>
     );
-    }
+}
 
-    export default function GamificationHUD({ id_cliente }) {
+export default function GamificationHUD({ id_cliente }) {
     const { data, loading, error, refetch } = useGamificacion();
 
     const today = useMemo(() => data?.hoy ?? {}, [data]);

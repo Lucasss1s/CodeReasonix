@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import FloatReward from "./FloatReward";
+import { FloatReward } from "./index";
 
 export default function RewardOnRoute({
     position = "top-center",

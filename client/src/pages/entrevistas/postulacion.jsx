@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { mePostulaciones } from "../../api/postulaciones";
-import Navbar from "../../components/Navbar";
+import { Navbar } from "../../components/index";
 import "./entrevistas.css";
 
 export default function Postulacion() {

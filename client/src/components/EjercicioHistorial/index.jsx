@@ -4,7 +4,7 @@ import "./ejercicio-historial.css";
 import { 
   getHistorialEjercicio, 
   getHistorialSubmit, 
-} from "../api/historial";
+} from "../../api/historial";
 
 export default function EjercicioHistorial({
   idEjercicio,

@@ -6,7 +6,7 @@ import {
   createComentarioReaccionEjercicio, 
   deleteComentarioEjercicio, 
   getComentariosEjercicio, 
-} from "../api/ejercicioComentarios";
+} from "../../api/ejercicioComentarios";
 
 function CommentItem({ comment, currentClientId, onReply, onToggleReact, onDelete }) {
   const [confirming, setConfirming] = useState(false);

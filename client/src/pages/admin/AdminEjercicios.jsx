@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import Navbar from '../../components/Navbar.jsx';
+import { Navbar } from '../../components/index.js';
 import { toast } from 'sonner';
 import './adminEjercicios.css';
 import { 

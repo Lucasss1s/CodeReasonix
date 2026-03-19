@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "../config/supabase.js";
+import { supabase } from "../../config/supabase.js";
 import {
   getUsuarioByCliente,
   updateUsuarioMe,
   changePassword,
-} from "../api/usuarios.js";
+} from "../../api/usuarios.js";
 import { 
   getPerfil,
   updatePerfil,
-} from "../api/perfil.js";
+} from "../../api/perfil.js";
 import "./account-settings.css";
 
 

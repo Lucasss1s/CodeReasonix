@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import API_BASE from "../../config/api";
-import Navbar from "../../components/Navbar";
+import { Navbar } from "../../components/index.js";
 import BossCard from "../../components/BossCard";
 import "./desafios.css";
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import "./ejercicio-bug.css";
-import { reporteEjercicio } from "../api/ejercicioBug";
+import { reporteEjercicio } from "../../api/ejercicioBug";
 
 export default function EjercicioBugReport({
     idEjercicio,

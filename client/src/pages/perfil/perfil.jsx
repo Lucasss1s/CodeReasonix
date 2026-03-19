@@ -1,18 +1,14 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import API_BASE from "../../config/api";
-import Navbar from "../../components/Navbar";
+import { Navbar } from "../../components/index.js";
 import useGamificacion from "../../hooks/useGamificacion";
 import useAchievements from "../../hooks/useAchievements";
-import AchievementGrid from "../../components/AchievementGrid";
-import AccountSettingsModal from "../../components/AccountSettingsModal";
+import { AchievementGrid } from "../../components/index.js";
+import { AccountSettingsModal } from "../../components/index.js";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import "../../components/achievement.css";
-import SubscriptionButton from "../../components/btnSuscripcion";
-import {
-  getUsuarioByCliente,
-} from "../../api/usuarios.js";
+import { SubscriptionButton } from "../../components/index.js";
+import { getUsuarioByCliente } from "../../api/usuarios.js";
 import { getSuscripcion } from "../../api/suscripcion.js";
 import { 
   getPerfil,

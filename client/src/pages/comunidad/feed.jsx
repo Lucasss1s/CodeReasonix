@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../../components/Navbar";
+import { Navbar } from "../../components/index.js";
 import Publicacion from "./publicacion.jsx";
 import Comentario from "./comentario.jsx";
 import Reaccion from "./reaccion.jsx";

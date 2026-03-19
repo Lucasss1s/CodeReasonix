@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import API_BASE from "../../config/api";
-import Navbar from "../../components/Navbar";
+import { Navbar } from "../../components/index.js";
 import "./desafios.css";
 
 export default function MisDesafios() {

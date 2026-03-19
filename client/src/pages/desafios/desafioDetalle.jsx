@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import API_BASE from "../../config/api";
-import Navbar from "../../components/Navbar";
+import { Navbar } from "../../components/index.js";
 import QuestionModal from "../../components/QuestionModal";
 import "./desafios.css";
 
@@ -369,8 +369,6 @@ export default function DesafioDetalle() {
 
                   const respondidaCorrecta =
                     pp.respondida && pp.correcta === true;
-                  const respondidaIncorrecta =
-                    pp.respondida && pp.correcta === false;
 
                   return (
                     <div

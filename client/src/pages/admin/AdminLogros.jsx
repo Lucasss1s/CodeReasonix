@@ -7,7 +7,7 @@ import {
     createLogros,
     activoLogros,
 } from "../../api/logros.js";
-import Navbar from "../../components/Navbar.jsx";
+import { Navbar } from "../../components/index.js";
 import { toast } from "sonner";
 import "./adminLogros.css";
 

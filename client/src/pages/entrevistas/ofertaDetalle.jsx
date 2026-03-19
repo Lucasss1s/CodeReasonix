@@ -6,7 +6,7 @@ import {
   createPostulaciones,
 } from "../../api/postulaciones";
 import { getByIDOfertas } from "../../api/ofertas";
-import Navbar from "../../components/Navbar";
+import { Navbar } from "../../components/index.js";
 import "./entrevistas.css";
 
 export default function OfertaDetalle() {

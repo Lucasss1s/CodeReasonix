@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API_BASE from "../config/api";
-import { getSuscripcion } from "../api/suscripcion";
+import { getSuscripcion } from "../../api/suscripcion";
 
 export default function SubscriptionButton({ className = "" }) {
     const [sus, setSus] = useState(null);

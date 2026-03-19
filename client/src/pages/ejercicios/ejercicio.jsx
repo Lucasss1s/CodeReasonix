@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import EjercicioComentarios from "../../components/EjercicioComentarios.jsx";
+import { EjercicioComentarios } from "../../components/index.js";
 import Editor from "@monaco-editor/react";
 import useRequirePreferencias from "../../hooks/useRequirePreferencias";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import "./ejercicio.css";
-import Navbar from "../../components/Navbar";
-import EjercicioPistas from "../../components/EjercicioPistas.jsx";
-import EjercicioHistorial from "../../components/EjercicioHistorial.jsx";
-import EjercicioBugReport from "../../components/EjercicioBugReport.jsx";
+import { Navbar } from "../../components/index.js";
+import { EjercicioPistas } from "../../components/index.js";
+import { EjercicioHistorial } from "../../components/index.js";
+import { EjercicioBugReportModal } from "../../components/index.js";
 import { getValidAccessToken } from "../../utils/authToken";
 import { submitFinal } from "../../api/submitFinal.js";
 import { submit } from "../../api/submit.js";
@@ -753,7 +753,7 @@ function Ejercicio() {
                     </div>
                 </div>
                 {showBugReport && (
-                <EjercicioBugReport
+                <EjercicioBugReportModal
                     idEjercicio={ejercicio.id_ejercicio}
                     lenguaje={lenguaje}
                     codigoActual={reconstructionCode(

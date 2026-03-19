@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getOfertas } from "../../api/ofertas";
-import Navbar from "../../components/Navbar";
+import { Navbar } from "../../components/index.js";
 import "./entrevistas.css";
 
 export default function Oferta() {

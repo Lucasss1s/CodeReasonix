@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Navbar from "../../components/Navbar.jsx";
+import { Navbar } from "../../components/index.js";
 import API_BASE from "../../config/api";
 import { toast } from "sonner";
 import { supabase } from "../../config/supabase";

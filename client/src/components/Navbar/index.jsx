@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { supabase } from "../config/supabase.js";
+import { supabase } from "../../config/supabase.js";
 import { toast } from "sonner";
 import "./navbar.css";
-import RewardOnRoute from "./RewardOnRoute";
-import logoCodeReasonix from "../assets/logo-codereasonix.svg";
-import { getPerfil } from "../api/perfil.js";
-import { postLoginXP } from "../api/gamificacion.js";
+import RewardOnRoute from "../RewardOnRoute.jsx";
+import logoCodeReasonix from "../../assets/logo-codereasonix.svg";
+import { getPerfil } from "../../api/perfil.js";
+import { postLoginXP } from "../../api/gamificacion.js";
 
 export default function Navbar() {
   const [usuario, setUsuario] = useState(null);

@@ -6,7 +6,7 @@ import{
   retomarRecomendaciones,
 } from "../api/recomendaciones";
 import { getEjercicios } from "../api/ejercicios";
-import Navbar from "../components/Navbar";
+import { Navbar } from "../components/index";
 import "../index.css";
 
 const DIFICULTAD_LABELS = ["Fácil", "Intermedio", "Difícil", "Experto"];
