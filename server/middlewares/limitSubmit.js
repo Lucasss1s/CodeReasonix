@@ -1,20 +1,5 @@
-import Redis from "ioredis";
 import { supabase } from "../config/db.js";
-
-const REDIS_URL = process.env.REDIS_URL || null;
-let redis = null;
-if (REDIS_URL) {
-    try {
-        redis = new Redis(REDIS_URL);
-        redis.on("error", (e) => console.error("[redis] error:", e));
-        redis.on("connect", () => console.info("[redis] connected"));
-    } catch (e) {
-        console.error("[redis] error:", e);
-        redis = null;
-    }
-} else {
-    console.info("[limitSubmit] REDIS_URL no seteado");
-}
+import redis from "../config/redis.js";
 
 const LIMITS = {
     free: 5,
@@ -31,9 +16,12 @@ function getTodayKey(id_cliente) {
 }
 
 async function incrRedis(key, expireSec) {
-    const val = await redis.incr(key);
-    if (val === 1) await redis.expire(key, expireSec);
-    return val;
+    const pipeline = redis.multi();
+    pipeline.incr(key);
+    pipeline.expire(key, expireSec);
+
+    const [count] = await pipeline.exec();
+    return count;
 }
 
 export const limitSubmit = ({ windowSec = 24*3600 } = {}) => {
@@ -69,34 +57,36 @@ export const limitSubmit = ({ windowSec = 24*3600 } = {}) => {
         const limit = isPremium ? LIMITS.premium : LIMITS.free;
 
         let current = 0;
+        let useRedis = !!redis;
         if (isPremium) {
             current = 0;
-        } else if (redis) {
+        } else if (useRedis) {
             // use redis 
             try {
-            current = await incrRedis(key, windowSec);
+                current = await incrRedis(key, windowSec);
             } catch (e) {
-            console.error("[limitSubmit] redis op error:", e);
+                console.error("[limitSubmit] redis op error:", e);
             // if redis fails and we're in production, block 
             if (process.env.NODE_ENV === "production") {
                 return res.status(500).json({ error: "Rate limiter error" });
             }
-            // fallback to in-memory 
-            redis = null;
+                // fallback 
+                useRedis = false;
             }
         }
 
-        if (!isPremium && !redis) {
-            // fallback in-memory (only non-prod)
+        if (!isPremium && !useRedis) {
+            // fallback in-memory 
             const now = Date.now();
             const rec = INMEM.store.get(key);
+
             if (!rec || rec.expiresAt <= now) {
-            INMEM.store.set(key, { count: 1, expiresAt: now + windowSec * 1000 });
-            current = 1;
+                INMEM.store.set(key, { count: 1, expiresAt: now + windowSec * 1000 });
+                current = 1;
             } else {
-            rec.count += 1;
-            current = rec.count;
-            INMEM.store.set(key, rec);
+                rec.count += 1;
+                current = rec.count;
+                INMEM.store.set(key, rec);
             }
         }
 
