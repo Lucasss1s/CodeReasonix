@@ -4,16 +4,14 @@ import { enviarCodigo } from '../utils/judge0.js';
 import { requireSesion } from '../middlewares/requireSesion.js';
 import { limitSubmit } from '../middlewares/limitSubmit.js';
 import { delayNoPremium } from '../middlewares/delayNoPremium.js';
+import { validate } from '../middlewares/validate.js';
+import { submitSchema } from '../schemas/submit.js';
 
 const router = express.Router();
 
-router.post('/', requireSesion, limitSubmit(), delayNoPremium(), async (req, res) => {
+router.post('/', requireSesion, limitSubmit(), delayNoPremium(), validate(submitSchema), async (req, res) => {
     const id_cliente = req.cliente?.id_cliente;
     const { id_ejercicio, codigo_fuente, lenguaje } = req.body;
-
-    if (!id_cliente || !id_ejercicio || !codigo_fuente || !lenguaje) {
-        return res.status(400).json({ error: 'Faltan datos obligatorios' });
-    }
 
     try {
         const { data: casos, error: errorCasos } = await supabase

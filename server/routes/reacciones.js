@@ -1,16 +1,14 @@
 import express from "express";
 import { supabase } from "../config/db.js";
 import { requireSesion } from "../middlewares/requireSesion.js";
+import { validate } from "../middlewares/validate.js";
+import { reaccionSchema } from "../schemas/reacciones.js";
 
 const router = express.Router();
 
-router.post("/", requireSesion, async (req, res) => {
+router.post("/", requireSesion, validate(reaccionSchema), async (req, res) => {
   const { id_publicacion, tipo } = req.body;
   const id_cliente = req.cliente.id_cliente;
-
-  if (!id_publicacion || !tipo) {
-    return res.status(400).json({ error: "Faltan datos" });
-  }
 
   try {
     const { data: existing, error: existingError } = await supabase
@@ -29,6 +27,7 @@ router.post("/", requireSesion, async (req, res) => {
         .eq("id_reaccion", existing.id_reaccion);
 
       if (deleteError) throw deleteError;
+
       return res.json({ deleted: true });
     }
 
@@ -41,6 +40,7 @@ router.post("/", requireSesion, async (req, res) => {
         .single();
 
       if (updateError) throw updateError;
+
       return res.json(updated);
     }
 
@@ -51,6 +51,7 @@ router.post("/", requireSesion, async (req, res) => {
       .single();
 
     if (insertError) throw insertError;
+    
     res.json(inserted);
   } catch (err) {
     console.error("Error creando reacción:", err);

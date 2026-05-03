@@ -1,15 +1,21 @@
 import express from "express";
 import { supabase } from "../config/db.js";
 import { requireSesion } from '../middlewares/requireSesion.js';
+import { validate } from '../middlewares/validate.js';
+import {
+    recomendacionesHomeQuerySchema,
+    retomarQuerySchema
+} from '../schemas/recomendaciones.js';
 
 const router = express.Router();
 
-//Lista ejercicios recomendados
-router.get("/home", requireSesion, async (req, res) => {
+//List recommended exercises
+router.get("/home", requireSesion, validate(recomendacionesHomeQuerySchema, 'query'), async (req, res) => {
     const id = req.cliente?.id_cliente;
+    const { limit } = req.query;
 
     try {
-        //Pref usario
+        //preferences
         const { data: pref, error: prefError } = await supabase
         .from("usuario_preferencia")
         .select("dificultad_objetivo")
@@ -19,16 +25,16 @@ router.get("/home", requireSesion, async (req, res) => {
         if (prefError) throw prefError;
 
         if (!pref) {
-        return res
-            .status(404)
-            .json({ error: "El usuario no tiene preferencias configuradas" });
+            return res.status(404).json({ 
+                error: "El usuario no tiene preferencias configuradas" 
+            });
         }
 
         const dificultadObjetivo = pref.dificultad_objetivo;
         const dificultadMin = Math.max(1, dificultadObjetivo - 1);
         const dificultadMax = Math.min(4, dificultadObjetivo + 1);
 
-        //Ejercicios resueltos
+        //solved  
         const { data: resueltos, error: resueltosError } = await supabase
         .from("submit_final")
         .select("id_ejercicio")
@@ -45,7 +51,7 @@ router.get("/home", requireSesion, async (req, res) => {
         )
         );
 
-        //Ejercicios candidatos
+        //candidates
         let query = supabase
         .from("ejercicio")
         .select("id_ejercicio, titulo, descripcion, dificultad, disabled")
@@ -54,47 +60,46 @@ router.get("/home", requireSesion, async (req, res) => {
         query = query.eq('disabled', false);
 
         if (resueltosIds.length > 0) {
-        query = query.not("id_ejercicio", "in", `(${resueltosIds.join(",")})`);
+            query = query.not("id_ejercicio", "in", `(${resueltosIds.join(",")})`);
         }
 
         const { data: candidatos, error: candError } = await query;
-
         if (candError) throw candError;
 
-        //Ordenar x dificultad/id
+        //sort by difficulty/id
         let listaOrdenada = (candidatos || []).sort((a, b) => {
-        const da = Math.abs(a.dificultad - dificultadObjetivo);
-        const db = Math.abs(b.dificultad - dificultadObjetivo);
-        if (da !== db) return da - db;
-        return a.id_ejercicio - b.id_ejercicio;
+            const da = Math.abs(a.dificultad - dificultadObjetivo);
+            const db = Math.abs(b.dificultad - dificultadObjetivo);
+            if (da !== db) return da - db;
+            return a.id_ejercicio - b.id_ejercicio;
         });
 
-        let recomendados = listaOrdenada.slice(0, 8);
+        let recomendados = listaOrdenada.slice(0, limit);
         let fromFallback = false;
 
-        //De no haber traer random
+        //If none bring a random one
         if (recomendados.length === 0) {
-        let fallbackQuery = supabase
-            .from("ejercicio")
-            .select("id_ejercicio, titulo, descripcion, dificultad")
-            .eq("disabled", false);
+            let fallbackQuery = supabase
+                .from("ejercicio")
+                .select("id_ejercicio, titulo, descripcion, dificultad")
+                .eq("disabled", false);
 
-        if (resueltosIds.length > 0) {
-            fallbackQuery = fallbackQuery.not(
-            "id_ejercicio",
-            "in",
-            `(${resueltosIds.join(",")})`
-            );
-        }
+            if (resueltosIds.length > 0) {
+                fallbackQuery = fallbackQuery.not(
+                "id_ejercicio",
+                "in",
+                `(${resueltosIds.join(",")})`
+                );
+            }
 
-        const { data: noResueltos, error: fbError } = await fallbackQuery
-            .order("dificultad", { ascending: true })
-            .order("id_ejercicio", { ascending: true });
+            const { data: noResueltos, error: fbError } = await fallbackQuery
+                .order("dificultad", { ascending: true })
+                .order("id_ejercicio", { ascending: true });
 
-        if (fbError) throw fbError;
+            if (fbError) throw fbError;
 
-        recomendados = (noResueltos || []).slice(0, 8);
-        fromFallback = true;
+            recomendados = (noResueltos || []).slice(0, limit);
+            fromFallback = true;
         }
 
         return res.json({
@@ -104,18 +109,19 @@ router.get("/home", requireSesion, async (req, res) => {
         });
     } catch (err) {
         console.error("Error obteniendo recomendaciones:", err);
-        return res
-        .status(500)
-        .json({ error: "Error 500 al obtener recomendaciones" });
+        return res.status(500).json({ 
+            error: "Error 500 al obtener recomendaciones" 
+        });
     }
 });
 
 
-router.get("/retomar", requireSesion, async (req, res) => {
+router.get("/retomar", requireSesion, validate(retomarQuerySchema, 'query'), async (req, res) => {
     const id = req.cliente?.id_cliente;
+    const { limit } = req.query;
 
     try {
-        //Intentos finales
+        //Last
         const { data: sf, error: sfError } = await supabase
         .from("submit_final")
         .select("id_ejercicio, lenguaje, resultado, fecha, id_submit_final")
@@ -127,27 +133,27 @@ router.get("/retomar", requireSesion, async (req, res) => {
         const statusByEj = {};
 
         for (const row of sf || []) {
-        const ejId = row.id_ejercicio;
-        if (!ejId) continue;
+            const ejId = row.id_ejercicio;
+            if (!ejId) continue;
 
-        if (!statusByEj[ejId]) {
-            statusByEj[ejId] = {
-            id_ejercicio: ejId,
-            ultimo_lenguaje: row.lenguaje,
-            ultima_fecha: row.fecha || null,
-            total_intentos: 1,
-            tiene_aceptado: !!row.resultado,
-            };
-        } else {
-            statusByEj[ejId].total_intentos += 1;
-            if (!statusByEj[ejId].ultima_fecha && row.fecha) {
-            statusByEj[ejId].ultima_fecha = row.fecha;
+            if (!statusByEj[ejId]) {
+                statusByEj[ejId] = {
+                id_ejercicio: ejId,
+                ultimo_lenguaje: row.lenguaje,
+                ultima_fecha: row.fecha || null,
+                total_intentos: 1,
+                tiene_aceptado: !!row.resultado,
+                };
+            } else {
+                statusByEj[ejId].total_intentos += 1;
+                if (!statusByEj[ejId].ultima_fecha && row.fecha) {
+                    statusByEj[ejId].ultima_fecha = row.fecha;
+                }
+                if (row.resultado) statusByEj[ejId].tiene_aceptado = true;
             }
-            if (row.resultado) statusByEj[ejId].tiene_aceptado = true;
-        }
         }
 
-        //Intentos de prueba
+        //Submit intetns
         const { data: sb, error: sbError } = await supabase
         .from("submit")
         .select("id_ejercicio, lenguaje, id_submit")
@@ -157,41 +163,40 @@ router.get("/retomar", requireSesion, async (req, res) => {
         if (sbError) throw sbError;
 
         for (const row of sb || []) {
-        const ejId = row.id_ejercicio;
-        if (!ejId) continue;
+            const ejId = row.id_ejercicio;
+            if (!ejId) continue;
 
-        if (!statusByEj[ejId]) {
-            statusByEj[ejId] = {
-            id_ejercicio: ejId,
-            ultimo_lenguaje: row.lenguaje,
-            ultima_fecha: null,
-            total_intentos: 1,
-            tiene_aceptado: false,
-            };
-        } else {
-            statusByEj[ejId].total_intentos += 1;
-            if (!statusByEj[ejId].ultimo_lenguaje && row.lenguaje) {
-            statusByEj[ejId].ultimo_lenguaje = row.lenguaje;
+            if (!statusByEj[ejId]) {
+                statusByEj[ejId] = {
+                    id_ejercicio: ejId,
+                    ultimo_lenguaje: row.lenguaje,
+                    ultima_fecha: null,
+                    total_intentos: 1,
+                    tiene_aceptado: false,
+                };
+            } else {
+                statusByEj[ejId].total_intentos += 1;
+                if (!statusByEj[ejId].ultimo_lenguaje && row.lenguaje) {
+                    statusByEj[ejId].ultimo_lenguaje = row.lenguaje;
+                }
             }
         }
-        }
 
-        //Filtrar sin "aceptado"
-        const incompletos = Object.values(statusByEj).filter(
-        (s) => !s.tiene_aceptado
-        );
+        //Without accepted
+        const incompletos = Object.values(statusByEj)
+            .filter(s => !s.tiene_aceptado);
 
         if (!incompletos.length) {
-        return res.json({ retomar: [] });
+            return res.json({ retomar: [] });
         }
 
         incompletos.sort((a, b) => {
-        const da = a.ultima_fecha ? new Date(a.ultima_fecha).getTime() : 0;
-        const db = b.ultima_fecha ? new Date(b.ultima_fecha).getTime() : 0;
-        return db - da;
+            const da = a.ultima_fecha ? new Date(a.ultima_fecha).getTime() : 0;
+            const db = b.ultima_fecha ? new Date(b.ultima_fecha).getTime() : 0;
+            return db - da;
         });
 
-        const top = incompletos.slice(0, 5);
+        const top = incompletos.slice(0, limit);
         const ids = top.map((s) => s.id_ejercicio);
 
         const { data: ejercicios, error: ejError } = await supabase
@@ -207,22 +212,22 @@ router.get("/retomar", requireSesion, async (req, res) => {
 
         const ejMap = {};
         for (const ej of ejercicios || []) {
-        ejMap[ej.id_ejercicio] = ej;
+            ejMap[ej.id_ejercicio] = ej;
         }
 
         const retomar = topValidos.map(s => ({
-        ...ejMap[s.id_ejercicio],
-        ultimo_lenguaje: s.ultimo_lenguaje,
-        total_intentos: s.total_intentos,
-        ultima_fecha: s.ultima_fecha,
+            ...ejMap[s.id_ejercicio],
+            ultimo_lenguaje: s.ultimo_lenguaje,
+            total_intentos: s.total_intentos,
+            ultima_fecha: s.ultima_fecha,
         }));
 
         return res.json({ retomar });
     } catch (err) {
         console.error("Error obteniendo retomar:", err);
-        return res
-        .status(500)
-        .json({ error: "Error interno al obtener ejercicios para retomar" });
+        return res.status(500).json({ 
+            error: "Error interno al obtener ejercicios para retomar" 
+        });
     }
 });
 

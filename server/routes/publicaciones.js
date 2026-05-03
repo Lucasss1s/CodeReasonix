@@ -1,34 +1,49 @@
 import express from "express";
 import { supabase } from "../config/db.js";
 import multer from "multer";
+import { fileTypeFromBuffer } from "file-type";
+import sharp from "sharp";
 import { requireSesion } from "../middlewares/requireSesion.js";
+import { validate } from "../middlewares/validate.js";
+import {
+  createPublicacionSchema,
+  deletePublicacionParamsSchema,
+} from "../schemas/publicaciones.js";
 
 const router = express.Router();
+
 const upload = multer({ 
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
-router.post("/",  upload.single("imagen"), requireSesion, async (req, res) => {
+router.post("/",  upload.single("imagen"), requireSesion, validate(createPublicacionSchema), async (req, res) => {
   const { contenido } = req.body;
   const id_cliente = req.cliente.id_cliente;
   const file = req.file;
-
-  if (!contenido) {
-    return res.status(400).json({ error: "Faltan datos" });
-  }
 
   let imagen_url = null;
 
   if (file) {
     try {
-      const ext = file.originalname.split(".").pop() || "jpg";
+        const tipo = await fileTypeFromBuffer(file.buffer);
+
+        const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
+
+        if (!tipo || !tiposPermitidos.includes(tipo.mime)) {
+          return res.status(400).json({
+            error: "Archivo no es una imagen válida",
+          });
+        }
+
+      const ext = tipo.ext;
+
       const fileName = `publicacion_${id_cliente}_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("perfil-fotos")
         .upload(fileName, file.buffer, {
-          contentType: file.mimetype,
+          contentType: tipo.mime,
           upsert: true,
         });
 
@@ -53,6 +68,7 @@ router.post("/",  upload.single("imagen"), requireSesion, async (req, res) => {
       .single();
 
     if (error) throw error;
+    
     res.json({ publicacion: data });
   } catch (err) {
     console.error("Error creando publicación:", err);
@@ -60,7 +76,7 @@ router.post("/",  upload.single("imagen"), requireSesion, async (req, res) => {
   }
 });
 
-router.delete("/:id", requireSesion, async (req, res) => {
+router.delete("/:id", requireSesion, validate(deletePublicacionParamsSchema, "params"), async (req, res) => {
   const { id } = req.params;
   const id_cliente = req.cliente.id_cliente;
 
